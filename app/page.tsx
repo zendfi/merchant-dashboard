@@ -8,6 +8,7 @@ import { NotificationProvider } from '@/lib/notifications';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
 import WalletModal from '@/components/WalletModal';
+import CreatePaymentLinkModal from '@/components/CreatePaymentLinkModal';
 import OverviewTab from '@/components/tabs/OverviewTab';
 import TransactionsTab from '@/components/tabs/TransactionsTab';
 import ApiKeysTab from '@/components/tabs/ApiKeysTab';
@@ -19,6 +20,7 @@ function DashboardContent() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('overview');
   const [showWalletModal, setShowWalletModal] = useState(false);
+  const [showPaymentLinkModal, setShowPaymentLinkModal] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -152,7 +154,10 @@ function DashboardContent() {
 
   return (
     <div className="min-h-screen bg-[#FAFBFC]">
-      <Header onOpenWallet={() => setShowWalletModal(true)} />
+      <Header 
+        onOpenWallet={() => setShowWalletModal(true)} 
+        onCreatePaymentLink={() => setShowPaymentLinkModal(true)}
+      />
 
       <div className="flex min-h-[calc(100vh-60px)]">
         <Sidebar activeTab={activeTab} onTabChange={handleTabChange} />
@@ -163,6 +168,7 @@ function DashboardContent() {
       </div>
 
       <WalletModal isOpen={showWalletModal} onClose={() => setShowWalletModal(false)} />
+      <CreatePaymentLinkModal isOpen={showPaymentLinkModal} onClose={() => setShowPaymentLinkModal(false)} />
 
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes slideUp {

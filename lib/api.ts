@@ -86,6 +86,34 @@ export interface WebhookStats {
   avg_attempts: number | null;
 }
 
+export interface PaymentLink {
+  id: string;
+  link_code: string;
+  payment_url: string;
+  hosted_page_url: string;
+  amount: number;
+  currency: string;
+  token: string;
+  description?: string;
+  max_uses: number | null;
+  uses_count: number;
+  expires_at: string | null;
+  is_active: boolean;
+  created_at: string;
+  onramp: boolean;
+}
+
+export interface CreatePaymentLinkRequest {
+  amount: number;
+  currency: string;
+  token?: string;
+  description?: string;
+  max_uses?: number;
+  expires_at?: string;
+  metadata?: Record<string, unknown>;
+  onramp?: boolean;
+}
+
 export interface ChartDataPoint {
   date: string;
   value: number;
@@ -350,6 +378,49 @@ export const webauthn = {
   },
 };
 
+// Payment Links APIs (requires API key)
+export const paymentLinks = {
+  // Create a payment link
+  create: async (
+    apiKey: string,
+    data: CreatePaymentLinkRequest
+  ): Promise<PaymentLink> => {
+    const response = await fetch(`${API_BASE}/api/v1/payment-links`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': apiKey,
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Request failed' }));
+      throw new Error(error.message || error.error || 'Failed to create payment link');
+    }
+
+    return response.json();
+  },
+
+  // List payment links
+  list: async (apiKey: string): Promise<PaymentLink[]> => {
+    const response = await fetch(`${API_BASE}/api/v1/payment-links`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': apiKey,
+      },
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Request failed' }));
+      throw new Error(error.message || error.error || 'Failed to list payment links');
+    }
+
+    return response.json();
+  },
+};
+
 export default {
   auth,
   merchant,
@@ -358,4 +429,5 @@ export default {
   webhooks,
   wallet,
   webauthn,
+  paymentLinks,
 };
