@@ -1,0 +1,88 @@
+import type { Config } from 'tailwindcss';
+
+const config: Config = {
+  content: [
+    './pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './components/**/*.{js,ts,jsx,tsx,mdx}',
+    './app/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
+  theme: {
+    extend: {
+      colors: {
+        // ZendFi Brand Colors
+        primary: {
+          50: '#F0F4FF',
+          100: '#D1DBFF',
+          200: '#A3B7FF',
+          300: '#7593FF',
+          400: '#635BFF',
+          500: '#5449D6',
+          600: '#453BB3',
+          700: '#362D8F',
+          800: '#271F6C',
+          900: '#180F48',
+        },
+        success: {
+          50: '#ECFDF5',
+          100: '#D1FAE5',
+          200: '#A7F3D0',
+          300: '#6EE7B7',
+          400: '#00D924',
+          500: '#00D66C',
+          600: '#059669',
+          700: '#047857',
+          800: '#065F46',
+          900: '#064E3B',
+        },
+        warning: {
+          50: '#FFF7ED',
+          100: '#FFEDD5',
+          200: '#FED7AA',
+          300: '#FDBA74',
+          400: '#FF9500',
+          500: '#F97316',
+          600: '#EA580C',
+          700: '#C2410C',
+          800: '#9A3412',
+          900: '#7C2D12',
+        },
+        danger: {
+          50: '#FEF2F2',
+          100: '#FEE2E2',
+          200: '#FECACA',
+          300: '#FCA5A5',
+          400: '#E25950',
+          500: '#EF4444',
+          600: '#DC2626',
+          700: '#B91C1C',
+          800: '#991B1B',
+          900: '#7F1D1D',
+        },
+        navy: {
+          50: '#F6F9FC',
+          100: '#EEF2FF',
+          200: '#E3E8EE',
+          300: '#D1D9E0',
+          400: '#9BA5B7',
+          500: '#697386',
+          600: '#425466',
+          700: '#1A1F36',
+          800: '#0A2540',
+          900: '#030712',
+        },
+      },
+      fontFamily: {
+        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'sans-serif'],
+        mono: ['JetBrains Mono', 'Courier New', 'monospace'],
+      },
+      boxShadow: {
+        'card': '0 1px 3px rgba(0, 0, 0, 0.08)',
+        'card-hover': '0 2px 6px rgba(0, 0, 0, 0.1)',
+        'modal': '0 20px 60px rgba(0, 0, 0, 0.2)',
+      },
+    },
+  },
+  plugins: [],
+};
+
+export default config;
