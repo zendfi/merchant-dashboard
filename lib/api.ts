@@ -237,7 +237,7 @@ export const merchant = {
 
   // Get dashboard analytics
   getAnalytics: async (): Promise<DashboardAnalytics> => {
-    return apiCall('/dashboard/analytics');
+    return apiCall('/api/v1/merchants/me/analytics');
   },
 };
 
