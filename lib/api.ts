@@ -398,7 +398,7 @@ export const paymentLinks = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-API-Key': apiKey,
+        'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify(data),
     });
@@ -417,7 +417,7 @@ export const paymentLinks = {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'X-API-Key': apiKey,
+        'Authorization': `Bearer ${apiKey}`,
       },
     });
 
