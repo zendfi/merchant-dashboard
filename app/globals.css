@@ -21,32 +21,6 @@ body {
   font-size: 13px;
 }
 
-/* Toast Notification */
-.toast-notification {
-  position: fixed;
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%) translateY(100px);
-  background: #0A2540;
-  color: white;
-  padding: 12px 20px;
-  border-radius: 50px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  z-index: 10000;
-  opacity: 0;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  min-width: 300px;
-  max-width: 90vw;
-}
-
-.toast-notification.show {
-  transform: translateX(-50%) translateY(0);
-  opacity: 1;
-}
-
 /* Spinner Animation */
 @keyframes spin {
   to { transform: rotate(360deg); }
