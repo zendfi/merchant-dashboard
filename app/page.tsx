@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ModeProvider } from '@/lib/mode-context';
-import { MerchantProvider } from '@/lib/merchant-context';
+import { MerchantProvider, useMerchant } from '@/lib/merchant-context';
 import { NotificationProvider } from '@/lib/notifications';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
@@ -18,10 +18,18 @@ import ProfileTab from '@/components/tabs/ProfileTab';
 
 function DashboardContent() {
   const router = useRouter();
+  const { merchant, isLoading, error } = useMerchant();
   const [activeTab, setActiveTab] = useState('overview');
   const [showWalletModal, setShowWalletModal] = useState(false);
   const [showPaymentLinkModal, setShowPaymentLinkModal] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+
+  // Auth check - redirect to login if not authenticated
+  useEffect(() => {
+    if (!isLoading && !merchant && error) {
+      router.push('/login');
+    }
+  }, [isLoading, merchant, error, router]);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -44,6 +52,30 @@ function DashboardContent() {
     setActiveTab(tab);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  // Show loading state while checking auth
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#FAFBFC] flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-10 h-10 border-3 border-[#635BFF] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-[#697386]">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render dashboard if not authenticated
+  if (!merchant) {
+    return (
+      <div className="min-h-screen bg-[#FAFBFC] flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-10 h-10 border-3 border-[#635BFF] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-[#697386]">Redirecting to login...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Mobile Warning Overlay
   if (isMobile) {

@@ -41,7 +41,7 @@ export default function LoginPage() {
       const data = await auth.loginPassword(email, password);
 
       if (data.success) {
-        setSuccess(`Welcome back, ${data.merchant.name}!`);
+        setSuccess(`Welcome back, ${data.name}!`);
         setTimeout(() => {
           router.push('/');
         }, 500);

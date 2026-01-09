@@ -21,6 +21,15 @@ export interface MerchantAuthResponse {
   expires_at: number;
 }
 
+// Password login returns a different structure than passkey login
+export interface PasswordLoginResponse {
+  success: boolean;
+  session_token: string;
+  merchant_id: string;
+  email: string;
+  name: string;
+}
+
 export interface LoginChallengeResponse {
   session_id: string;
   challenge: string;
@@ -173,7 +182,7 @@ export const auth = {
   },
 
   // Password login
-  loginPassword: async (email: string, password: string): Promise<MerchantAuthResponse> => {
+  loginPassword: async (email: string, password: string): Promise<PasswordLoginResponse> => {
     return apiCall('/api/v1/merchants/login/password', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
