@@ -250,6 +250,38 @@ export const merchant = {
   },
 };
 
+// Session Key type
+export interface SessionKey {
+  id: string;
+  limit_usdc: number;
+  used_amount_usdc: number;
+  remaining_usdc: number;
+  expires_at: string;
+  is_active: boolean;
+  status: 'active' | 'expired' | 'revoked';
+  created_at: string;
+  session_wallet: string | null;
+  agent_id: string | null;
+  agent_name: string | null;
+  user_wallet: string | null;
+}
+
+export interface SessionKeyStats {
+  total: number;
+  active: number;
+  total_limit_usdc: number;
+  total_used_usdc: number;
+  total_remaining_usdc: number;
+}
+
+// Session Keys APIs
+export const sessionKeys = {
+  // List all session keys
+  list: async (): Promise<{ session_keys: SessionKey[]; stats: SessionKeyStats }> => {
+    return apiCall('/api/v1/merchants/me/session-keys');
+  },
+};
+
 // API Keys APIs
 export const apiKeys = {
   // List all API keys
