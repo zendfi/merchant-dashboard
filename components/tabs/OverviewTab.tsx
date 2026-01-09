@@ -2,38 +2,48 @@
 
 import { useEffect, useState } from 'react';
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Title,
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
   Tooltip,
-  Legend,
-  Filler,
-} from 'chart.js';
-import { Line, Bar } from 'react-chartjs-2';
+  ResponsiveContainer,
+} from 'recharts';
 import { useMerchant } from '@/lib/merchant-context';
 import { useMode } from '@/lib/mode-context';
 import { merchant as merchantApi, DashboardStats, DashboardAnalytics } from '@/lib/api';
 
-// Register ChartJS components
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
-);
-
 interface OverviewTabProps {
   onViewAllTransactions: () => void;
 }
+
+// Custom tooltip component for consistent styling
+const CustomTooltip = ({
+  active,
+  payload,
+  label,
+  formatter,
+}: {
+  active?: boolean;
+  payload?: Array<{ value: number; color: string }>;
+  label?: string;
+  formatter?: (value: number) => string;
+}) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-[#0A2540] px-3 py-2 rounded-lg shadow-lg border border-[#635bff]/30">
+        <p className="text-[11px] text-gray-400 mb-1">{label}</p>
+        <p className="text-white font-semibold text-sm">
+          {formatter ? formatter(payload[0].value) : payload[0].value}
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
 
 export default function OverviewTab({ onViewAllTransactions }: OverviewTabProps) {
   const { merchant } = useMerchant();
@@ -62,116 +72,39 @@ export default function OverviewTab({ onViewAllTransactions }: OverviewTabProps)
     loadData();
   }, [mode]);
 
-  // Chart default options
-  const chartDefaults = {
-    responsive: true,
-    maintainAspectRatio: true,
-    aspectRatio: 2.5,
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        backgroundColor: '#0A2540',
-        padding: 8,
-        titleColor: '#fff',
-        bodyColor: '#fff',
-        borderColor: '#635bff',
-        borderWidth: 1,
-      },
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        ticks: { font: { size: 10 } },
-      },
-      x: {
-        ticks: { font: { size: 10 } },
-      },
-    },
-  };
-
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
-  // Prepare chart data
-  const transactionsChartData = {
-    labels: analytics?.payments_chart.map((d) => formatDate(d.date)) || [],
-    datasets: [
-      {
-        label: 'Confirmed Transactions',
-        data: analytics?.payments_chart.map((d) => d.value) || [],
-        borderColor: '#635bff',
-        backgroundColor: 'rgba(99, 91, 255, 0.1)',
-        borderWidth: 2,
-        fill: true,
-        tension: 0.4,
-        pointRadius: 4,
-        pointBackgroundColor: '#635bff',
-        pointBorderColor: '#fff',
-        pointBorderWidth: 2,
-        pointHoverRadius: 6,
-      },
-    ],
-  };
+  // Transform data for Recharts
+  const transactionsData = analytics?.payments_chart.map((d) => ({
+    date: formatDate(d.date),
+    value: d.value,
+  })) || [];
 
-  const volumeChartData = {
-    labels: analytics?.volume_chart.map((d) => formatDate(d.date)) || [],
-    datasets: [
-      {
-        label: 'Volume (USD)',
-        data: analytics?.volume_chart.map((d) => d.value) || [],
-        backgroundColor: 'rgba(16, 185, 129, 0.8)',
-        borderColor: '#10b981',
-        borderWidth: 1,
-      },
-    ],
-  };
+  const volumeData = analytics?.volume_chart.map((d) => ({
+    date: formatDate(d.date),
+    value: d.value,
+  })) || [];
 
-  const apiCallsChartData = {
-    labels: analytics?.api_calls_chart.map((d) => formatDate(d.date)) || [],
-    datasets: [
-      {
-        label: 'API Calls',
-        data: analytics?.api_calls_chart.map((d) => d.value) || [],
-        borderColor: '#f59e0b',
-        backgroundColor: 'rgba(245, 158, 11, 0.1)',
-        borderWidth: 2,
-        fill: true,
-        tension: 0.4,
-        pointRadius: 4,
-        pointBackgroundColor: '#f59e0b',
-        pointBorderColor: '#fff',
-        pointBorderWidth: 2,
-        pointHoverRadius: 6,
-      },
-    ],
-  };
+  const apiCallsData = analytics?.api_calls_chart.map((d) => ({
+    date: formatDate(d.date),
+    value: d.value,
+  })) || [];
 
-  const successRateChartData = {
-    labels: analytics?.success_rate_chart.map((d) => formatDate(d.date)) || [],
-    datasets: [
-      {
-        label: 'Success Rate (%)',
-        data: analytics?.success_rate_chart.map((d) => d.value) || [],
-        borderColor: '#8b5cf6',
-        backgroundColor: 'rgba(139, 92, 246, 0.1)',
-        borderWidth: 2,
-        fill: true,
-        tension: 0.4,
-        pointRadius: 4,
-        pointBackgroundColor: '#8b5cf6',
-        pointBorderColor: '#fff',
-        pointBorderWidth: 2,
-        pointHoverRadius: 6,
-      },
-    ],
-  };
+  const successRateData = analytics?.success_rate_chart.map((d) => ({
+    date: formatDate(d.date),
+    value: d.value,
+  })) || [];
+
+  // Suppress unused variable warning
+  void onViewAllTransactions;
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="spinner spinner-dark" />
+        <div className="w-8 h-8 border-3 border-[#635BFF] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -249,93 +182,168 @@ export default function OverviewTab({ onViewAllTransactions }: OverviewTabProps)
         <h2 className="mb-5 text-[#1A1F36] text-lg font-semibold">Analytics</h2>
         <div className="grid grid-cols-2 gap-5 mb-8">
           {/* Transactions Chart */}
-          <div className="bg-white rounded-xl p-5 shadow-[0_2px_4px_rgba(0,0,0,0.05)]">
-            <h3 className="mb-3 text-[#697386] text-[13px] font-semibold uppercase tracking-[0.5px]">
+          <div className="bg-white rounded-xl p-5 shadow-[0_2px_4px_rgba(0,0,0,0.05)] border border-[#E3E8EE]">
+            <h3 className="mb-4 text-[#697386] text-[13px] font-semibold uppercase tracking-[0.5px]">
               Transactions (30 Days)
             </h3>
-            <div className="max-h-[200px]">
-              <Line data={transactionsChartData} options={chartDefaults as never} />
+            <div className="h-[180px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={transactionsData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="transactionsGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#635bff" stopOpacity={0.3} />
+                      <stop offset="100%" stopColor="#635bff" stopOpacity={0.05} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E3E8EE" vertical={false} />
+                  <XAxis 
+                    dataKey="date" 
+                    tick={{ fill: '#697386', fontSize: 10 }} 
+                    tickLine={false}
+                    axisLine={{ stroke: '#E3E8EE' }}
+                  />
+                  <YAxis 
+                    tick={{ fill: '#697386', fontSize: 10 }} 
+                    tickLine={false}
+                    axisLine={false}
+                    allowDecimals={false}
+                  />
+                  <Tooltip content={<CustomTooltip formatter={(v) => `${v} transactions`} />} />
+                  <Area
+                    type="monotone"
+                    dataKey="value"
+                    stroke="#635bff"
+                    strokeWidth={2.5}
+                    fill="url(#transactionsGradient)"
+                    dot={{ fill: '#635bff', strokeWidth: 2, stroke: '#fff', r: 4 }}
+                    activeDot={{ fill: '#635bff', strokeWidth: 2, stroke: '#fff', r: 6 }}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
           </div>
 
           {/* Volume Chart */}
-          <div className="bg-white rounded-xl p-5 shadow-[0_2px_4px_rgba(0,0,0,0.05)]">
-            <h3 className="mb-3 text-[#697386] text-[13px] font-semibold uppercase tracking-[0.5px]">
+          <div className="bg-white rounded-xl p-5 shadow-[0_2px_4px_rgba(0,0,0,0.05)] border border-[#E3E8EE]">
+            <h3 className="mb-4 text-[#697386] text-[13px] font-semibold uppercase tracking-[0.5px]">
               Volume (USD)
             </h3>
-            <div className="max-h-[200px]">
-              <Bar
-                data={volumeChartData}
-                options={{
-                  ...chartDefaults,
-                  plugins: {
-                    ...chartDefaults.plugins,
-                    tooltip: {
-                      ...chartDefaults.plugins.tooltip,
-                      callbacks: {
-                        label: (context: { parsed: { y: number } }) =>
-                          '$' + context.parsed.y.toFixed(2),
-                      },
-                    },
-                  },
-                  scales: {
-                    ...chartDefaults.scales,
-                    y: {
-                      ...chartDefaults.scales.y,
-                      ticks: {
-                        ...chartDefaults.scales.y.ticks,
-                        callback: (value: number | string) => '$' + Number(value).toFixed(0),
-                      },
-                    },
-                  },
-                } as never}
-              />
+            <div className="h-[180px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={volumeData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="volumeGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#10b981" stopOpacity={1} />
+                      <stop offset="100%" stopColor="#10b981" stopOpacity={0.6} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E3E8EE" vertical={false} />
+                  <XAxis 
+                    dataKey="date" 
+                    tick={{ fill: '#697386', fontSize: 10 }} 
+                    tickLine={false}
+                    axisLine={{ stroke: '#E3E8EE' }}
+                  />
+                  <YAxis 
+                    tick={{ fill: '#697386', fontSize: 10 }} 
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(value) => `$${value}`}
+                  />
+                  <Tooltip content={<CustomTooltip formatter={(v) => `$${v.toFixed(2)}`} />} />
+                  <Bar 
+                    dataKey="value" 
+                    fill="url(#volumeGradient)" 
+                    radius={[4, 4, 0, 0]}
+                    maxBarSize={40}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </div>
 
           {/* API Calls Chart */}
-          <div className="bg-white rounded-xl p-5 shadow-[0_2px_4px_rgba(0,0,0,0.05)]">
-            <h3 className="mb-3 text-[#697386] text-[13px] font-semibold uppercase tracking-[0.5px]">
+          <div className="bg-white rounded-xl p-5 shadow-[0_2px_4px_rgba(0,0,0,0.05)] border border-[#E3E8EE]">
+            <h3 className="mb-4 text-[#697386] text-[13px] font-semibold uppercase tracking-[0.5px]">
               API Calls (30 Days)
             </h3>
-            <div className="max-h-[200px]">
-              <Line data={apiCallsChartData} options={chartDefaults as never} />
+            <div className="h-[180px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={apiCallsData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="apiCallsGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.3} />
+                      <stop offset="100%" stopColor="#f59e0b" stopOpacity={0.05} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E3E8EE" vertical={false} />
+                  <XAxis 
+                    dataKey="date" 
+                    tick={{ fill: '#697386', fontSize: 10 }} 
+                    tickLine={false}
+                    axisLine={{ stroke: '#E3E8EE' }}
+                  />
+                  <YAxis 
+                    tick={{ fill: '#697386', fontSize: 10 }} 
+                    tickLine={false}
+                    axisLine={false}
+                    allowDecimals={false}
+                  />
+                  <Tooltip content={<CustomTooltip formatter={(v) => `${v} calls`} />} />
+                  <Area
+                    type="monotone"
+                    dataKey="value"
+                    stroke="#f59e0b"
+                    strokeWidth={2.5}
+                    fill="url(#apiCallsGradient)"
+                    dot={{ fill: '#f59e0b', strokeWidth: 2, stroke: '#fff', r: 4 }}
+                    activeDot={{ fill: '#f59e0b', strokeWidth: 2, stroke: '#fff', r: 6 }}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
           </div>
 
           {/* Success Rate Chart */}
-          <div className="bg-white rounded-xl p-5 shadow-[0_2px_4px_rgba(0,0,0,0.05)]">
-            <h3 className="mb-3 text-[#697386] text-[13px] font-semibold uppercase tracking-[0.5px]">
+          <div className="bg-white rounded-xl p-5 shadow-[0_2px_4px_rgba(0,0,0,0.05)] border border-[#E3E8EE]">
+            <h3 className="mb-4 text-[#697386] text-[13px] font-semibold uppercase tracking-[0.5px]">
               Success Rate (%)
             </h3>
-            <div className="max-h-[200px]">
-              <Line
-                data={successRateChartData}
-                options={{
-                  ...chartDefaults,
-                  plugins: {
-                    ...chartDefaults.plugins,
-                    tooltip: {
-                      ...chartDefaults.plugins.tooltip,
-                      callbacks: {
-                        label: (context: { parsed: { y: number } }) =>
-                          context.parsed.y.toFixed(1) + '%',
-                      },
-                    },
-                  },
-                  scales: {
-                    ...chartDefaults.scales,
-                    y: {
-                      beginAtZero: true,
-                      max: 100,
-                      ticks: {
-                        font: { size: 10 },
-                        callback: (value: number | string) => value + '%',
-                      },
-                    },
-                  },
-                } as never}
-              />
+            <div className="h-[180px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={successRateData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="successRateGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.3} />
+                      <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0.05} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E3E8EE" vertical={false} />
+                  <XAxis 
+                    dataKey="date" 
+                    tick={{ fill: '#697386', fontSize: 10 }} 
+                    tickLine={false}
+                    axisLine={{ stroke: '#E3E8EE' }}
+                  />
+                  <YAxis 
+                    tick={{ fill: '#697386', fontSize: 10 }} 
+                    tickLine={false}
+                    axisLine={false}
+                    domain={[0, 100]}
+                    tickFormatter={(value) => `${value}%`}
+                  />
+                  <Tooltip content={<CustomTooltip formatter={(v) => `${v.toFixed(1)}%`} />} />
+                  <Area
+                    type="monotone"
+                    dataKey="value"
+                    stroke="#8b5cf6"
+                    strokeWidth={2.5}
+                    fill="url(#successRateGradient)"
+                    dot={{ fill: '#8b5cf6', strokeWidth: 2, stroke: '#fff', r: 4 }}
+                    activeDot={{ fill: '#8b5cf6', strokeWidth: 2, stroke: '#fff', r: 6 }}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
           </div>
         </div>

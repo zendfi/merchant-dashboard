@@ -9,14 +9,13 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "chart.js": "^4.4.0",
     "clsx": "^2.1.1",
     "js-cookie": "^3.0.5",
     "next": "^14.2.35",
     "qrcode.react": "^4.2.0",
     "react": "^18.3.1",
-    "react-chartjs-2": "^5.2.0",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "recharts": "^3.6.0"
   },
   "devDependencies": {
     "@types/js-cookie": "^3.0.6",
