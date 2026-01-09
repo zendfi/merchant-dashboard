@@ -60,7 +60,7 @@ export function useNotification() {
   return context;
 }
 
-// Toast component - Modern glass-morphism design
+// Toast component - Modern design with inline styles for reliability
 function Toast({
   notification,
   onClose,
@@ -73,7 +73,7 @@ function Toast({
 
   useEffect(() => {
     // Trigger animation on mount
-    requestAnimationFrame(() => setIsVisible(true));
+    const timer = setTimeout(() => setIsVisible(true), 10);
     
     // Progress bar countdown
     const startTime = Date.now();
@@ -85,95 +85,119 @@ function Toast({
       if (remaining <= 0) clearInterval(interval);
     }, 50);
     
-    return () => clearInterval(interval);
+    return () => {
+      clearTimeout(timer);
+      clearInterval(interval);
+    };
   }, []);
 
   const config = {
     success: {
       icon: (
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
         </svg>
       ),
-      bgColor: 'bg-emerald-500',
-      borderColor: 'border-emerald-400/30',
-      progressColor: 'bg-emerald-400',
-      glowColor: 'shadow-emerald-500/20',
+      iconBg: '#10b981',
+      borderColor: 'rgba(16, 185, 129, 0.3)',
+      progressColor: '#34d399',
     },
     error: {
       icon: (
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
         </svg>
       ),
-      bgColor: 'bg-red-500',
-      borderColor: 'border-red-400/30',
-      progressColor: 'bg-red-400',
-      glowColor: 'shadow-red-500/20',
+      iconBg: '#ef4444',
+      borderColor: 'rgba(239, 68, 68, 0.3)',
+      progressColor: '#f87171',
     },
     warning: {
       icon: (
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
         </svg>
       ),
-      bgColor: 'bg-amber-500',
-      borderColor: 'border-amber-400/30',
-      progressColor: 'bg-amber-400',
-      glowColor: 'shadow-amber-500/20',
+      iconBg: '#f59e0b',
+      borderColor: 'rgba(245, 158, 11, 0.3)',
+      progressColor: '#fbbf24',
     },
     info: {
       icon: (
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       ),
-      bgColor: 'bg-indigo-500',
-      borderColor: 'border-indigo-400/30',
-      progressColor: 'bg-indigo-400',
-      glowColor: 'shadow-indigo-500/20',
+      iconBg: '#635bff',
+      borderColor: 'rgba(99, 91, 255, 0.3)',
+      progressColor: '#818cf8',
     },
   };
 
-  const { icon, bgColor, borderColor, progressColor, glowColor } = config[notification.type];
+  const { icon, iconBg, borderColor, progressColor } = config[notification.type];
 
   return (
     <div 
-      className={`
-        fixed bottom-6 left-1/2 -translate-x-1/2 z-[10000]
-        transition-all duration-500 ease-out
-        ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}
-      `}
+      style={{
+        position: 'fixed',
+        bottom: '24px',
+        left: '50%',
+        transform: `translateX(-50%) translateY(${isVisible ? '0' : '20px'})`,
+        zIndex: 10000,
+        opacity: isVisible ? 1 : 0,
+        transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+      }}
     >
       <div 
-        className={`
-          relative overflow-hidden
-          bg-[#0f172a]/95 backdrop-blur-xl
-          border ${borderColor}
-          rounded-2xl
-          shadow-2xl ${glowColor}
-          min-w-[320px] max-w-[420px]
-        `}
+        style={{
+          position: 'relative',
+          overflow: 'hidden',
+          background: 'rgba(15, 23, 42, 0.95)',
+          backdropFilter: 'blur(12px)',
+          border: `1px solid ${borderColor}`,
+          borderRadius: '16px',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4)',
+          minWidth: '320px',
+          maxWidth: '420px',
+        }}
       >
         {/* Main content */}
-        <div className="flex items-start gap-3 p-4">
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '16px' }}>
           {/* Icon */}
-          <div className={`
-            flex-shrink-0 w-9 h-9 rounded-xl ${bgColor}
-            flex items-center justify-center text-white
-            shadow-lg
-          `}>
+          <div style={{
+            flexShrink: 0,
+            width: '36px',
+            height: '36px',
+            borderRadius: '10px',
+            backgroundColor: iconBg,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'white',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.2)',
+          }}>
             {icon}
           </div>
           
           {/* Text content */}
-          <div className="flex-1 min-w-0 pt-0.5">
-            <p className="text-white font-semibold text-[14px] leading-tight">
+          <div style={{ flex: 1, minWidth: 0, paddingTop: '2px' }}>
+            <p style={{
+              color: 'white',
+              fontWeight: 600,
+              fontSize: '14px',
+              lineHeight: 1.3,
+              margin: 0,
+            }}>
               {notification.title}
             </p>
             {notification.message && (
               <p 
-                className="text-slate-400 text-[13px] mt-1 leading-relaxed"
+                style={{
+                  color: '#94a3b8',
+                  fontSize: '13px',
+                  marginTop: '4px',
+                  lineHeight: 1.5,
+                }}
                 dangerouslySetInnerHTML={{ __html: notification.message }}
               />
             )}
@@ -182,26 +206,46 @@ function Toast({
           {/* Close button */}
           <button
             onClick={onClose}
-            className="
-              flex-shrink-0 w-7 h-7 rounded-lg
-              flex items-center justify-center
-              text-slate-500 hover:text-white
-              hover:bg-white/10
-              transition-all duration-200
-              -mt-0.5 -mr-1
-            "
+            style={{
+              flexShrink: 0,
+              width: '28px',
+              height: '28px',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#64748b',
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              marginTop: '-2px',
+              marginRight: '-4px',
+              transition: 'all 0.2s',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)';
+              e.currentTarget.style.color = 'white';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+              e.currentTarget.style.color = '#64748b';
+            }}
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
         
         {/* Progress bar */}
-        <div className="h-1 bg-slate-800/50">
+        <div style={{ height: '3px', backgroundColor: 'rgba(30, 41, 59, 0.5)' }}>
           <div 
-            className={`h-full ${progressColor} transition-all duration-100 ease-linear`}
-            style={{ width: `${progress}%` }}
+            style={{
+              height: '100%',
+              backgroundColor: progressColor,
+              transition: 'width 0.1s linear',
+              width: `${progress}%`,
+            }}
           />
         </div>
       </div>
