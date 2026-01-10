@@ -95,9 +95,12 @@ export default function CreatePaymentLinkModal({ isOpen, onClose }: CreatePaymen
     setLoadingRate(true);
     try {
       const response = await fetch('/api/v1/onramp/rates');
+      if (!response.ok) {
+        throw new Error('Failed to fetch rates');
+      }
       const data = await response.json();
-      // Paj returns USD to NGN rate, so we use the on_ramp_rate
-      setExchangeRate(data.on_ramp_rate.rate);
+      // Backend returns PajRates directly: { on_ramp_rate: { rate, ... }, off_ramp_rate: { ... } }
+      setExchangeRate(data.on_ramp_rate?.rate || data.onRampRate?.rate);
     } catch (err) {
       console.error('Failed to load exchange rate:', err);
     } finally {
