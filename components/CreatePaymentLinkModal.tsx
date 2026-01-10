@@ -37,12 +37,27 @@ export default function CreatePaymentLinkModal({ isOpen, onClose }: CreatePaymen
   const [createdLink, setCreatedLink] = useState<PaymentLink | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
 
+  // NGN Calculator state
+  const [showCalculator, setShowCalculator] = useState(false);
+  const [ngnAmount, setNgnAmount] = useState('');
+  const [exchangeRate, setExchangeRate] = useState<number | null>(null);
+  const [loadingRate, setLoadingRate] = useState(false);
+
   // Load API keys on mount
   useEffect(() => {
     if (isOpen) {
       loadApiKeys();
+      loadExchangeRate();
     }
   }, [isOpen]);
+
+  // Update USD amount when NGN changes
+  useEffect(() => {
+    if (ngnAmount && exchangeRate) {
+      const usdValue = parseFloat(ngnAmount) / exchangeRate;
+      setAmount(usdValue.toFixed(2));
+    }
+  }, [ngnAmount, exchangeRate]);
 
   // Reset form when modal closes
   useEffect(() => {
@@ -73,6 +88,20 @@ export default function CreatePaymentLinkModal({ isOpen, onClose }: CreatePaymen
       }
     } catch (err) {
       console.error('Failed to load API keys:', err);
+    }
+  };
+
+  const loadExchangeRate = async () => {
+    setLoadingRate(true);
+    try {
+      const response = await fetch('/api/v1/onramp/rates');
+      const data = await response.json();
+      // Paj returns USD to NGN rate, so we use the on_ramp_rate
+      setExchangeRate(data.on_ramp_rate.rate);
+    } catch (err) {
+      console.error('Failed to load exchange rate:', err);
+    } finally {
+      setLoadingRate(false);
     }
   };
 
@@ -254,7 +283,11 @@ export default function CreatePaymentLinkModal({ isOpen, onClose }: CreatePaymen
                       step="0.01"
                       min="0.01"
                       value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
+                      onChange={(e) => {
+                        setAmount(e.target.value);
+                        // Clear NGN when manually editing USD
+                        if (ngnAmount) setNgnAmount('');
+                      }}
                       placeholder="0.00"
                       className="w-full pl-7 pr-3 py-2.5 border border-[#e3e8ee] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#635BFF]/20 focus:border-[#635BFF]"
                     />
@@ -267,6 +300,86 @@ export default function CreatePaymentLinkModal({ isOpen, onClose }: CreatePaymen
                     <option value="USD">USD</option>
                   </select>
                 </div>
+
+                {/* NGN Calculator Toggle */}
+                <button
+                  type="button"
+                  onClick={() => setShowCalculator(!showCalculator)}
+                  className="text-xs text-[#635BFF] hover:underline flex items-center gap-1.5"
+                >
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    className={`transition-transform ${showCalculator ? 'rotate-180' : ''}`}
+                  >
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                  {showCalculator ? 'Hide' : 'Show'} NGN Calculator
+                </button>
+
+                {/* NGN Calculator */}
+                {showCalculator && (
+                  <div className="mt-3 p-3 bg-[#F0F0FF] border border-[#635BFF]/20 rounded-lg space-y-3">
+                    <div className="flex items-center gap-2">
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="#635BFF"
+                        strokeWidth="2"
+                      >
+                        <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+                        <line x1="1" y1="10" x2="23" y2="10" />
+                      </svg>
+                      <span className="text-xs font-semibold text-[#635BFF]">
+                        NGN to USD Calculator
+                      </span>
+                    </div>
+                    
+                    {loadingRate ? (
+                      <div className="text-xs text-[#697386] py-2">Loading exchange rate...</div>
+                    ) : exchangeRate ? (
+                      <>
+                        <div className="text-xs text-[#697386]">
+                          Current rate: <span className="font-semibold text-[#0a2540]">₦{exchangeRate.toFixed(2)} = $1.00</span>
+                        </div>
+                        
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#697386] text-sm">₦</span>
+                          <input
+                            type="number"
+                            step="1"
+                            min="1"
+                            value={ngnAmount}
+                            onChange={(e) => setNgnAmount(e.target.value)}
+                            placeholder="Enter NGN amount"
+                            className="w-full pl-7 pr-3 py-2.5 border border-[#635BFF]/30 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#635BFF]/20 focus:border-[#635BFF] bg-white"
+                          />
+                        </div>
+
+                        {ngnAmount && parseFloat(ngnAmount) > 0 && (
+                          <div className="flex items-center justify-between p-2.5 bg-white border border-[#635BFF]/20 rounded-lg">
+                            <span className="text-xs text-[#697386]">USD Equivalent:</span>
+                            <span className="text-sm font-bold text-[#635BFF]">
+                              ${(parseFloat(ngnAmount) / exchangeRate).toFixed(2)}
+                            </span>
+                          </div>
+                        )}
+                        
+                        <div className="text-[10px] text-[#697386] leading-relaxed">
+                          💡 Enter your NGN amount to automatically calculate the USD price. Rate provided by PAJ Ramp.
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-xs text-red-600">Failed to load exchange rate</div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Token */}
