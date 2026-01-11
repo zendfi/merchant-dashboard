@@ -392,6 +392,146 @@ export const wallet = {
   },
 };
 
+// Offramp (Bank Withdrawal) Types
+export interface OfframpRates {
+  rates: {
+    on_ramp_rate: {
+      id: string;
+      base_currency: string;
+      target_currency: string;
+      rate: number;
+      created_at: string;
+      rate_type: string;
+    };
+    off_ramp_rate: {
+      id: string;
+      base_currency: string;
+      target_currency: string;
+      rate: number;
+      created_at: string;
+      rate_type: string;
+    };
+  };
+  usdc_balance: number;
+}
+
+export interface PajBank {
+  id: string;
+  name: string;
+  code: string;
+  country: string;
+}
+
+export interface BankAccountDetails {
+  account_name: string;
+  account_number: string;
+  bank: PajBank;
+}
+
+export interface OfframpOrder {
+  order_id: string;
+  paj_order_id: string;
+  paj_deposit_address: string;
+  amount_usdc: number;
+  fiat_amount: number;
+  currency: string;
+  exchange_rate: number;
+  fee: number;
+  status: string;
+  bank_account_number: string;
+  bank_name?: string;
+}
+
+// Offramp (Withdraw to Bank) APIs
+export const offramp = {
+  // Get offramp rates and USDC balance
+  getRates: async (): Promise<OfframpRates> => {
+    return apiCall('/api/v1/offramp/rates');
+  },
+
+  // Initiate offramp session (send OTP)
+  initiate: async (email: string): Promise<{ session_initiated: boolean; message: string }> => {
+    return apiCall('/api/v1/offramp/initiate', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  },
+
+  // Verify OTP and get session token
+  verifyOtp: async (email: string, otp: string): Promise<{ session_token: string; verified: boolean }> => {
+    return apiCall('/api/v1/offramp/verify-otp', {
+      method: 'POST',
+      body: JSON.stringify({ email, otp }),
+    });
+  },
+
+  // Get available banks
+  getBanks: async (sessionToken: string): Promise<{ banks: PajBank[] }> => {
+    return apiCall('/api/v1/offramp/banks', {
+      method: 'POST',
+      body: JSON.stringify({ session_token: sessionToken }),
+    });
+  },
+
+  // Resolve bank account details
+  resolveAccount: async (
+    sessionToken: string,
+    bankId: string,
+    accountNumber: string
+  ): Promise<BankAccountDetails> => {
+    return apiCall('/api/v1/offramp/resolve-account', {
+      method: 'POST',
+      body: JSON.stringify({
+        session_token: sessionToken,
+        bank_id: bankId,
+        account_number: accountNumber,
+      }),
+    });
+  },
+
+  // Create offramp order
+  createOrder: async (
+    sessionToken: string,
+    amountUsdc: number,
+    bankId: string,
+    accountNumber: string
+  ): Promise<OfframpOrder> => {
+    return apiCall('/api/v1/offramp/create-order', {
+      method: 'POST',
+      body: JSON.stringify({
+        session_token: sessionToken,
+        amount_usdc: amountUsdc,
+        bank_id: bankId,
+        account_number: accountNumber,
+      }),
+    });
+  },
+
+  // Execute transfer (send USDC to PAJ)
+  executeTransfer: async (
+    orderId: string,
+    passkeySignature: {
+      credential_id: string;
+      authenticator_data: number[];
+      signature: number[];
+      client_data_json: number[];
+    }
+  ): Promise<{ success: boolean; tx_signature: string; explorer_url: string; message: string }> => {
+    return apiCall('/api/v1/offramp/execute-transfer', {
+      method: 'POST',
+      body: JSON.stringify({
+        order_id: orderId,
+        passkey_signature: passkeySignature,
+      }),
+    });
+  },
+
+  // Get order status
+  getOrder: async (orderId: string): Promise<OfframpOrder> => {
+    return apiCall(`/api/v1/offramp/orders/${orderId}`);
+  },
+};
+
 // WebAuthn APIs
 export const webauthn = {
   // Start passkey registration

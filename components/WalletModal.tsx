@@ -5,6 +5,7 @@ import { useMode } from '@/lib/mode-context';
 import { wallet as walletApi, WalletInfo } from '@/lib/api';
 import { useNotification } from '@/lib/notifications';
 import { getPasskeySignature } from '@/lib/webauthn';
+import BankWithdrawalModal from './BankWithdrawalModal';
 
 interface WalletModalProps {
   isOpen: boolean;
@@ -17,6 +18,7 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
   const [walletData, setWalletData] = useState<WalletInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showSendForm, setShowSendForm] = useState(false);
+  const [showBankWithdrawal, setShowBankWithdrawal] = useState(false);
   const [selectedToken, setSelectedToken] = useState('SOL');
   const [recipientAddress, setRecipientAddress] = useState('');
   const [sendAmount, setSendAmount] = useState('');
@@ -282,6 +284,21 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
             </button>
           </div>
 
+          {/* Withdraw to Bank Button */}
+          {mode === 'live' && (walletData?.usdc_balance || 0) > 0 && (
+            <button
+              onClick={() => setShowBankWithdrawal(true)}
+              className="w-full mt-3 p-2.5 rounded-md font-semibold text-[13px] cursor-pointer transition-all flex items-center justify-center gap-1.5 bg-[#16A34A] text-white shadow-[0_1px_3px_rgba(0,0,0,0.1)] hover:bg-[#15803D] hover:-translate-y-px hover:shadow-[0_4px_8px_rgba(22,163,74,0.2)]"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M3 21h18" />
+                <path d="M5 21V7l8-4 8 4v14" />
+                <path d="M9 21v-4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v4" />
+              </svg>
+              Withdraw to Bank (NGN)
+            </button>
+          )}
+
           {/* Send Form */}
           {showSendForm && (
             <div className="mt-6 p-5 bg-[#F6F9FC] rounded-xl border border-[#E3E8EE]">
@@ -350,6 +367,14 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
           )}
         </div>
       </div>
+
+      {/* Bank Withdrawal Modal */}
+      <BankWithdrawalModal
+        isOpen={showBankWithdrawal}
+        onClose={() => setShowBankWithdrawal(false)}
+        usdcBalance={walletData?.usdc_balance || 0}
+        onSuccess={loadWalletInfo}
+      />
     </div>
   );
 }
