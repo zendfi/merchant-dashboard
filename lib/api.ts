@@ -423,8 +423,8 @@ export interface PajBank {
 }
 
 export interface BankAccountDetails {
-  account_name: string;
-  account_number: string;
+  accountName: string;
+  accountNumber: string;
   bank: PajBank;
 }
 

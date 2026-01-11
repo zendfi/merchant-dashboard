@@ -113,10 +113,10 @@ export default function OverviewTab({ onViewAllTransactions }: OverviewTabProps)
     <div>
       {/* Welcome Section */}
       <div className="mb-5">
-        <h1 className="text-[28px] font-semibold mb-1 text-[#0A2540] tracking-[-0.4px] leading-tight flex items-center gap-2">
+        <h1 className="text-xl md:text-[28px] font-semibold mb-1 text-[#0A2540] tracking-[-0.4px] leading-tight flex items-center gap-2">
           Welcome back, {merchant?.name || 'Merchant'}!
           <svg
-            className="w-[18px] h-[18px]"
+            className="w-4 h-4 md:w-[18px] md:h-[18px] hidden sm:block"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -128,7 +128,7 @@ export default function OverviewTab({ onViewAllTransactions }: OverviewTabProps)
             />
           </svg>
         </h1>
-        <p className="text-[#425466] text-[13px]">
+        <p className="text-[#425466] text-[12px] md:text-[13px]">
           Customer since{' '}
           {merchant?.created_at
             ? new Date(merchant.created_at).toLocaleDateString('en-US', {
@@ -137,50 +137,50 @@ export default function OverviewTab({ onViewAllTransactions }: OverviewTabProps)
                 year: 'numeric',
               })
             : 'N/A'}{' '}
-          · Account ID: <code className="text-xs">{merchant?.id}</code>
+          <span className="hidden sm:inline">· Account ID: <code className="text-xs">{merchant?.id}</code></span>
         </p>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3 mb-5">
-        <div className="bg-white rounded-lg border border-[#E3E8EE] p-4 transition-all shadow-[0_1px_3px_rgba(0,0,0,0.08)] hover:-translate-y-px hover:shadow-[0_2px_6px_rgba(0,0,0,0.1)]">
-          <div className="text-[#425466] text-[11px] font-semibold uppercase tracking-[0.6px] mb-2">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 mb-5">
+        <div className="bg-white rounded-lg border border-[#E3E8EE] p-3 md:p-4 transition-all shadow-[0_1px_3px_rgba(0,0,0,0.08)] hover:-translate-y-px hover:shadow-[0_2px_6px_rgba(0,0,0,0.1)]">
+          <div className="text-[#425466] text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.6px] mb-1 md:mb-2">
             Total Payments
           </div>
-          <div className="text-[32px] font-bold text-[#0A2540] leading-none tracking-[-0.5px]">
+          <div className="text-xl md:text-[32px] font-bold text-[#0A2540] leading-none tracking-[-0.5px]">
             {stats?.total_payments || 0}
           </div>
         </div>
-        <div className="bg-white rounded-lg border border-[#E3E8EE] p-4 transition-all shadow-[0_1px_3px_rgba(0,0,0,0.08)] hover:-translate-y-px hover:shadow-[0_2px_6px_rgba(0,0,0,0.1)]">
-          <div className="text-[#425466] text-[11px] font-semibold uppercase tracking-[0.6px] mb-2">
+        <div className="bg-white rounded-lg border border-[#E3E8EE] p-3 md:p-4 transition-all shadow-[0_1px_3px_rgba(0,0,0,0.08)] hover:-translate-y-px hover:shadow-[0_2px_6px_rgba(0,0,0,0.1)]">
+          <div className="text-[#425466] text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.6px] mb-1 md:mb-2">
             Total Volume
           </div>
-          <div className="text-[32px] font-bold text-[#00D924] leading-none tracking-[-0.5px]">
+          <div className="text-xl md:text-[32px] font-bold text-[#00D924] leading-none tracking-[-0.5px]">
             ${(stats?.total_volume || 0).toFixed(2)}
           </div>
         </div>
-        <div className="bg-white rounded-lg border border-[#E3E8EE] p-4 transition-all shadow-[0_1px_3px_rgba(0,0,0,0.08)] hover:-translate-y-px hover:shadow-[0_2px_6px_rgba(0,0,0,0.1)]">
-          <div className="text-[#425466] text-[11px] font-semibold uppercase tracking-[0.6px] mb-2">
+        <div className="bg-white rounded-lg border border-[#E3E8EE] p-3 md:p-4 transition-all shadow-[0_1px_3px_rgba(0,0,0,0.08)] hover:-translate-y-px hover:shadow-[0_2px_6px_rgba(0,0,0,0.1)]">
+          <div className="text-[#425466] text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.6px] mb-1 md:mb-2">
             Confirmed
           </div>
-          <div className="text-[32px] font-bold text-[#00D924] leading-none tracking-[-0.5px]">
+          <div className="text-xl md:text-[32px] font-bold text-[#00D924] leading-none tracking-[-0.5px]">
             {stats?.confirmed_payments || 0}
           </div>
         </div>
-        <div className="bg-white rounded-lg border border-[#E3E8EE] p-4 transition-all shadow-[0_1px_3px_rgba(0,0,0,0.08)] hover:-translate-y-px hover:shadow-[0_2px_6px_rgba(0,0,0,0.1)]">
-          <div className="text-[#425466] text-[11px] font-semibold uppercase tracking-[0.6px] mb-2">
+        <div className="bg-white rounded-lg border border-[#E3E8EE] p-3 md:p-4 transition-all shadow-[0_1px_3px_rgba(0,0,0,0.08)] hover:-translate-y-px hover:shadow-[0_2px_6px_rgba(0,0,0,0.1)]">
+          <div className="text-[#425466] text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.6px] mb-1 md:mb-2">
             Pending
           </div>
-          <div className="text-[32px] font-bold text-[#FF9500] leading-none tracking-[-0.5px]">
+          <div className="text-xl md:text-[32px] font-bold text-[#FF9500] leading-none tracking-[-0.5px]">
             {stats?.pending_payments || 0}
           </div>
         </div>
       </div>
 
       {/* Analytics Charts */}
-      <div className="mt-8">
-        <h2 className="mb-5 text-[#1A1F36] text-lg font-semibold">Analytics</h2>
-        <div className="grid grid-cols-2 gap-5 mb-8">
+      <div className="mt-6 md:mt-8">
+        <h2 className="mb-4 md:mb-5 text-[#1A1F36] text-base md:text-lg font-semibold">Analytics</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 mb-8">
           {/* Transactions Chart */}
           <div className="bg-white rounded-xl p-5 shadow-[0_2px_4px_rgba(0,0,0,0.05)] border border-[#E3E8EE]">
             <h3 className="mb-4 text-[#697386] text-[13px] font-semibold uppercase tracking-[0.5px]">

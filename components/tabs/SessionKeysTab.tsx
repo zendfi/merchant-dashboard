@@ -75,49 +75,49 @@ export default function SessionKeysTab() {
 
   return (
     <div>
-      <h1 className="mb-6 text-xl font-semibold text-[#0A2540]">Session Keys</h1>
+      <h1 className="mb-4 md:mb-6 text-lg md:text-xl font-semibold text-[#0A2540]">Session Keys</h1>
       
       {/* Stats */}
       {stats && stats.total > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white p-4 rounded-lg border border-[#E3E8EE] shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
-            <div className="text-[11px] text-[#425466] font-bold uppercase tracking-[0.6px] mb-1">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-4 md:mb-6">
+          <div className="bg-white p-3 md:p-4 rounded-lg border border-[#E3E8EE] shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
+            <div className="text-[10px] md:text-[11px] text-[#425466] font-bold uppercase tracking-[0.6px] mb-1">
               Total Keys
             </div>
-            <div className="text-2xl font-bold text-[#0A2540]">{stats.total}</div>
+            <div className="text-xl md:text-2xl font-bold text-[#0A2540]">{stats.total}</div>
           </div>
-          <div className="bg-white p-4 rounded-lg border border-[#E3E8EE] shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
-            <div className="text-[11px] text-[#425466] font-bold uppercase tracking-[0.6px] mb-1">
+          <div className="bg-white p-3 md:p-4 rounded-lg border border-[#E3E8EE] shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
+            <div className="text-[10px] md:text-[11px] text-[#425466] font-bold uppercase tracking-[0.6px] mb-1">
               Active
             </div>
-            <div className="text-2xl font-bold text-[#00D66C]">{stats.active}</div>
+            <div className="text-xl md:text-2xl font-bold text-[#00D66C]">{stats.active}</div>
           </div>
-          <div className="bg-white p-4 rounded-lg border border-[#E3E8EE] shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
-            <div className="text-[11px] text-[#425466] font-bold uppercase tracking-[0.6px] mb-1">
+          <div className="bg-white p-3 md:p-4 rounded-lg border border-[#E3E8EE] shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
+            <div className="text-[10px] md:text-[11px] text-[#425466] font-bold uppercase tracking-[0.6px] mb-1">
               Total Limit
             </div>
-            <div className="text-2xl font-bold text-[#0A2540]">
+            <div className="text-xl md:text-2xl font-bold text-[#0A2540]">
               ${stats.total_limit_usdc.toFixed(2)}
             </div>
           </div>
-          <div className="bg-white p-4 rounded-lg border border-[#E3E8EE] shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
-            <div className="text-[11px] text-[#425466] font-bold uppercase tracking-[0.6px] mb-1">
+          <div className="bg-white p-3 md:p-4 rounded-lg border border-[#E3E8EE] shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
+            <div className="text-[10px] md:text-[11px] text-[#425466] font-bold uppercase tracking-[0.6px] mb-1">
               Remaining
             </div>
-            <div className="text-2xl font-bold text-[#635BFF]">
+            <div className="text-xl md:text-2xl font-bold text-[#635BFF]">
               ${stats.total_remaining_usdc.toFixed(2)}
             </div>
           </div>
         </div>
       )}
 
-      <h2 className="mb-4 text-lg font-semibold text-[#0A2540] flex items-center gap-2">
+      <h2 className="mb-3 md:mb-4 text-base md:text-lg font-semibold text-[#0A2540] flex items-center gap-2">
         Session Keys{' '}
         <span className="text-[10px] font-bold px-2 py-0.5 rounded-[10px] uppercase tracking-[0.5px] bg-[#D1FAE5] text-[#065F46]">
           {sessionKeys.filter((k) => k.status === 'active').length} Active
         </span>
       </h2>
-      <p className="text-[#697386] my-4 mb-6">
+      <p className="text-[#697386] text-xs md:text-base my-3 md:my-4 mb-4 md:mb-6">
         Session keys allow temporary delegated payment authority without exposing your main wallet.
       </p>
 

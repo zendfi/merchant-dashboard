@@ -1,10 +1,13 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
+import { useEffect } from 'react';
 
 interface SidebarProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
 const mainNavItems = [
@@ -91,10 +94,52 @@ const settingsNavItems = [
   },
 ];
 
-export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
+export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }: SidebarProps) {
+  // Close sidebar on escape key
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [onClose]);
+
+  // Prevent body scroll when sidebar is open on mobile
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
   return (
-    <nav className="w-[220px] bg-[#F6F9FC] border-r border-[#E3E8EE] py-4 sticky top-[60px] h-[calc(100vh-60px)] overflow-y-auto">
-      <ul className="list-none p-0 m-0">
+    <>
+      {/* Mobile Overlay */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-[150] md:hidden"
+          onClick={onClose}
+        />
+      )}
+      
+      {/* Sidebar */}
+      <nav className={`
+        fixed md:sticky top-[60px] left-0 h-[calc(100vh-60px)] z-[200]
+        w-[260px] md:w-[220px] bg-[#F6F9FC] border-r border-[#E3E8EE] py-4
+        transform transition-transform duration-300 ease-in-out
+        ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+        overflow-y-auto
+      `}>
+        {/* Mobile Header */}
+        <div className="md:hidden px-4 pb-4 mb-2 border-b border-[#E3E8EE]">
+          <p className="text-[11px] font-semibold text-[#9BA5B7] uppercase tracking-wide">Navigation</p>
+        </div>
+        
+        <ul className="list-none p-0 m-0">
         {mainNavItems.map((item) => (
           <li key={item.id} className="mx-2 my-0.5">
             <button
@@ -138,5 +183,6 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
         ))}
       </ul>
     </nav>
+    </>
   );
 }

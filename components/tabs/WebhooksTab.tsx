@@ -63,12 +63,12 @@ export default function WebhooksTab() {
 
   return (
     <div>
-      <h1 className="mb-6 text-xl font-semibold text-[#0A2540]">Webhook Configuration</h1>
-      <h2 className="mb-4 text-lg font-semibold text-[#0A2540]">Webhook Settings</h2>
+      <h1 className="mb-4 md:mb-6 text-lg md:text-xl font-semibold text-[#0A2540]">Webhook Configuration</h1>
+      <h2 className="mb-3 md:mb-4 text-base md:text-lg font-semibold text-[#0A2540]">Webhook Settings</h2>
 
       {/* Webhook Status */}
       <div
-        className={`flex items-center gap-2 p-2.5 px-3 bg-white rounded-md border text-[13px] shadow-[0_1px_3px_rgba(0,0,0,0.08)] ${
+        className={`flex items-center gap-2 p-2.5 px-3 bg-white rounded-md border text-xs md:text-[13px] shadow-[0_1px_3px_rgba(0,0,0,0.08)] ${
           isConfigured
             ? 'border-[#00D924] bg-[#ECFDF5]'
             : 'border-[#FF9500] bg-[#FEF3C7]'
@@ -79,38 +79,46 @@ export default function WebhooksTab() {
             isConfigured ? 'bg-[#00D924]' : 'bg-[#FF9500]'
           }`}
         />
-        <strong>Webhook:</strong>{' '}
-        {isConfigured
-          ? `Configured at ${merchant?.webhook_url}`
-          : 'Not configured - Set up webhooks to receive real-time notifications'}
+        <span className="break-all">
+          <strong>Webhook:</strong>{' '}
+          {isConfigured
+            ? <span className="hidden sm:inline">Configured at {merchant?.webhook_url}</span>
+            : 'Not configured'}
+          {isConfigured && (
+            <span className="sm:hidden">Configured</span>
+          )}
+          {!isConfigured && (
+            <span className="hidden sm:inline"> - Set up webhooks to receive real-time notifications</span>
+          )}
+        </span>
       </div>
 
       {/* Webhook Stats */}
       {stats && stats.total_deliveries > 0 && (
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-2.5 my-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-2.5 my-3">
           <div className="p-2.5 px-3 bg-white rounded-md border border-[#E3E8EE] shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
             <div className="text-[10px] text-[#425466] uppercase tracking-[0.6px] font-bold mb-1">
               Success Rate
             </div>
-            <div className="text-lg font-bold text-[#00D924]">{stats.success_rate}%</div>
+            <div className="text-base md:text-lg font-bold text-[#00D924]">{stats.success_rate}%</div>
           </div>
           <div className="p-2.5 px-3 bg-white rounded-md border border-[#E3E8EE] shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
             <div className="text-[10px] text-[#425466] uppercase tracking-[0.6px] font-bold mb-1">
               Total Sent
             </div>
-            <div className="text-lg font-bold text-[#0A2540]">{stats.total_deliveries}</div>
+            <div className="text-base md:text-lg font-bold text-[#0A2540]">{stats.total_deliveries}</div>
           </div>
           <div className="p-2.5 px-3 bg-white rounded-md border border-[#E3E8EE] shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
             <div className="text-[10px] text-[#425466] uppercase tracking-[0.6px] font-bold mb-1">
               Successful
             </div>
-            <div className="text-lg font-bold text-[#0A2540]">{stats.successful_deliveries}</div>
+            <div className="text-base md:text-lg font-bold text-[#0A2540]">{stats.successful_deliveries}</div>
           </div>
           <div className="p-2.5 px-3 bg-white rounded-md border border-[#E3E8EE] shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
             <div className="text-[10px] text-[#425466] uppercase tracking-[0.6px] font-bold mb-1">
               Failed
             </div>
-            <div className="text-lg font-bold text-[#0A2540]">{stats.failed_deliveries}</div>
+            <div className="text-base md:text-lg font-bold text-[#0A2540]">{stats.failed_deliveries}</div>
           </div>
         </div>
       )}
@@ -119,14 +127,14 @@ export default function WebhooksTab() {
       <div className="flex gap-2 mt-3 flex-wrap">
         <button
           onClick={() => setShowModal(true)}
-          className="px-4 py-2 rounded-md text-[13px] font-semibold cursor-pointer transition-all inline-flex items-center gap-1.5 bg-[#635BFF] text-white border-none shadow-[0_1px_3px_rgba(0,0,0,0.12)] hover:bg-[#5449D6] hover:-translate-y-px hover:shadow-[0_2px_6px_rgba(0,0,0,0.15)]"
+          className="px-3 md:px-4 py-2 rounded-md text-xs md:text-[13px] font-semibold cursor-pointer transition-all inline-flex items-center gap-1.5 bg-[#635BFF] text-white border-none shadow-[0_1px_3px_rgba(0,0,0,0.12)] hover:bg-[#5449D6] hover:-translate-y-px hover:shadow-[0_2px_6px_rgba(0,0,0,0.15)]"
         >
           Update Webhook
         </button>
         <button
           onClick={handleTestWebhook}
           disabled={isTesting || !isConfigured}
-          className="px-4 py-2 rounded-md text-[13px] font-semibold cursor-pointer transition-all inline-flex items-center gap-1.5 bg-white text-[#635BFF] border border-[#E3E8EE] shadow-[0_1px_3px_rgba(0,0,0,0.08)] hover:bg-[#FAFBFC] hover:border-[#635BFF] disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-3 md:px-4 py-2 rounded-md text-xs md:text-[13px] font-semibold cursor-pointer transition-all inline-flex items-center gap-1.5 bg-white text-[#635BFF] border border-[#E3E8EE] shadow-[0_1px_3px_rgba(0,0,0,0.08)] hover:bg-[#FAFBFC] hover:border-[#635BFF] disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isTesting ? 'Testing...' : 'Test Webhook'}
         </button>

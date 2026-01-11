@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { offramp, PajBank, BankAccountDetails, OfframpOrder } from '@/lib/api';
 import { useNotification } from '@/lib/notifications';
 import { getPasskeySignature } from '@/lib/webauthn';
@@ -29,7 +29,8 @@ export default function BankWithdrawalModal({
   // Form data
   const [amount, setAmount] = useState('');
   const [email, setEmail] = useState('');
-  const [otp, setOtp] = useState('');
+  const [otpDigits, setOtpDigits] = useState(['', '', '', '']);
+  const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const [sessionToken, setSessionToken] = useState('');
   const [banks, setBanks] = useState<PajBank[]>([]);
   const [selectedBankId, setSelectedBankId] = useState('');
@@ -40,6 +41,9 @@ export default function BankWithdrawalModal({
   const [exchangeRate, setExchangeRate] = useState<number>(0);
   const [txSignature, setTxSignature] = useState('');
   const [explorerUrl, setExplorerUrl] = useState('');
+  
+  // OTP value as string
+  const otpValue = otpDigits.join('');
 
   // Load rates on mount
   useEffect(() => {
@@ -51,9 +55,18 @@ export default function BankWithdrawalModal({
   const loadRates = async () => {
     try {
       const data = await offramp.getRates();
-      setExchangeRate(data.rates.off_ramp_rate.rate);
+      console.log('Offramp rates response:', data);
+      if (data?.rates?.off_ramp_rate?.rate) {
+        setExchangeRate(data.rates.off_ramp_rate.rate);
+      } else {
+        console.error('Invalid rates response structure:', data);
+        // Default fallback rate if API returns bad data
+        setExchangeRate(1450);
+      }
     } catch (error) {
       console.error('Failed to load rates:', error);
+      // Default fallback rate
+      setExchangeRate(1450);
     }
   };
 
@@ -77,7 +90,7 @@ export default function BankWithdrawalModal({
       setStep('amount');
       setAmount('');
       setEmail('');
-      setOtp('');
+      setOtpDigits(['', '', '', '']);
       setSessionToken('');
       setBanks([]);
       setSelectedBankId('');
@@ -127,14 +140,14 @@ export default function BankWithdrawalModal({
   };
 
   const handleOtpSubmit = async () => {
-    if (!otp || otp.length < 4) {
-      showNotification('Error', 'Please enter the OTP code', 'error');
+    if (otpValue.length < 4) {
+      showNotification('Error', 'Please enter the 4-digit OTP code', 'error');
       return;
     }
 
     setIsLoading(true);
     try {
-      const result = await offramp.verifyOtp(email, otp);
+      const result = await offramp.verifyOtp(email, otpValue);
       setSessionToken(result.session_token);
       
       // Fetch banks
@@ -362,36 +375,99 @@ export default function BankWithdrawalModal({
           {/* OTP Step */}
           {step === 'otp' && (
             <div className="space-y-4">
+              <div className="text-center mb-2">
+                <div className="w-12 h-12 bg-[#EEF2FF] rounded-full flex items-center justify-center mx-auto mb-3">
+                  <svg className="w-6 h-6 text-[#635BFF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <h4 className="text-sm font-semibold text-[#0A2540] mb-1">Check Your Email</h4>
+                <p className="text-xs text-[#697386]">
+                  We sent a 4-digit code to<br />
+                  <span className="font-medium text-[#0A2540]">{email}</span>
+                </p>
+              </div>
+
               <div>
-                <label className="block text-sm font-semibold text-[#1A1F36] mb-2">
+                <label className="block text-xs font-medium text-[#697386] mb-2 text-center">
                   Enter verification code
                 </label>
-                <input
-                  type="text"
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  placeholder="Enter 4-6 digit code"
-                  className="w-full p-3 border border-[#E3E8EE] rounded-lg text-lg font-mono text-center tracking-[0.3em] transition-all focus:outline-none focus:border-[#635BFF] focus:shadow-[0_0_0_3px_rgba(99,91,255,0.1)]"
-                  maxLength={6}
-                />
-                <p className="text-xs text-[#697386] mt-2">
-                  Sent to {email}
+                <div 
+                  className="flex justify-center gap-2"
+                  onPaste={(e) => {
+                    e.preventDefault();
+                    const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 4);
+                    if (pastedData) {
+                      const newOtp = ['', '', '', ''];
+                      for (let i = 0; i < pastedData.length && i < 4; i++) {
+                        newOtp[i] = pastedData[i];
+                      }
+                      setOtpDigits(newOtp);
+                      const nextEmptyIndex = newOtp.findIndex(d => !d);
+                      otpInputRefs.current[nextEmptyIndex === -1 ? 3 : nextEmptyIndex]?.focus();
+                    }
+                  }}
+                >
+                  {otpDigits.map((digit, index) => (
+                    <input
+                      key={index}
+                      ref={(el) => { otpInputRefs.current[index] = el; }}
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={1}
+                      value={digit}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, '').slice(-1);
+                        const newOtp = [...otpDigits];
+                        newOtp[index] = value;
+                        setOtpDigits(newOtp);
+                        if (value && index < 3) {
+                          otpInputRefs.current[index + 1]?.focus();
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Backspace' && !otpDigits[index] && index > 0) {
+                          otpInputRefs.current[index - 1]?.focus();
+                        } else if (e.key === 'ArrowLeft' && index > 0) {
+                          otpInputRefs.current[index - 1]?.focus();
+                        } else if (e.key === 'ArrowRight' && index < 3) {
+                          otpInputRefs.current[index + 1]?.focus();
+                        }
+                      }}
+                      autoFocus={index === 0}
+                      className={`
+                        w-12 h-14 text-center text-xl font-semibold
+                        border-2 rounded-lg transition-all duration-150
+                        focus:outline-none focus:ring-0
+                        ${digit 
+                          ? 'border-[#635BFF] bg-[#F5F3FF] text-[#635BFF]' 
+                          : 'border-[#E3E8EE] bg-[#F6F9FC] text-[#0A2540] focus:border-[#635BFF] focus:bg-white'
+                        }
+                      `}
+                    />
+                  ))}
+                </div>
+                <p className="text-[10px] text-[#697386] text-center mt-2">
+                  Paste from clipboard or type manually
                 </p>
               </div>
 
               <div className="flex gap-3">
                 <button
-                  onClick={() => setStep('email')}
+                  onClick={() => {
+                    setStep('email');
+                    setOtpDigits(['', '', '', '']);
+                  }}
                   className="flex-1 p-3 bg-[#E3E8EE] text-[#1A1F36] border-none rounded-lg font-semibold text-sm cursor-pointer transition-all hover:bg-[#D3D9E1]"
                 >
                   Back
                 </button>
                 <button
                   onClick={handleOtpSubmit}
-                  disabled={isLoading}
+                  disabled={isLoading || otpValue.length < 4}
                   className="flex-1 p-3 bg-[#635BFF] text-white border-none rounded-lg font-semibold text-sm cursor-pointer transition-all hover:bg-[#5449D6] disabled:bg-[#CBD5E1] disabled:cursor-not-allowed"
                 >
-                  {isLoading ? 'Verifying...' : 'Verify'}
+                  {isLoading ? 'Verifying...' : 'Verify & Continue'}
                 </button>
               </div>
             </div>
@@ -490,7 +566,7 @@ export default function BankWithdrawalModal({
                   </svg>
                   <span className="font-semibold text-[#16A34A]">Account Verified</span>
                 </div>
-                <div className="text-[#0A2540] font-bold text-lg">{accountDetails.account_name}</div>
+                <div className="text-[#0A2540] font-bold text-lg">{accountDetails.accountName}</div>
                 <div className="text-sm text-[#697386]">{accountDetails.bank.name}</div>
               </div>
 
@@ -501,17 +577,21 @@ export default function BankWithdrawalModal({
                 </div>
                 <div className="flex justify-between py-2 border-b border-[#E3E8EE]">
                   <span className="text-[#697386]">Exchange rate</span>
-                  <span className="font-semibold text-[#0A2540]">1 USDC = ₦{exchangeRate.toLocaleString()}</span>
+                  <span className="font-semibold text-[#0A2540]">
+                    1 USDC = ₦{exchangeRate > 0 ? exchangeRate.toLocaleString() : 'Loading...'}
+                  </span>
                 </div>
                 <div className="flex justify-between py-2 border-b border-[#E3E8EE]">
                   <span className="text-[#697386]">They receive</span>
                   <span className="font-bold text-lg text-[#16A34A]">
-                    ₦{estimatedFiat.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    ₦{exchangeRate > 0 
+                      ? estimatedFiat.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                      : 'Calculating...'}
                   </span>
                 </div>
                 <div className="flex justify-between py-2">
                   <span className="text-[#697386]">To account</span>
-                  <span className="font-mono text-[#0A2540]">{accountNumber}</span>
+                  <span className="font-mono text-[#0A2540]">{accountDetails.accountNumber}</span>
                 </div>
               </div>
 

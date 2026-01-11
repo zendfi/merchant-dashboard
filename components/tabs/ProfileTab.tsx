@@ -20,39 +20,39 @@ export default function ProfileTab({ onSwitchTab }: ProfileTabProps) {
 
   return (
     <div>
-      <h1 className="mb-6 text-xl font-semibold text-[#0A2540]">Profile & Settings</h1>
+      <h1 className="mb-4 md:mb-6 text-lg md:text-xl font-semibold text-[#0A2540]">Profile & Settings</h1>
 
       {/* Account Overview */}
-      <div className="mb-8">
-        <h2 className="mb-4 text-lg font-semibold text-[#0A2540]">Account Information</h2>
+      <div className="mb-6 md:mb-8">
+        <h2 className="mb-3 md:mb-4 text-base md:text-lg font-semibold text-[#0A2540]">Account Information</h2>
 
-        <div className="grid gap-5">
-          <div className="bg-[#F6F9FC] p-5 rounded-xl">
-            <strong className="block mb-2 text-[#697386] text-xs uppercase tracking-[0.5px]">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-5">
+          <div className="bg-[#F6F9FC] p-4 md:p-5 rounded-xl">
+            <strong className="block mb-1.5 md:mb-2 text-[#697386] text-[10px] md:text-xs uppercase tracking-[0.5px]">
               Business Name
             </strong>
-            <p className="text-[#1A1F36] m-0 text-base font-semibold">{merchant?.name}</p>
+            <p className="text-[#1A1F36] m-0 text-sm md:text-base font-semibold">{merchant?.name}</p>
           </div>
 
-          <div className="bg-[#F6F9FC] p-5 rounded-xl">
-            <strong className="block mb-2 text-[#697386] text-xs uppercase tracking-[0.5px]">
+          <div className="bg-[#F6F9FC] p-4 md:p-5 rounded-xl">
+            <strong className="block mb-1.5 md:mb-2 text-[#697386] text-[10px] md:text-xs uppercase tracking-[0.5px]">
               Email Address
             </strong>
-            <p className="text-[#1A1F36] m-0 text-base">{merchant?.email}</p>
+            <p className="text-[#1A1F36] m-0 text-sm md:text-base break-all">{merchant?.email}</p>
           </div>
 
-          <div className="bg-[#F6F9FC] p-5 rounded-xl">
-            <strong className="block mb-2 text-[#697386] text-xs uppercase tracking-[0.5px]">
+          <div className="bg-[#F6F9FC] p-4 md:p-5 rounded-xl">
+            <strong className="block mb-1.5 md:mb-2 text-[#697386] text-[10px] md:text-xs uppercase tracking-[0.5px]">
               Account ID
             </strong>
-            <p className="text-[#1A1F36] m-0 font-mono text-sm">{merchant?.id}</p>
+            <p className="text-[#1A1F36] m-0 font-mono text-xs md:text-sm break-all">{merchant?.id}</p>
           </div>
 
-          <div className="bg-[#F6F9FC] p-5 rounded-xl">
-            <strong className="block mb-2 text-[#697386] text-xs uppercase tracking-[0.5px]">
+          <div className="bg-[#F6F9FC] p-4 md:p-5 rounded-xl">
+            <strong className="block mb-1.5 md:mb-2 text-[#697386] text-[10px] md:text-xs uppercase tracking-[0.5px]">
               Member Since
             </strong>
-            <p className="text-[#1A1F36] m-0 text-base">
+            <p className="text-[#1A1F36] m-0 text-sm md:text-base">
               {merchant?.created_at
                 ? new Date(merchant.created_at).toLocaleDateString('en-US', {
                     month: 'long',
@@ -66,37 +66,37 @@ export default function ProfileTab({ onSwitchTab }: ProfileTabProps) {
       </div>
 
       {/* Wallet Information */}
-      <div className="mb-8">
-        <h2 className="mb-4 text-lg font-semibold text-[#0A2540]">Wallet Configuration</h2>
+      <div className="mb-6 md:mb-8">
+        <h2 className="mb-3 md:mb-4 text-base md:text-lg font-semibold text-[#0A2540]">Wallet Configuration</h2>
 
-        <div className="bg-[#F6F9FC] p-5 rounded-xl">
-          <strong className="block mb-3 text-[#697386] text-xs uppercase tracking-[0.5px]">
+        <div className="bg-[#F6F9FC] p-4 md:p-5 rounded-xl">
+          <strong className="block mb-2 md:mb-3 text-[#697386] text-[10px] md:text-xs uppercase tracking-[0.5px]">
             Settlement Wallet Address
           </strong>
-          <div className="bg-[#FAFBFC] p-3 px-3.5 rounded-md border border-[#E3E8EE] font-mono text-xs break-all text-[#0A2540] mb-2">
+          <div className="bg-[#FAFBFC] p-2.5 md:p-3 px-3 md:px-3.5 rounded-md border border-[#E3E8EE] font-mono text-[10px] md:text-xs break-all text-[#0A2540] mb-2">
             {merchant?.wallet_address}
           </div>
-          <p className="text-[#697386] text-[13px] m-0">
+          <p className="text-[#697386] text-xs md:text-[13px] m-0">
             All payments are automatically settled to this wallet address.
           </p>
         </div>
       </div>
 
       {/* Security & Access */}
-      <div className="mb-8">
-        <h2 className="mb-4 text-lg font-semibold text-[#0A2540]">Security & Access</h2>
+      <div className="mb-6 md:mb-8">
+        <h2 className="mb-3 md:mb-4 text-base md:text-lg font-semibold text-[#0A2540]">Security & Access</h2>
 
-        <div className="grid gap-4">
-          <div className="bg-[#F6F9FC] p-5 rounded-xl flex justify-between items-center">
+        <div className="grid gap-3 md:gap-4">
+          <div className="bg-[#F6F9FC] p-4 md:p-5 rounded-xl flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-0">
             <div>
-              <strong className="block mb-1 text-[#1A1F36]">API Keys</strong>
-              <p className="text-[#697386] m-0 text-[13px]">
+              <strong className="block mb-1 text-[#1A1F36] text-sm md:text-base">API Keys</strong>
+              <p className="text-[#697386] m-0 text-xs md:text-[13px]">
                 Manage your API keys for integration
               </p>
             </div>
             <button
               onClick={() => onSwitchTab('api-keys')}
-              className="px-4 py-2 bg-white border border-[#E3E8EE] rounded-md text-[#5B6EE8] font-medium cursor-pointer hover:bg-[#FAFBFC]"
+              className="px-4 py-2 bg-white border border-[#E3E8EE] rounded-md text-[#5B6EE8] text-sm font-medium cursor-pointer hover:bg-[#FAFBFC] w-full sm:w-auto"
             >
               View Keys
             </button>

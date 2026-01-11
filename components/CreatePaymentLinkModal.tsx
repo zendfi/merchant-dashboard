@@ -182,16 +182,16 @@ export default function CreatePaymentLinkModal({ isOpen, onClose }: CreatePaymen
 
       {/* Side Panel */}
       <div
-        className="fixed right-0 top-0 h-full w-full max-w-[480px] bg-white z-[201] shadow-[-4px_0_20px_rgba(0,0,0,0.1)] transform transition-transform duration-300 ease-out overflow-hidden flex flex-col"
+        className="fixed right-0 top-0 h-full w-full sm:max-w-[480px] bg-white z-[201] shadow-[-4px_0_20px_rgba(0,0,0,0.1)] transform transition-transform duration-300 ease-out overflow-hidden flex flex-col"
         style={{ transform: isOpen ? 'translateX(0)' : 'translateX(100%)' }}
       >
         {/* Header */}
-        <div className="px-6 py-5 border-b border-[#e3e8ee] flex items-center justify-between bg-white">
+        <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-[#e3e8ee] flex items-center justify-between bg-white">
           <div>
-            <h2 className="text-lg font-semibold text-[#0a2540] m-0">
+            <h2 className="text-base sm:text-lg font-semibold text-[#0a2540] m-0">
               {step === 'form' ? 'Create Payment Link' : 'Payment Link Created'}
             </h2>
-            <p className="text-sm text-[#697386] mt-0.5">
+            <p className="text-xs sm:text-sm text-[#697386] mt-0.5">
               {step === 'form'
                 ? 'Generate a shareable link for customers to pay'
                 : 'Share this link with your customer'}
@@ -208,7 +208,7 @@ export default function CreatePaymentLinkModal({ isOpen, onClose }: CreatePaymen
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
           {step === 'form' ? (
             <form onSubmit={handleSubmit} className="space-y-5">
               {/* Mode indicator */}

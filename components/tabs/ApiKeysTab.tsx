@@ -86,8 +86,8 @@ export default function ApiKeysTab() {
 
   return (
     <div>
-      <h1 className="mb-6 text-xl font-semibold text-[#0A2540]">API Keys</h1>
-      <h2 className="mb-4 text-lg font-semibold text-[#0A2540] flex items-center gap-2">
+      <h1 className="mb-4 md:mb-6 text-lg md:text-xl font-semibold text-[#0A2540]">API Keys</h1>
+      <h2 className="mb-4 text-base md:text-lg font-semibold text-[#0A2540] flex items-center gap-2">
         API Keys{' '}
         <span className="text-[10px] font-bold px-2 py-0.5 rounded-[10px] uppercase tracking-[0.5px] bg-[#D1FAE5] text-[#065F46]">
           {filteredKeys.length} Active
@@ -127,9 +127,9 @@ export default function ApiKeysTab() {
             </div>
 
             {/* Key Value */}
-            <div className="relative flex items-center gap-1.5 mb-2.5">
-              <div className="flex-1 bg-[#0A2540] p-3 pr-11 rounded-md font-mono text-xs text-[#425466] break-all relative shadow-[inset_0_1px_3px_rgba(0,0,0,0.3)] tracking-widest">
-                {'•'.repeat(64)}
+            <div className="relative flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-1.5 mb-2.5">
+              <div className="flex-1 bg-[#0A2540] p-3 pr-11 rounded-md font-mono text-xs text-[#425466] break-all relative shadow-[inset_0_1px_3px_rgba(0,0,0,0.3)] tracking-widest overflow-hidden">
+                <span className="block truncate">{'•'.repeat(32)}</span>
                 <button
                   onClick={() => handleToggleKey(key.id)}
                   className="absolute right-2.5 top-1/2 -translate-y-1/2 bg-transparent border-none text-[#425466] cursor-pointer p-1 text-base transition-all leading-none hover:text-[#00D924]"
@@ -151,7 +151,7 @@ export default function ApiKeysTab() {
               </div>
               <button
                 onClick={() => handleRegenerateKey(key.id)}
-                className="bg-[#E25950] text-white border-none px-3 py-1.5 rounded-md text-xs font-semibold cursor-pointer transition-all flex-shrink-0 flex items-center gap-1 hover:bg-[#C94A42]"
+                className="bg-[#E25950] text-white border-none px-3 py-2 sm:py-1.5 rounded-md text-xs font-semibold cursor-pointer transition-all flex-shrink-0 flex items-center justify-center gap-1 hover:bg-[#C94A42]"
               >
                 <svg
                   width="16"
@@ -173,8 +173,8 @@ export default function ApiKeysTab() {
             </div>
 
             {/* Meta */}
-            <div className="flex justify-between items-center mt-2.5 text-[11px] text-[#425466]">
-              <div className="flex gap-4">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mt-2.5 text-[11px] text-[#425466] gap-1 sm:gap-0">
+              <div className="flex flex-col sm:flex-row gap-1 sm:gap-4">
                 <span>
                   Created: {new Date(key.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                 </span>

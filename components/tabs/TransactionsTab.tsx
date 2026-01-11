@@ -78,9 +78,44 @@ export default function TransactionsTab({ limit = 10, showViewAll = true }: Tran
 
   return (
     <div>
-      <h1 className="mb-6 text-xl font-semibold text-[#0A2540]">Transactions</h1>
+      <h1 className="mb-4 md:mb-6 text-lg md:text-xl font-semibold text-[#0A2540]">Transactions</h1>
       
-      <table className="w-full border-collapse bg-white rounded-lg overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
+      {/* Mobile Card View */}
+      <div className="md:hidden space-y-3">
+        {transactions.map((tx) => (
+          <div key={tx.id} className="bg-white rounded-lg border border-[#E3E8EE] p-4 shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
+            <div className="flex items-center justify-between mb-3">
+              <span className="font-mono text-xs text-[#635BFF] font-medium">
+                {tx.id.substring(0, 8)}...
+              </span>
+              <span className={`status-badge ${getStatusClass(tx.status)}`}>
+                {tx.status || 'pending'}
+              </span>
+            </div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-lg font-bold text-[#0A2540]">${tx.amount_usd.toFixed(2)}</span>
+              <span className="text-xs text-[#697386] bg-[#f6f9fc] px-2 py-1 rounded">{tx.payment_token || 'USDC'}</span>
+            </div>
+            <div className="flex items-center justify-between text-xs text-[#697386]">
+              <span>
+                {new Date(tx.created_at).toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric',
+                })}
+              </span>
+              {tx.split_count && tx.split_count > 0 && (
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-[10px] uppercase tracking-[0.5px] bg-[#D1FAE5] text-[#065F46]">
+                  SPLIT
+                </span>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop Table View */}
+      <table className="hidden md:table w-full border-collapse bg-white rounded-lg overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
         <thead className="bg-[#FAFBFC]">
           <tr>
             <th className="text-left p-2.5 px-3 text-[11px] font-bold text-[#425466] uppercase tracking-[0.6px] border-b border-[#E3E8EE]">
