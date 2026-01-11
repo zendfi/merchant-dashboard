@@ -101,8 +101,8 @@ export default function BankWithdrawalModal({
       showNotification('Error', 'Insufficient USDC balance', 'error');
       return;
     }
-    if (numAmount < 0.1) {
-      showNotification('Error', 'Minimum withdrawal is 0.1 USDC', 'error');
+    if (numAmount < 0.5) {
+      showNotification('Error', 'Minimum withdrawal is 0.5 USDC', 'error');
       return;
     }
     setStep('email');
@@ -287,7 +287,7 @@ export default function BankWithdrawalModal({
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="0.00"
                   step="0.01"
-                  min="0.1"
+                  min="0.5"
                   className="w-full p-3 border border-[#E3E8EE] rounded-lg text-lg font-semibold text-center transition-all focus:outline-none focus:border-[#635BFF] focus:shadow-[0_0_0_3px_rgba(99,91,255,0.1)]"
                 />
                 <div className="flex justify-between mt-2 text-xs text-[#697386]">
