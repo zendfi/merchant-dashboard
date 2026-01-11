@@ -12,7 +12,7 @@ interface WalletModalProps {
 }
 
 type WalletView = 'main' | 'bank-withdrawal';
-type BankStep = 'amount' | 'email' | 'otp' | 'bank' | 'account' | 'confirm' | 'processing' | 'success';
+type BankStep = 'amount' | 'email' | 'otp' | 'bank' | 'account' | 'confirm' | 'processing' | 'manual-transfer' | 'success';
 
 export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
   const { mode } = useMode();
@@ -312,24 +312,33 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
     try {
       const orderResult = await offramp.createOrder(sessionToken, parseFloat(bankAmount), selectedBankId, accountNumber);
       setOrder(orderResult);
-      showNotification('Order Created', 'Please authenticate with your passkey to complete the transfer', 'info');
+      
+      // Check if wallet is MPC (can auto-transfer) or external (manual transfer)
+      if (walletData?.has_mpc_wallet) {
+        // MPC Wallet: Automatic transfer with passkey
+        showNotification('Order Created', 'Please authenticate with your passkey to complete the transfer', 'info');
 
-      const passkeySignature = await getPasskeySignature({
-        to_address: orderResult.paj_deposit_address,
-        amount: parseFloat(bankAmount),
-        token: 'Usdc',
-      });
+        const passkeySignature = await getPasskeySignature({
+          to_address: orderResult.paj_deposit_address,
+          amount: parseFloat(bankAmount),
+          token: 'Usdc',
+        });
 
-      if (!passkeySignature) {
-        throw new Error('Passkey authentication cancelled');
+        if (!passkeySignature) {
+          throw new Error('Passkey authentication cancelled');
+        }
+
+        const transferResult = await offramp.executeTransfer(orderResult.order_id, passkeySignature);
+        setTxSignature(transferResult.tx_signature);
+        setExplorerUrl(transferResult.explorer_url);
+        setBankStep('success');
+        showNotification('Success!', 'Your withdrawal has been initiated. Fiat will arrive in your bank account shortly.', 'success');
+        await loadWalletInfo();
+      } else {
+        // External Wallet: Show manual transfer instructions
+        setBankStep('manual-transfer');
+        showNotification('Order Created', 'Please send USDC to the provided address to complete the withdrawal', 'info');
       }
-
-      const transferResult = await offramp.executeTransfer(orderResult.order_id, passkeySignature);
-      setTxSignature(transferResult.tx_signature);
-      setExplorerUrl(transferResult.explorer_url);
-      setBankStep('success');
-      showNotification('Success!', 'Your withdrawal has been initiated. Fiat will arrive in your bank account shortly.', 'success');
-      await loadWalletInfo();
     } catch (error) {
       setBankStep('confirm');
       showNotification('Error', error instanceof Error ? error.message : 'Withdrawal failed', 'error');
@@ -863,6 +872,93 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
                   </div>
                   <h3 className="text-lg font-bold text-[#0A2540] mb-2">Processing Withdrawal</h3>
                   <p className="text-sm text-[#697386]">Please wait while we process your withdrawal...<br />Do not close this window.</p>
+                </div>
+              )}
+
+              {/* Manual Transfer Step (for external wallets) */}
+              {bankStep === 'manual-transfer' && order && (
+                <div className="space-y-4">
+                  <div className="bg-[#FEF3C7] rounded-lg p-4 border border-[#FCD34D]">
+                    <div className="flex items-start gap-2">
+                      <svg className="w-5 h-5 text-[#D97706] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      <div>
+                        <div className="font-semibold text-[#92400E] text-sm">Manual Transfer Required</div>
+                        <p className="text-xs text-[#92400E] mt-1">
+                          You&apos;re using an external wallet. Please manually send USDC to complete this withdrawal.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-[#F6F9FC] rounded-lg p-4 border border-[#E3E8EE]">
+                    <h4 className="text-sm font-semibold text-[#0A2540] mb-3">Send exactly this amount:</h4>
+                    <div className="bg-white rounded-lg p-3 border border-[#E3E8EE] text-center mb-4">
+                      <div className="text-2xl font-bold text-[#635BFF]">{parseFloat(bankAmount).toFixed(2)} USDC</div>
+                      <div className="text-xs text-[#697386] mt-1">≈ ₦{estimatedFiat.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                    </div>
+                    
+                    <h4 className="text-sm font-semibold text-[#0A2540] mb-2">To this address:</h4>
+                    <div className="bg-white rounded-lg p-3 border border-[#E3E8EE]">
+                      <div className="font-mono text-xs text-[#0A2540] break-all mb-2">{order.paj_deposit_address}</div>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(order.paj_deposit_address);
+                          showNotification('Copied!', 'Deposit address copied to clipboard', 'success');
+                        }}
+                        className="w-full p-2 bg-[#635BFF] text-white border-none rounded-md font-semibold text-xs cursor-pointer transition-all hover:bg-[#5449D6] flex items-center justify-center gap-1"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                        Copy Address
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="bg-[#F0FDF4] rounded-lg p-4 border border-[#86EFAC]">
+                    <h4 className="text-sm font-semibold text-[#16A34A] mb-2 flex items-center gap-1">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Instructions
+                    </h4>
+                    <ol className="text-xs text-[#166534] space-y-2 list-decimal list-inside">
+                      <li>Open your Solana wallet (Phantom, Solflare, etc.)</li>
+                      <li>Select <strong>USDC</strong> token</li>
+                      <li>Click <strong>Send</strong> and paste the address above</li>
+                      <li>Enter exactly <strong>{parseFloat(bankAmount).toFixed(2)} USDC</strong></li>
+                      <li>Confirm the transaction in your wallet</li>
+                    </ol>
+                  </div>
+
+                  <div className="bg-white rounded-lg p-3 border border-[#E3E8EE]">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-[#697386]">Recipient</span>
+                      <span className="font-medium text-[#0A2540]">{accountDetails?.accountName}</span>
+                    </div>
+                    <div className="flex justify-between text-sm mt-2">
+                      <span className="text-[#697386]">Bank</span>
+                      <span className="font-medium text-[#0A2540]">{accountDetails?.bank.name}</span>
+                    </div>
+                    <div className="flex justify-between text-sm mt-2">
+                      <span className="text-[#697386]">Account</span>
+                      <span className="font-mono text-[#0A2540]">{accountDetails?.accountNumber}</span>
+                    </div>
+                  </div>
+
+                  <div className="text-center text-xs text-[#697386]">
+                    <p>Once you send the USDC, the funds will be converted and sent to your bank account automatically.</p>
+                    <p className="mt-1 font-medium">Order ID: {order.order_id.slice(0, 8)}...</p>
+                  </div>
+
+                  <button
+                    onClick={() => { resetBankWithdrawal(); setCurrentView('main'); }}
+                    className="w-full p-3 bg-[#E3E8EE] text-[#1A1F36] border-none rounded-lg font-semibold text-sm cursor-pointer transition-all hover:bg-[#D1D5DB]"
+                  >
+                    Done
+                  </button>
                 </div>
               )}
 
