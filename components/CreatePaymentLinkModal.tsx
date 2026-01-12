@@ -51,10 +51,11 @@ export default function CreatePaymentLinkModal({ isOpen, onClose }: CreatePaymen
     }
   }, [isOpen]);
 
-  // Update USD amount when NGN changes
+  // Update USD amount when NGN changes - PAJ will use their official rate for conversion
   useEffect(() => {
     if (ngnAmount && exchangeRate) {
       const usdValue = parseFloat(ngnAmount) / exchangeRate;
+      // Display rounded to 2 decimals, PAJ handles exact conversion with their rate
       setAmount(usdValue.toFixed(2));
     }
   }, [ngnAmount, exchangeRate]);
