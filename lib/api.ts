@@ -121,6 +121,8 @@ export interface CreatePaymentLinkRequest {
   expires_at?: string;
   metadata?: Record<string, unknown>;
   onramp?: boolean;
+  /** Original NGN amount for exact PAJ conversion (if created via NGN calculator) */
+  amount_ngn?: number;
 }
 
 export interface ChartDataPoint {

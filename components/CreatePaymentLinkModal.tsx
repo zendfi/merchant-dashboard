@@ -146,6 +146,9 @@ export default function CreatePaymentLinkModal({ isOpen, onClose }: CreatePaymen
         }
       }
 
+      // Include original NGN amount if created via NGN calculator for exact conversion
+      const amountNgn = ngnAmount && parseFloat(ngnAmount) > 0 ? parseFloat(ngnAmount) : undefined;
+
       const link = await paymentLinks.create(apiKey, {
         amount: parseFloat(amount),
         currency,
@@ -154,6 +157,7 @@ export default function CreatePaymentLinkModal({ isOpen, onClose }: CreatePaymen
         max_uses: maxUses ? parseInt(maxUses) : undefined,
         expires_at: expiresAt,
         onramp,
+        amount_ngn: amountNgn,
       });
 
       setCreatedLink(link);
