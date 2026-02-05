@@ -41,7 +41,7 @@ function DashboardContent() {
     return (
       <div className="min-h-screen bg-[#FAFBFC] flex items-center justify-center">
         <div className="text-center">
-          <div className="w-10 h-10 border-3 border-[#635BFF] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-10 h-10 border-4 border-gray-200 border-t-black rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-[#697386]">Loading dashboard...</p>
         </div>
       </div>
@@ -53,7 +53,7 @@ function DashboardContent() {
     return (
       <div className="min-h-screen bg-[#FAFBFC] flex items-center justify-center">
         <div className="text-center">
-          <div className="w-10 h-10 border-3 border-[#635BFF] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-10 h-10 border-4 border-gray-200 border-t-black rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-[#697386]">Redirecting to login...</p>
         </div>
       </div>

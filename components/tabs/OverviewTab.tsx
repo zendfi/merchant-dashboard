@@ -104,7 +104,7 @@ export default function OverviewTab({ onViewAllTransactions }: OverviewTabProps)
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="w-8 h-8 border-3 border-[#635BFF] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-gray-200 border-t-black rounded-full animate-spin" />
       </div>
     );
   }
