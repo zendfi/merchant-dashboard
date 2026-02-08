@@ -55,7 +55,6 @@ export default function BankWithdrawalModal({
   const loadRates = async () => {
     try {
       const data = await offramp.getRates();
-      console.log('Offramp rates response:', data);
       if (data?.rates?.off_ramp_rate?.rate) {
         setExchangeRate(data.rates.off_ramp_rate.rate);
       } else {

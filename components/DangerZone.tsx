@@ -41,7 +41,6 @@ export default function DangerZone() {
     setIsAuthenticating(true);
 
     try {
-      // Authenticate with passkey
       const signature = await getPasskeySignature({
         to_address: 'export',
         amount: 0,
@@ -76,7 +75,6 @@ export default function DangerZone() {
       setPrivateKey(result.private_key_base58);
       setCurrentStep(4);
 
-      // Start countdown
       let seconds = 60;
       const interval = setInterval(() => {
         seconds--;
@@ -106,46 +104,27 @@ export default function DangerZone() {
   return (
     <>
       {/* Danger Zone Section */}
-      <div className="mt-12">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-xl font-bold text-[#1A1F36] mb-1">Danger Zone</h2>
-            <p className="text-[#697386] text-sm">Irreversible and sensitive operations</p>
+      <div className="bg-rose-50 dark:bg-rose-900/10 border-2 border-rose-200 dark:border-rose-800 rounded-xl p-6">
+        <div className="flex items-start gap-4">
+          <div className="flex-shrink-0 w-12 h-12 bg-rose-500 rounded-xl flex items-center justify-center">
+            <span className="material-symbols-outlined text-[24px] text-white">lock</span>
           </div>
-        </div>
-
-        <div className="bg-[#FEF0EE] border-2 border-[#E25950] rounded-xl p-6">
-          <div className="flex items-start gap-4">
-            <div className="flex-shrink-0 w-12 h-12 bg-[#E25950] rounded-xl flex items-center justify-center">
-              <svg
-                width="24"
-                height="24"
-                fill="none"
-                stroke="white"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-              </svg>
-            </div>
-            <div className="flex-1">
-              <h3 className="text-base font-semibold text-[#1A1F36] mb-2">Export Private Key</h3>
-              <p className="text-[#697386] text-sm leading-relaxed mb-4">
-                Export your wallet&apos;s private key for backup or migration. This grants
-                permanent access to your funds.{' '}
-                <strong className="text-[#E25950]">
-                  Anyone with this key can steal your funds.
-                </strong>
-              </p>
-              <button
-                onClick={openModal}
-                className="bg-[#E25950] text-white border-none px-5 py-2.5 rounded-lg text-sm font-semibold cursor-pointer transition-all hover:bg-[#D14942]"
-              >
-                Export Private Key
-              </button>
-            </div>
+          <div className="flex-1">
+            <h3 className="text-base font-semibold text-slate-900 dark:text-white mb-2">Export Private Key</h3>
+            <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed mb-4">
+              Export your wallet&apos;s private key for backup or migration. This grants
+              permanent access to your funds.{' '}
+              <strong className="text-rose-500">
+                Anyone with this key can steal your funds.
+              </strong>
+            </p>
+            <button
+              onClick={openModal}
+              className="inline-flex items-center gap-2 bg-rose-500 text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-rose-600 transition-colors"
+            >
+              <span className="material-symbols-outlined text-[18px]">key</span>
+              Export Private Key
+            </button>
           </div>
         </div>
       </div>
@@ -153,51 +132,46 @@ export default function DangerZone() {
       {/* Export Key Modal */}
       {showModal && (
         <div
-          className="fixed inset-0 bg-black/50 z-[50000] flex items-center justify-center"
+          className="fixed inset-0 bg-black/50 dark:bg-black/70 z-[50000] flex items-center justify-center backdrop-blur-sm"
           onClick={(e) => {
             if (e.target === e.currentTarget) closeModal();
           }}
         >
           <div
-            className="bg-white rounded-lg shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-1px_rgba(0,0,0,0.06)] w-[90%] max-w-[500px] animate-[modalSlideUp_0.3s_ease-out] overflow-hidden"
+            className="bg-white dark:bg-[#1f162b] rounded-2xl shadow-2xl w-[90%] max-w-[500px] animate-[modalSlideUp_0.3s_ease-out] overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Step 1: Warning */}
             {currentStep === 1 && (
               <>
-                <div className="p-4 px-6 border-b border-[#e5e7eb] flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-[#E25950] m-0">
+                <div className="p-5 px-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                  <h3 className="text-lg font-bold text-rose-500">
                     Critical Security Warning
                   </h3>
                   <button
                     onClick={closeModal}
-                    className="bg-transparent border-none text-2xl leading-none text-[#6b7280] cursor-pointer p-1 hover:text-[#374151]"
+                    className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
                   >
-                    ×
+                    <span className="material-symbols-outlined text-[20px]">close</span>
                   </button>
                 </div>
                 <div className="p-6">
                   <div className="text-center mb-6">
-                    <div className="w-16 h-16 bg-[#FEF0EE] rounded-full mx-auto mb-4 flex items-center justify-center">
-                      <svg width="32" height="32" fill="none" stroke="#E25950" strokeWidth="2">
-                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-                        <line x1="12" y1="9" x2="12" y2="13" />
-                        <line x1="12" y1="17" x2="12.01" y2="17" />
-                      </svg>
+                    <div className="w-16 h-16 bg-rose-50 dark:bg-rose-900/20 rounded-full mx-auto mb-4 flex items-center justify-center">
+                      <span className="material-symbols-outlined text-[32px] text-rose-500">warning</span>
                     </div>
-                    <p className="text-[#697386] text-[15px] mt-2">
+                    <p className="text-slate-500 dark:text-slate-400 text-sm mt-2">
                       Please read carefully before proceeding
                     </p>
                   </div>
 
-                  <div className="bg-[#FEF0EE] border-l-4 border-[#E25950] p-4 rounded-lg mb-6">
-                    <h3 className="text-sm font-semibold text-[#E25950] mb-2">
+                  <div className="bg-rose-50 dark:bg-rose-900/20 border-l-4 border-rose-500 p-4 rounded-r-xl mb-6">
+                    <h4 className="text-sm font-semibold text-rose-500 mb-2">
                       Risks of Exporting Your Private Key:
-                    </h3>
-                    <ul className="m-0 pl-5 text-[#1A1F36] text-[13px] leading-relaxed">
+                    </h4>
+                    <ul className="m-0 pl-5 text-slate-700 dark:text-slate-300 text-sm leading-relaxed space-y-1">
                       <li>
-                        <strong>Permanent Access:</strong> Anyone with this key has full control
-                        forever
+                        <strong>Permanent Access:</strong> Anyone with this key has full control forever
                       </li>
                       <li>
                         <strong>Cannot Be Revoked:</strong> Once exposed, you cannot undo it
@@ -211,13 +185,13 @@ export default function DangerZone() {
                   <div className="flex gap-3 justify-end">
                     <button
                       onClick={closeModal}
-                      className="px-4 py-2 rounded-md text-[13px] font-semibold cursor-pointer transition-all bg-white text-[#635BFF] border border-[#E3E8EE] hover:bg-[#F6F9FC]"
+                      className="px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={handleContinueToAuth}
-                      className="px-4 py-2 rounded-md text-[13px] font-semibold cursor-pointer transition-all bg-[#E25950] text-white border-none"
+                      className="px-4 py-2.5 bg-rose-500 text-white rounded-xl text-sm font-semibold hover:bg-rose-600 transition-colors"
                     >
                       I Understand, Continue →
                     </button>
@@ -229,30 +203,28 @@ export default function DangerZone() {
             {/* Step 2: Passkey Authentication */}
             {currentStep === 2 && (
               <>
-                <div className="p-4 px-6 border-b border-[#e5e7eb] flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-[#111827] m-0">Verify Your Identity</h3>
+                <div className="p-5 px-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">Verify Your Identity</h3>
                   <button
                     onClick={closeModal}
-                    className="bg-transparent border-none text-2xl leading-none text-[#6b7280] cursor-pointer p-1 hover:text-[#374151]"
+                    className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
                   >
-                    ×
+                    <span className="material-symbols-outlined text-[20px]">close</span>
                   </button>
                 </div>
                 <div className="p-6">
                   <div className="text-center mb-6">
-                    <div className="w-16 h-16 bg-[#EEF2FF] rounded-full mx-auto mb-4 flex items-center justify-center">
-                      <svg width="32" height="32" fill="none" stroke="#5B6EE8" strokeWidth="2">
-                        <path d="M12 15v2m0 0v2m0-2h2m-2 0H10m9-7a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
+                    <div className="w-16 h-16 bg-primary/10 rounded-full mx-auto mb-4 flex items-center justify-center">
+                      <span className="material-symbols-outlined text-[32px] text-primary">fingerprint</span>
                     </div>
-                    <p className="text-[#697386] text-[15px]">
+                    <p className="text-slate-500 dark:text-slate-400 text-sm">
                       Use your passkey to authorize this export
                     </p>
                   </div>
 
                   <div className="text-center my-8">
-                    <div className="w-10 h-10 border-[3px] border-[#E3E8EE] border-t-[#5B6EE8] rounded-full animate-spin mx-auto mb-4" />
-                    <p className="text-[#697386] text-sm">
+                    <div className="w-10 h-10 border-3 border-slate-200 border-t-primary rounded-full animate-spin mx-auto mb-4" />
+                    <p className="text-slate-500 dark:text-slate-400 text-sm">
                       Waiting for passkey authentication...
                     </p>
                   </div>
@@ -260,7 +232,7 @@ export default function DangerZone() {
                   <div className="flex gap-3 justify-end">
                     <button
                       onClick={() => setCurrentStep(1)}
-                      className="px-4 py-2 rounded-md text-[13px] font-semibold cursor-pointer transition-all bg-white text-[#635BFF] border border-[#E3E8EE] hover:bg-[#F6F9FC]"
+                      className="px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
                     >
                       ← Back
                     </button>
@@ -272,27 +244,27 @@ export default function DangerZone() {
             {/* Step 3: Final Confirmation */}
             {currentStep === 3 && (
               <>
-                <div className="p-4 px-6 border-b border-[#e5e7eb] flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-[#111827] m-0">Final Confirmation</h3>
+                <div className="p-5 px-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">Final Confirmation</h3>
                   <button
                     onClick={closeModal}
-                    className="bg-transparent border-none text-2xl leading-none text-[#6b7280] cursor-pointer p-1 hover:text-[#374151]"
+                    className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
                   >
-                    ×
+                    <span className="material-symbols-outlined text-[20px]">close</span>
                   </button>
                 </div>
                 <div className="p-6">
-                  <div className="bg-[#FEF0EE] border border-[#E25950] p-5 rounded-lg mb-6">
+                  <div className="bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 p-5 rounded-xl mb-6">
                     <label className="flex items-start gap-3 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={confirmChecked}
                         onChange={(e) => setConfirmChecked(e.target.checked)}
-                        className="mt-1 w-4 h-4 cursor-pointer"
+                        className="mt-1 w-4 h-4 cursor-pointer accent-rose-500"
                       />
-                      <span className="text-[#1A1F36] text-sm leading-relaxed">
+                      <span className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed">
                         I understand that exporting my private key is{' '}
-                        <strong className="text-[#E25950]">extremely dangerous</strong> and that
+                        <strong className="text-rose-500">extremely dangerous</strong> and that
                         anyone who obtains it can steal all my funds. I take full responsibility
                         for securing this key.
                       </span>
@@ -302,18 +274,14 @@ export default function DangerZone() {
                   <div className="flex gap-3 justify-end">
                     <button
                       onClick={() => setCurrentStep(2)}
-                      className="px-4 py-2 rounded-md text-[13px] font-semibold cursor-pointer transition-all bg-white text-[#635BFF] border border-[#E3E8EE] hover:bg-[#F6F9FC]"
+                      className="px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
                     >
                       ← Back
                     </button>
                     <button
                       onClick={handleExport}
                       disabled={!confirmChecked || isExporting}
-                      className={`px-4 py-2 rounded-md text-[13px] font-semibold transition-all bg-[#E25950] text-white border-none ${
-                        !confirmChecked || isExporting
-                          ? 'opacity-50 cursor-not-allowed'
-                          : 'cursor-pointer'
-                      }`}
+                      className="px-4 py-2.5 bg-rose-500 text-white rounded-xl text-sm font-semibold hover:bg-rose-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       {isExporting ? 'Exporting...' : 'Export Private Key'}
                     </button>
@@ -325,60 +293,56 @@ export default function DangerZone() {
             {/* Step 4: Display Key */}
             {currentStep === 4 && (
               <>
-                <div className="p-4 px-6 border-b border-[#e5e7eb] flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-[#111827] m-0">Private Key Exported</h3>
+                <div className="p-5 px-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">Private Key Exported</h3>
                   <button
                     onClick={closeModal}
-                    className="bg-transparent border-none text-2xl leading-none text-[#6b7280] cursor-pointer p-1 hover:text-[#374151]"
+                    className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
                   >
-                    ×
+                    <span className="material-symbols-outlined text-[20px]">close</span>
                   </button>
                 </div>
                 <div className="p-6">
                   <div className="text-center mb-6">
-                    <div className="w-16 h-16 bg-[#E6F7ED] rounded-full mx-auto mb-4 flex items-center justify-center">
-                      <svg width="32" height="32" fill="none" stroke="#00D66C" strokeWidth="2">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
+                    <div className="w-16 h-16 bg-emerald-50 dark:bg-emerald-900/20 rounded-full mx-auto mb-4 flex items-center justify-center">
+                      <span className="material-symbols-outlined text-[32px] text-emerald-500">check_circle</span>
                     </div>
-                    <p className="text-[#697386] text-[15px]">
+                    <p className="text-slate-500 dark:text-slate-400 text-sm">
                       Store this securely. You won&apos;t see it again.
                     </p>
                   </div>
 
-                  <div className="relative mb-3">
+                  <div className="relative mb-4">
                     <textarea
                       readOnly
                       value={privateKey}
-                      className="w-full h-[100px] p-3 border border-[#E3E8EE] rounded-lg font-mono text-[13px] text-[#1A1F36] resize-none bg-[#FAFBFC]"
+                      className="w-full h-[100px] p-3 border border-slate-200 dark:border-slate-700 rounded-xl font-mono text-sm text-slate-900 dark:text-white resize-none bg-slate-50 dark:bg-slate-800"
                     />
                     <button
                       onClick={copyPrivateKey}
-                      className="absolute right-2 bottom-2 px-2.5 py-1 text-xs font-semibold bg-white text-[#635BFF] border border-[#E3E8EE] rounded-md cursor-pointer hover:bg-[#F6F9FC]"
+                      className="absolute right-3 bottom-3 px-3 py-1.5 text-xs font-semibold bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors inline-flex items-center gap-1"
                     >
+                      <span className="material-symbols-outlined text-[14px]">content_copy</span>
                       Copy
                     </button>
                   </div>
 
-                  <div className="w-[200px] h-[200px] mx-auto mb-3 flex items-center justify-center">
+                  <div className="w-[200px] h-[200px] mx-auto mb-4 flex items-center justify-center">
                     {privateKey && (
                       <QRCodeSVG value={privateKey} size={200} />
                     )}
                   </div>
 
-                  <div className="text-center mb-3 text-[#697386]">
-                    This view will close in <span className="font-semibold">{countdown}</span>{' '}
-                    seconds.
+                  <div className="text-center mb-4 text-slate-500 dark:text-slate-400 text-sm">
+                    This view will close in <span className="font-semibold text-primary">{countdown}</span> seconds.
                   </div>
 
-                  <div className="flex justify-end">
-                    <button
-                      onClick={closeModal}
-                      className="w-full px-4 py-2.5 rounded-md text-[13px] font-semibold cursor-pointer transition-all bg-[#635BFF] text-white border-none hover:bg-[#5449D6]"
-                    >
-                      I&apos;ve stored it safely
-                    </button>
-                  </div>
+                  <button
+                    onClick={closeModal}
+                    className="w-full px-4 py-3 rounded-xl text-sm font-semibold bg-primary text-white hover:bg-primary/90 transition-colors"
+                  >
+                    I&apos;ve stored it safely
+                  </button>
                 </div>
               </>
             )}
