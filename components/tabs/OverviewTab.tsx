@@ -144,25 +144,37 @@ export default function OverviewTab({ onViewAllTransactions }: OverviewTabProps)
             <button className="px-3 py-1 text-xs font-bold rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">24H</button>
           </div> */}
         </div>
-        <div className="h-64 w-full flex items-end justify-between gap-1 sm:gap-2">
-          {volumeData.slice(0, 24).map((d, idx) => {
-            const height = maxVolume > 0 ? (d.value / maxVolume) * 100 : 10;
-            const opacity = 0.2 + (height / 100) * 0.6;
-            return (
-              <div
-                key={idx}
-                className="w-full rounded-t-sm hover:opacity-100 transition-all relative group cursor-pointer"
-                style={{ 
-                  height: `${Math.max(height, 5)}%`,
-                  backgroundColor: `rgba(139, 123, 247, ${opacity})`
-                }}
-              >
-                <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
-                  ${d.value.toLocaleString()}
-                </div>
-              </div>
-            );
-          })}
+        <div className="h-64 w-full flex items-end gap-[3px] sm:gap-1">
+          {volumeData.length === 0 ? (
+            <div className="flex-1 flex items-center justify-center h-full">
+              <p className="text-sm text-slate-400 dark:text-slate-500">No transaction data yet</p>
+            </div>
+          ) : (
+            <>
+              {/* Pad to at least 30 slots so bars have proper width */}
+              {Array.from({ length: Math.max(30, volumeData.length) }).map((_, idx) => {
+                const d = volumeData[idx];
+                if (!d) {
+                  return <div key={idx} className="flex-1 min-w-0" />;
+                }
+                const height = maxVolume > 0 ? (d.value / maxVolume) * 100 : 10;
+                return (
+                  <div
+                    key={idx}
+                    className="flex-1 min-w-0 rounded-t-md hover:brightness-110 transition-all relative group cursor-pointer"
+                    style={{
+                      height: `${Math.max(height, 4)}%`,
+                      backgroundColor: `rgba(139, 123, 247, ${0.35 + (height / 100) * 0.65})`,
+                    }}
+                  >
+                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 pointer-events-none">
+                      ${d.value.toLocaleString()}
+                    </div>
+                  </div>
+                );
+              })}
+            </>
+          )}
         </div>
       </div>
     </div>
