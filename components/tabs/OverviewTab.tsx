@@ -42,6 +42,20 @@ export default function OverviewTab({ onViewAllTransactions }: OverviewTabProps)
   // Generate bar chart data
   const volumeData = analytics?.volume_chart || [];
   const maxVolume = Math.max(...volumeData.map(d => d.value), 1);
+  // Y-axis ticks: 5 evenly spaced values from 0 to max, rounded nicely
+  const yTicks = (() => {
+    const raw = maxVolume;
+    const magnitude = Math.pow(10, Math.floor(Math.log10(raw || 1)));
+    const nice = Math.ceil(raw / magnitude) * magnitude;
+    return [0, nice * 0.25, nice * 0.5, nice * 0.75, nice].map(v => Math.round(v));
+  })();
+  const chartMax = yTicks[yTicks.length - 1] || 1;
+  const formatAmount = (v: number) => {
+    if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`;
+    if (v >= 1_000) return `$${(v / 1_000).toFixed(v >= 10_000 ? 0 : 1)}K`;
+    return `$${v}`;
+  };
+  const totalSlots = Math.max(30, volumeData.length);
 
   if (isLoading) {
     return (
@@ -144,37 +158,86 @@ export default function OverviewTab({ onViewAllTransactions }: OverviewTabProps)
             <button className="px-3 py-1 text-xs font-bold rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">24H</button>
           </div> */}
         </div>
-        <div className="h-64 w-full flex items-end gap-[3px] sm:gap-1">
-          {volumeData.length === 0 ? (
-            <div className="flex-1 flex items-center justify-center h-full">
-              <p className="text-sm text-slate-400 dark:text-slate-500">No transaction data yet</p>
-            </div>
-          ) : (
-            <>
-              {/* Pad to at least 30 slots so bars have proper width */}
-              {Array.from({ length: Math.max(30, volumeData.length) }).map((_, idx) => {
-                const d = volumeData[idx];
-                if (!d) {
-                  return <div key={idx} className="flex-1 min-w-0" />;
-                }
-                const height = maxVolume > 0 ? (d.value / maxVolume) * 100 : 10;
-                return (
-                  <div
-                    key={idx}
-                    className="flex-1 min-w-0 rounded-t-md hover:brightness-110 transition-all relative group cursor-pointer"
-                    style={{
-                      height: `${Math.max(height, 4)}%`,
-                      backgroundColor: `rgba(139, 123, 247, ${0.35 + (height / 100) * 0.65})`,
-                    }}
-                  >
-                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 pointer-events-none">
-                      ${d.value.toLocaleString()}
-                    </div>
+        {/* Chart with axes */}
+        <div className="flex">
+          {/* Y-Axis */}
+          <div className="flex flex-col justify-between items-end pr-3 pb-7 h-64 shrink-0">
+            {[...yTicks].reverse().map((tick, i) => (
+              <span key={i} className="text-[10px] sm:text-xs text-slate-400 dark:text-slate-500 font-medium leading-none">
+                {formatAmount(tick)}
+              </span>
+            ))}
+          </div>
+
+          {/* Bars + X-Axis */}
+          <div className="flex-1 min-w-0 flex flex-col">
+            {/* Grid lines + bars */}
+            <div className="h-64 w-full relative">
+              {/* Horizontal grid lines */}
+              {yTicks.map((_, i) => (
+                <div
+                  key={i}
+                  className="absolute left-0 right-0 border-t border-slate-100 dark:border-slate-800/60"
+                  style={{ top: `${(i / (yTicks.length - 1)) * 100}%` }}
+                />
+              ))}
+              {/* Bars */}
+              <div className="absolute inset-0 flex items-end gap-[3px] sm:gap-1">
+                {volumeData.length === 0 ? (
+                  <div className="flex-1 flex items-center justify-center h-full">
+                    <p className="text-sm text-slate-400 dark:text-slate-500">No transaction data yet</p>
                   </div>
-                );
-              })}
-            </>
-          )}
+                ) : (
+                  Array.from({ length: totalSlots }).map((_, idx) => {
+                    const d = volumeData[idx];
+                    if (!d) {
+                      return <div key={idx} className="flex-1 min-w-0" />;
+                    }
+                    const height = chartMax > 0 ? (d.value / chartMax) * 100 : 10;
+                    return (
+                      <div
+                        key={idx}
+                        className="flex-1 min-w-0 rounded-t-md hover:brightness-110 transition-all relative group cursor-pointer z-[1]"
+                        style={{
+                          height: `${Math.max(height, 2)}%`,
+                          backgroundColor: `rgba(139, 123, 247, ${0.35 + (height / 100) * 0.65})`,
+                        }}
+                      >
+                        <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 pointer-events-none">
+                          ${d.value.toLocaleString()}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
+            {/* X-Axis */}
+            <div className="flex items-start pt-2 border-t border-slate-200 dark:border-slate-700">
+              {volumeData.length > 0 ? (
+                Array.from({ length: totalSlots }).map((_, idx) => {
+                  const d = volumeData[idx];
+                  // Show label for first, last, and every ~7th bar
+                  const showLabel = d && (idx === 0 || idx === volumeData.length - 1 || idx % 7 === 0);
+                  return (
+                    <div key={idx} className="flex-1 min-w-0 text-center">
+                      {showLabel ? (
+                        <span className="text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500 font-medium">
+                          {(() => {
+                            const date = new Date(d.date);
+                            return `${date.toLocaleDateString('en-US', { month: 'short' })} ${date.getDate()}`;
+                          })()}
+                        </span>
+                      ) : null}
+                    </div>
+                  );
+                })
+              ) : (
+                <span className="text-[10px] text-slate-400 dark:text-slate-500 mx-auto">—</span>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>
