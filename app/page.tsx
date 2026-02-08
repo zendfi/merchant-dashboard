@@ -9,10 +9,10 @@ import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
 import WalletModal from '@/components/WalletModal';
 import CreatePaymentLinkModal from '@/components/CreatePaymentLinkModal';
+import LoadingScreen from '@/components/LoadingScreen';
 import OverviewTab from '@/components/tabs/OverviewTab';
 import TransactionsTab from '@/components/tabs/TransactionsTab';
 import ApiKeysTab from '@/components/tabs/ApiKeysTab';
-import SessionKeysTab from '@/components/tabs/SessionKeysTab';
 import WebhooksTab from '@/components/tabs/WebhooksTab';
 import ProfileTab from '@/components/tabs/ProfileTab';
 
@@ -24,37 +24,46 @@ function DashboardContent() {
   const [showPaymentLinkModal, setShowPaymentLinkModal] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Auth check - redirect to login if not authenticated
+  // Redirect to login if not authenticated
   useEffect(() => {
     if (!isLoading && !merchant && error) {
       router.push('/login');
     }
   }, [isLoading, merchant, error, router]);
 
+  // Track loading-to-ready transition for fade-out
+  const [showLoading, setShowLoading] = useState(true);
+  const [fadeOut, setFadeOut] = useState(false);
+
+  useEffect(() => {
+    if (!isLoading) {
+      // Small delay to ensure minimum loading screen visibility
+      const fadeTimer = setTimeout(() => {
+        setFadeOut(true);
+        const removeTimer = setTimeout(() => setShowLoading(false), 400);
+        return () => clearTimeout(removeTimer);
+      }, 600);
+      return () => clearTimeout(fadeTimer);
+    }
+  }, [isLoading]);
+
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Show loading state while checking auth
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-[#FAFBFC] flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-10 h-10 border-4 border-gray-200 border-t-black rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-[#697386]">Loading dashboard...</p>
-        </div>
-      </div>
-    );
+  // Show loading screen while checking auth
+  if (isLoading && showLoading) {
+    return <LoadingScreen />;
   }
 
-  // Don't render dashboard if not authenticated
+  // Redirect if not authenticated
   if (!merchant) {
     return (
-      <div className="min-h-screen bg-[#FAFBFC] flex items-center justify-center">
+      <div className="min-h-screen bg-background-light dark:bg-background-dark flex items-center justify-center">
         <div className="text-center">
-          <div className="w-10 h-10 border-4 border-gray-200 border-t-black rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-[#697386]">Redirecting to login...</p>
+          <div className="w-10 h-10 border-4 border-slate-200 border-t-primary rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-sm text-slate-500 dark:text-slate-400">Redirecting to login...</p>
         </div>
       </div>
     );
@@ -65,11 +74,9 @@ function DashboardContent() {
       case 'overview':
         return <OverviewTab onViewAllTransactions={() => setActiveTab('transactions')} />;
       case 'transactions':
-        return <TransactionsTab />;
+        return <TransactionsTab onCreatePayment={() => setShowPaymentLinkModal(true)} />;
       case 'api-keys':
         return <ApiKeysTab />;
-      case 'session-keys':
-        return <SessionKeysTab />;
       case 'webhooks':
         return <WebhooksTab />;
       case 'profile':
@@ -80,29 +87,38 @@ function DashboardContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAFBFC]">
-      <Header 
-        onOpenWallet={() => setShowWalletModal(true)} 
-        onCreatePaymentLink={() => setShowPaymentLinkModal(true)}
-        onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-        sidebarOpen={sidebarOpen}
-      />
+    <div className="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-white h-screen flex overflow-hidden">
+      {/* Loading screen fade-out overlay */}
+      {showLoading && (
+        <div className={fadeOut ? 'loading-fadeout' : ''}>
+          <LoadingScreen />
+        </div>
+      )}
 
-      <div className="flex min-h-[calc(100vh-60px)]">
-        <Sidebar 
-          activeTab={activeTab} 
-          onTabChange={(tab) => {
-            handleTabChange(tab);
-            setSidebarOpen(false);
-          }}
-          isOpen={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
+      <Sidebar 
+        activeTab={activeTab} 
+        onTabChange={(tab) => {
+          handleTabChange(tab);
+          setSidebarOpen(false);
+        }}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
+      <main className="flex-1 flex flex-col h-full overflow-hidden relative">
+        <Header 
+          onOpenWallet={() => setShowWalletModal(true)} 
+          onCreatePaymentLink={() => setShowPaymentLinkModal(true)}
+          onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+          sidebarOpen={sidebarOpen}
+          activeTab={activeTab}
         />
 
-        <main className="flex-1 overflow-x-auto w-full">
-          <div className="max-w-[1600px] mx-auto p-4 md:p-6 md:px-7">{renderTab()}</div>
-        </main>
-      </div>
+        <div className="flex-1 overflow-y-auto p-4 lg:p-8 pb-20">
+          <div className="max-w-7xl mx-auto">
+            {renderTab()}
+          </div>
+        </div>
+      </main>
 
       <WalletModal isOpen={showWalletModal} onClose={() => setShowWalletModal(false)} />
       <CreatePaymentLinkModal isOpen={showPaymentLinkModal} onClose={() => setShowPaymentLinkModal(false)} />

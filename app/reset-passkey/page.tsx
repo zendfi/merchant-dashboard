@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { auth, webauthn as webauthnApi } from '@/lib/api';
 import { createPasskeyCredential, isWebAuthnSupported } from '@/lib/webauthn';
 
@@ -108,132 +109,152 @@ function ResetPasskeyContent() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#f6f9fc]">
-      {/* Header */}
-      <header className="p-6 px-8">
-        <Link href="/" className="text-2xl font-bold text-[#635bff] no-underline">
-          zendfi
-        </Link>
-      </header>
+    <div className="min-h-screen flex bg-background-light dark:bg-background-dark">
+      {/* Left Branding Panel */}
+      <div className="hidden lg:flex lg:w-[480px] xl:w-[540px] bg-gradient-to-br from-primary via-purple-500 to-indigo-600 relative overflow-hidden flex-col justify-between p-12">
+        <div className="absolute inset-0">
+          <div className="absolute top-20 -left-20 w-80 h-80 bg-white/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-20 right-0 w-64 h-64 bg-white/5 rounded-full blur-2xl" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-white/5 rounded-full blur-3xl" />
+        </div>
 
-      {/* Main Content */}
-      <main className="flex-1 flex items-center justify-center p-10">
-        <div className="bg-white rounded-lg shadow-[0_2px_4px_rgba(0,0,0,0.05),0_0_0_1px_rgba(0,0,0,0.05)] p-12 max-w-[520px] w-full">
-          <h1 className="text-2xl font-semibold text-[#30313d] mb-2 flex items-center gap-2.5">
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#635bff"
-              strokeWidth="2"
-            >
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-            </svg>
-            Reset your passkey
-          </h1>
-          <p className="text-[#697386] mb-8 text-sm">
-            Register a new passkey for your account
+        <div className="relative z-10">
+          <Link href="/">
+            <Image src="/logo.png" alt="ZendFi" width={140} height={36} className="h-9 w-auto brightness-0 invert" priority />
+          </Link>
+        </div>
+
+        <div className="relative z-10 space-y-6">
+          <h2 className="text-3xl xl:text-4xl font-extrabold text-white leading-tight">
+            Passwordless<br />security
+          </h2>
+          <p className="text-white/70 text-base leading-relaxed max-w-sm">
+            Passkeys use your device&apos;s biometrics for the most secure authentication experience.
           </p>
-
-          {error && (
-            <div className="bg-red-50 text-red-600 p-3 rounded-md mb-4 text-sm">
-              {error}
-            </div>
-          )}
-
-          {success && (
-            <div className="bg-green-50 text-green-600 p-3 rounded-md mb-4 text-sm">
-              {success}
-            </div>
-          )}
-
-          {isLoading && (
-            <div className="text-center py-5 text-[#697386]">
-              <p>Verifying your reset link...</p>
-            </div>
-          )}
-
-          {!isLoading && !token && (
-            <div className="text-center">
-              <p className="text-red-600 mb-5">
-                This reset link is invalid or has expired.
-              </p>
-              <Link
-                href="/login"
-                className="inline-block w-full p-3 bg-[#635bff] text-white rounded-md text-[15px] font-medium text-center hover:bg-[#5851ea]"
-              >
-                Back to Login
-              </Link>
-            </div>
-          )}
-
-          {!isLoading && token && !isValid && (
-            <div className="text-center">
-              <p className="text-red-600 mb-5">
-                This reset link is invalid or has expired.
-              </p>
-              <Link
-                href="/login"
-                className="inline-block w-full p-3 bg-[#635bff] text-white rounded-md text-[15px] font-medium text-center hover:bg-[#5851ea]"
-              >
-                Back to Login
-              </Link>
-            </div>
-          )}
-
-          {!isLoading && isValid && !success && (
-            <div>
-              {email && (
-                <div className="text-center mb-6 p-3 bg-[#f6f9fc] rounded-md text-[#30313d] text-sm font-medium">
-                  {email}
+          <div className="flex flex-col gap-4 pt-4">
+            {[
+              { icon: 'fingerprint', text: 'Biometric authentication' },
+              { icon: 'phishing', text: 'Phishing-resistant by design' },
+              { icon: 'devices', text: 'Works across your devices' },
+            ].map((item) => (
+              <div key={item.icon} className="flex items-center gap-3">
+                <div className="size-8 rounded-lg bg-white/15 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-white text-lg">{item.icon}</span>
                 </div>
-              )}
-
-              <div className="bg-[#f6f9fc] border-l-[3px] border-[#635bff] p-4 my-6 text-sm text-[#697386] leading-relaxed rounded-r-md">
-                <strong className="block text-[#30313d] mb-1">What happens next?</strong>
-                Your old passkey will be removed and you&apos;ll register a new one using
-                Face ID, Touch ID, or your security key.
+                <span className="text-white/90 text-sm font-medium">{item.text}</span>
               </div>
-
-              <button
-                type="button"
-                onClick={handleResetPasskey}
-                disabled={isRegistering || !isWebAuthnSupported()}
-                className="w-full p-3 bg-[#635bff] text-white border-none rounded-md text-[15px] font-medium cursor-pointer transition-all flex items-center justify-center gap-2 hover:bg-[#5851ea] disabled:bg-[#a5a5a5] disabled:cursor-not-allowed"
-              >
-                {isRegistering ? (
-                  <>
-                    <span className="spinner" /> Registering...
-                  </>
-                ) : (
-                  <>
-                    <svg
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                    </svg>
-                    Register new passkey
-                  </>
-                )}
-              </button>
-            </div>
-          )}
-
-          <div className="text-center mt-8 pt-6 border-t border-[#e0e0e0] text-sm text-[#697386]">
-            <Link href="/login" className="text-[#635bff] hover:underline">
-              ← Back to Login
-            </Link>
+            ))}
           </div>
         </div>
-      </main>
+
+        <div className="relative z-10 text-white/40 text-xs">
+          &copy; {new Date().getFullYear()} ZendFi. All rights reserved.
+        </div>
+      </div>
+
+      {/* Right Form Panel */}
+      <div className="flex-1 flex flex-col">
+        <header className="lg:hidden p-6">
+          <Link href="/">
+            <Image src="/logo.png" alt="ZendFi" width={120} height={32} className="h-8 w-auto" priority />
+          </Link>
+        </header>
+
+        <div className="flex-1 flex items-center justify-center p-6 sm:p-10">
+          <div className="w-full max-w-[420px]">
+            <div className="mb-8">
+              <div className="flex items-center gap-3 mb-2">
+                <span className="material-symbols-outlined text-primary text-2xl">fingerprint</span>
+                <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Reset your passkey</h1>
+              </div>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Register a new passkey for your account</p>
+            </div>
+
+            {error && (
+              <div className="mb-5 p-3.5 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-xl flex items-start gap-3">
+                <span className="material-symbols-outlined text-rose-500 text-lg shrink-0 mt-0.5">error</span>
+                <p className="text-sm text-rose-700 dark:text-rose-300">{error}</p>
+              </div>
+            )}
+
+            {success && (
+              <div className="mb-5 p-3.5 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl flex items-start gap-3">
+                <span className="material-symbols-outlined text-emerald-500 text-lg shrink-0 mt-0.5" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                <p className="text-sm text-emerald-700 dark:text-emerald-300">{success}</p>
+              </div>
+            )}
+
+            {isLoading && (
+              <div className="text-center py-12">
+                <span className="spinner spinner-dark" />
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-3">Verifying your reset link...</p>
+              </div>
+            )}
+
+            {!isLoading && (!token || (token && !isValid)) && (
+              <div className="text-center space-y-5">
+                <div className="size-16 mx-auto bg-rose-50 dark:bg-rose-900/20 rounded-2xl flex items-center justify-center">
+                  <span className="material-symbols-outlined text-rose-500 text-3xl">link_off</span>
+                </div>
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  This reset link is invalid or has expired.
+                </p>
+                <Link
+                  href="/login"
+                  className="block w-full p-3 bg-primary text-white rounded-xl text-sm font-semibold text-center transition-all hover:bg-primary/90 no-underline"
+                >
+                  Back to Login
+                </Link>
+              </div>
+            )}
+
+            {!isLoading && isValid && !success && (
+              <div className="space-y-5">
+                {email && (
+                  <div className="text-center p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl">
+                    <span className="text-sm text-slate-600 dark:text-slate-400 flex items-center justify-center gap-2">
+                      <span className="material-symbols-outlined text-base">mail</span>
+                      {email}
+                    </span>
+                  </div>
+                )}
+
+                <div className="p-4 bg-primary/5 dark:bg-primary/10 border border-primary/20 rounded-xl">
+                  <div className="flex items-start gap-3">
+                    <span className="material-symbols-outlined text-primary text-lg shrink-0 mt-0.5">info</span>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">What happens next?</p>
+                      <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                        Your old passkey will be removed and you&apos;ll register a new one using Face ID, Touch ID, or your security key.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleResetPasskey}
+                  disabled={isRegistering || !isWebAuthnSupported()}
+                  className="w-full p-3 bg-primary text-white rounded-xl text-sm font-semibold cursor-pointer transition-all flex items-center justify-center gap-2 hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isRegistering ? (
+                    <><span className="spinner" /> Registering...</>
+                  ) : (
+                    <><span className="material-symbols-outlined text-lg">fingerprint</span> Register new passkey</>
+                  )}
+                </button>
+              </div>
+            )}
+
+            <p className="text-center mt-8 text-sm text-slate-500 dark:text-slate-400">
+              <Link href="/login" className="text-primary hover:text-primary/80 font-semibold transition-colors inline-flex items-center gap-1">
+                <span className="material-symbols-outlined text-base">arrow_back</span>
+                Back to Login
+              </Link>
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -241,8 +262,8 @@ function ResetPasskeyContent() {
 export default function ResetPasskeyPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-[#f6f9fc]">
-        <div className="spinner spinner-dark" />
+      <div className="min-h-screen flex items-center justify-center bg-background-light dark:bg-background-dark">
+        <span className="spinner spinner-dark" />
       </div>
     }>
       <ResetPasskeyContent />
