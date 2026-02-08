@@ -2,28 +2,42 @@
 
 import { useEffect, useState } from 'react';
 import { useMode } from '@/lib/mode-context';
-import { transactions as transactionsApi, Transaction } from '@/lib/api';
-import { useRouter } from 'next/navigation';
+import { transactions as transactionsApi, Transaction, merchant as merchantApi, DashboardStats } from '@/lib/api';
 
 interface TransactionsTabProps {
   limit?: number;
   showViewAll?: boolean;
+  onCreatePayment?: () => void;
 }
 
-export default function TransactionsTab({ limit = 10, showViewAll = true }: TransactionsTabProps) {
-  const router = useRouter();
+export default function TransactionsTab({ limit = 25, showViewAll = true, onCreatePayment }: TransactionsTabProps) {
   const { mode } = useMode();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [total, setTotal] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [dateFilter, setDateFilter] = useState('30');
 
   useEffect(() => {
-    const loadTransactions = async () => {
+    const loadData = async () => {
       setIsLoading(true);
       try {
-        const data = await transactionsApi.list({ mode, limit });
-        setTransactions(data.transactions || []);
-        setTotal(data.total || 0);
+        const [txData, statsData] = await Promise.all([
+          transactionsApi.list({ 
+            mode, 
+            limit,
+            page: currentPage,
+            status: statusFilter !== 'all' ? statusFilter : undefined,
+            search: searchQuery || undefined,
+          }),
+          merchantApi.getStats(mode),
+        ]);
+        setTransactions(txData.transactions || []);
+        setTotal(txData.total || 0);
+        setStats(statsData);
       } catch (error) {
         console.error('Failed to load transactions:', error);
       } finally {
@@ -31,156 +45,268 @@ export default function TransactionsTab({ limit = 10, showViewAll = true }: Tran
       }
     };
 
-    loadTransactions();
-  }, [mode, limit]);
+    loadData();
+  }, [mode, limit, currentPage, statusFilter, searchQuery]);
 
-  const getStatusClass = (status: string | undefined) => {
-    switch (status) {
-      case 'confirmed':
-        return 'status-confirmed';
-      case 'pending':
-        return 'status-pending';
-      case 'failed':
-        return 'status-failed';
-      case 'expired':
-        return 'status-expired';
-      default:
-        return 'status-pending';
-    }
+  const totalPages = Math.ceil(total / limit);
+
+  // Filter transactions by date (client-side since API doesn't support date filtering)
+  const filteredTransactions = transactions.filter((tx) => {
+    const txDate = new Date(tx.created_at);
+    const now = new Date();
+    const daysAgo = parseInt(dateFilter, 10);
+    const cutoffDate = new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000);
+    return txDate >= cutoffDate;
+  });
+
+  // Export transactions to CSV
+  const exportToCSV = () => {
+    if (filteredTransactions.length === 0) return;
+
+    const headers = ['Transaction ID', 'Status', 'Amount (USD)', 'Token', 'Customer Wallet', 'Date', 'Description'];
+    const rows = filteredTransactions.map((tx) => {
+      const metadata = tx.metadata as Record<string, string> | null;
+      const description = metadata?.description || `Payment ${tx.id.slice(0, 8)}`;
+      return [
+        tx.id,
+        tx.status || 'pending',
+        tx.amount_usd.toFixed(2),
+        tx.token || 'USDC',
+        tx.customer_wallet || 'Anonymous',
+        new Date(tx.created_at).toISOString(),
+        description,
+      ];
+    });
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `transactions_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const getStatusBadge = (status: string) => {
+    const config: Record<string, { bg: string; text: string; label: string }> = {
+      confirmed: { bg: 'bg-emerald-50', text: 'text-emerald-600', label: 'Confirmed' },
+      pending: { bg: 'bg-amber-50', text: 'text-amber-600', label: 'Pending' },
+      failed: { bg: 'bg-rose-50', text: 'text-rose-600', label: 'Failed' },
+      refunded: { bg: 'bg-purple-50', text: 'text-purple-600', label: 'Refunded' },
+      expired: { bg: 'bg-slate-50', text: 'text-slate-600', label: 'Expired' },
+    };
+    const c = config[status] || config.pending;
+    return (
+      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${c.bg} ${c.text} border border-current/20`}>
+        {c.label}
+      </span>
+    );
+  };
+
+  const calculateSuccessRate = () => {
+    if (!stats?.total_payments || stats.total_payments === 0) return '0.0';
+    return ((stats.confirmed_payments / stats.total_payments) * 100).toFixed(1);
+  };
+
+  const calculatePendingAmount = () => {
+    // Calculate based on pending payments count and average transaction amount
+    if (!stats?.pending_payments || !stats?.total_volume || !stats?.total_payments) return 0;
+    const avgAmount = stats.total_volume / stats.total_payments;
+    return stats.pending_payments * avgAmount;
   };
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="spinner spinner-dark" />
-      </div>
-    );
-  }
-
-  if (transactions.length === 0) {
-    return (
-      <div>
-        <h1 className="mb-6 text-xl font-semibold text-[#0A2540]">Transactions</h1>
-        <div className="text-center py-12 text-[#697386]">
-          <p>No transactions yet. Start accepting payments!</p>
-          <a
-            href="https://zendfi.tech/docs"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex mt-4 px-4 py-2 bg-[#635BFF] text-white rounded-md text-sm font-semibold no-underline hover:bg-[#5449D6]"
-          >
-            View Docs
-          </a>
-        </div>
+        <div className="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div>
-      <h1 className="mb-4 md:mb-6 text-lg md:text-xl font-semibold text-[#0A2540]">Transactions</h1>
-      
-      {/* Mobile Card View */}
-      <div className="md:hidden space-y-3">
-        {transactions.map((tx) => (
-          <div key={tx.id} className="bg-white rounded-lg border border-[#E3E8EE] p-4 shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
-            <div className="flex items-center justify-between mb-3">
-              <span className="font-mono text-xs text-[#635BFF] font-medium">
-                {tx.id.substring(0, 8)}...
-              </span>
-              <span className={`status-badge ${getStatusClass(tx.status)}`}>
-                {tx.status || 'pending'}
-              </span>
-            </div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-lg font-bold text-[#0A2540]">${tx.amount_usd.toFixed(2)}</span>
-              <span className="text-xs text-[#697386] bg-[#f6f9fc] px-2 py-1 rounded">{tx.payment_token || 'USDC'}</span>
-            </div>
-            <div className="flex items-center justify-between text-xs text-[#697386]">
-              <span>
-                {new Date(tx.created_at).toLocaleDateString('en-US', {
-                  month: 'short',
-                  day: 'numeric',
-                  year: 'numeric',
-                })}
-              </span>
-              {tx.split_count && tx.split_count > 0 && (
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-[10px] uppercase tracking-[0.5px] bg-[#D1FAE5] text-[#065F46]">
-                  SPLIT
-                </span>
-              )}
-            </div>
-          </div>
-        ))}
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Transactions</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">View and manage all payment activities and cash flow.</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={exportToCSV}
+            disabled={filteredTransactions.length === 0}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            <span className="material-symbols-outlined text-[18px]">download</span>
+            Export CSV
+          </button>
+          <button 
+            onClick={onCreatePayment}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors"
+          >
+            <span className="material-symbols-outlined text-[18px]">add</span>
+            Create Payment
+          </button>
+        </div>
       </div>
 
-      {/* Desktop Table View */}
-      <table className="hidden md:table w-full border-collapse bg-white rounded-lg overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
-        <thead className="bg-[#FAFBFC]">
-          <tr>
-            <th className="text-left p-2.5 px-3 text-[11px] font-bold text-[#425466] uppercase tracking-[0.6px] border-b border-[#E3E8EE]">
-              ID
-            </th>
-            <th className="text-left p-2.5 px-3 text-[11px] font-bold text-[#425466] uppercase tracking-[0.6px] border-b border-[#E3E8EE]">
-              Amount
-            </th>
-            <th className="text-left p-2.5 px-3 text-[11px] font-bold text-[#425466] uppercase tracking-[0.6px] border-b border-[#E3E8EE]">
-              Token
-            </th>
-            <th className="text-left p-2.5 px-3 text-[11px] font-bold text-[#425466] uppercase tracking-[0.6px] border-b border-[#E3E8EE]">
-              Status
-            </th>
-            <th className="text-left p-2.5 px-3 text-[11px] font-bold text-[#425466] uppercase tracking-[0.6px] border-b border-[#E3E8EE]">
-              Date
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {transactions.map((tx) => (
-            <tr key={tx.id} className="hover:bg-[#FAFBFC]">
-              <td className="p-3 border-b border-[#FAFBFC] text-[13px]">
-                <span className="font-mono text-xs text-[#635BFF] font-medium">
-                  {tx.id.substring(0, 8)}
-                </span>
-                {tx.split_count && tx.split_count > 0 && (
-                  <span className="ml-1.5 text-[10px] font-bold px-2 py-0.5 rounded-[10px] uppercase tracking-[0.5px] bg-[#D1FAE5] text-[#065F46]">
-                    SPLIT
-                  </span>
-                )}
-              </td>
-              <td className="p-3 border-b border-[#FAFBFC] text-[13px]">
-                <strong>${tx.amount_usd.toFixed(2)}</strong>
-              </td>
-              <td className="p-3 border-b border-[#FAFBFC] text-[13px]">
-                {tx.payment_token || 'USDC'}
-              </td>
-              <td className="p-3 border-b border-[#FAFBFC] text-[13px]">
-                <span className={`status-badge ${getStatusClass(tx.status)}`}>
-                  {tx.status || 'pending'}
-                </span>
-              </td>
-              <td className="p-3 border-b border-[#FAFBFC] text-[13px]">
-                {new Date(tx.created_at).toLocaleDateString('en-US', {
-                  month: 'short',
-                  day: 'numeric',
-                })}{' '}
-                {new Date(tx.created_at).toLocaleTimeString('en-US', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800">
+          <span className="text-sm text-slate-500 dark:text-slate-400">Total Volume (30d)</span>
+          <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
+            ${(stats?.total_volume || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+          </p>
+        </div>
+        <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800">
+          <span className="text-sm text-slate-500 dark:text-slate-400">Success Rate</span>
+          <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
+            {calculateSuccessRate()}%
+          </p>
+        </div>
+        <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800">
+          <span className="text-sm text-slate-500 dark:text-slate-400">Pending Amount</span>
+          <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
+            ${calculatePendingAmount().toLocaleString('en-US', { minimumFractionDigits: 2 })}
+          </p>
+        </div>
+      </div>
 
-      {showViewAll && total > limit && (
-        <button
-          onClick={() => router.push('/transactions')}
-          className="w-full mt-3 p-2.5 bg-white text-[#635BFF] border border-[#E3E8EE] rounded-md text-[13px] font-semibold cursor-pointer transition-all shadow-[0_1px_3px_rgba(0,0,0,0.08)] hover:bg-[#FAFBFC] hover:border-[#635BFF]"
-        >
-          View All Transactions ({total})
-        </button>
+      {/* Filters */}
+      <div className="flex flex-col lg:flex-row gap-4">
+        <div className="flex-1 relative">
+          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
+          <input
+            type="text"
+            placeholder="Search by ID, email, or customer name"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+          />
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <select 
+            value={dateFilter}
+            onChange={(e) => setDateFilter(e.target.value)}
+            className="px-3 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+          >
+            <option value="30">Date: Last 30 days</option>
+            <option value="7">Date: Last 7 days</option>
+            <option value="90">Date: Last 90 days</option>
+          </select>
+          <select 
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-3 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+          >
+            <option value="all">Status: All</option>
+            <option value="confirmed">Succeeded</option>
+            <option value="pending">Pending</option>
+            <option value="failed">Failed</option>
+            <option value="refunded">Refunded</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Table */}
+      {filteredTransactions.length === 0 ? (
+        <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 p-12 text-center">
+          <span className="material-symbols-outlined text-[48px] text-slate-300 mb-4">receipt_long</span>
+          <p className="text-slate-500 dark:text-slate-400 mb-4">No transactions yet. Start accepting payments!</p>
+          <a
+            href="https://zendfi.tech/docs"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm font-semibold"
+          >
+            View Docs
+          </a>
+        </div>
+      ) : (
+        <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 overflow-hidden">
+          {/* Mobile Card View */}
+          <div className="lg:hidden divide-y divide-slate-100 dark:divide-slate-800">
+            {filteredTransactions.map((tx) => (
+              <div key={tx.id} className="p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-amber-500 font-mono text-sm">{tx.id.slice(0, 8)}</span>
+                  {getStatusBadge(tx.status || 'pending')}
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-bold text-slate-900 dark:text-white">${tx.amount_usd.toFixed(2)}</span>
+                  <span className="text-slate-500">{tx.token || 'USDC'}</span>
+                </div>
+                <div className="text-right text-slate-500 text-xs">
+                  {new Date(tx.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} {new Date(tx.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Table */}
+          <div className="hidden lg:block overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
+                <tr>
+                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">ID</th>
+                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Amount</th>
+                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Token</th>
+                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
+                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Date</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                {filteredTransactions.map((tx) => (
+                  <tr key={tx.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+                    <td className="px-6 py-4">
+                      <span className="text-amber-500 font-mono text-sm">{tx.id.slice(0, 8)}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="font-bold text-slate-900 dark:text-white">${tx.amount_usd.toFixed(2)}</span>
+                    </td>
+                    <td className="px-6 py-4 text-slate-600 dark:text-slate-400">
+                      {tx.token || 'USDC'}
+                    </td>
+                    <td className="px-6 py-4">{getStatusBadge(tx.status || 'pending')}</td>
+                    <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">
+                      {new Date(tx.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} {new Date(tx.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100 dark:border-slate-800">
+            <p className="text-sm text-slate-500">
+              Showing <span className="font-medium text-slate-900 dark:text-white">{filteredTransactions.length}</span> of <span className="font-medium text-primary">{total.toLocaleString()}</span> results
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Previous
+              </button>
+              <button
+                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage >= totalPages}
+                className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

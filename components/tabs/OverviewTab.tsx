@@ -1,67 +1,34 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import {
-  AreaChart,
-  Area,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts';
 import { useMerchant } from '@/lib/merchant-context';
 import { useMode } from '@/lib/mode-context';
-import { merchant as merchantApi, DashboardStats, DashboardAnalytics } from '@/lib/api';
+import { merchant as merchantApi, DashboardStats, DashboardAnalytics, transactions as transactionsApi, Transaction } from '@/lib/api';
 
 interface OverviewTabProps {
   onViewAllTransactions: () => void;
 }
-
-// Custom tooltip component for consistent styling
-const CustomTooltip = ({
-  active,
-  payload,
-  label,
-  formatter,
-}: {
-  active?: boolean;
-  payload?: Array<{ value: number; color: string }>;
-  label?: string;
-  formatter?: (value: number) => string;
-}) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-[#0A2540] px-3 py-2 rounded-lg shadow-lg border border-[#635bff]/30">
-        <p className="text-[11px] text-gray-400 mb-1">{label}</p>
-        <p className="text-white font-semibold text-sm">
-          {formatter ? formatter(payload[0].value) : payload[0].value}
-        </p>
-      </div>
-    );
-  }
-  return null;
-};
 
 export default function OverviewTab({ onViewAllTransactions }: OverviewTabProps) {
   const { merchant } = useMerchant();
   const { mode } = useMode();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [analytics, setAnalytics] = useState<DashboardAnalytics | null>(null);
+  const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
       try {
-        const [statsData, analyticsData] = await Promise.all([
+        const [statsData, analyticsData, txData] = await Promise.all([
           merchantApi.getStats(mode),
           merchantApi.getAnalytics(),
+          transactionsApi.list({ mode, limit: 5 }),
         ]);
         setStats(statsData);
         setAnalytics(analyticsData);
+        setRecentTransactions(txData.transactions || []);
       } catch (error) {
         console.error('Failed to load dashboard data:', error);
       } finally {
@@ -72,280 +39,130 @@ export default function OverviewTab({ onViewAllTransactions }: OverviewTabProps)
     loadData();
   }, [mode]);
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  };
-
-  // Transform data for Recharts
-  const transactionsData = analytics?.payments_chart.map((d) => ({
-    date: formatDate(d.date),
-    value: d.value,
-  })) || [];
-
-  const volumeData = analytics?.volume_chart.map((d) => ({
-    date: formatDate(d.date),
-    value: d.value,
-  })) || [];
-
-  const apiCallsData = analytics?.api_calls_chart.map((d) => ({
-    date: formatDate(d.date),
-    value: d.value,
-  })) || [];
-
-  const successRateData = analytics?.success_rate_chart.map((d) => ({
-    date: formatDate(d.date),
-    value: d.value,
-  })) || [];
-
-  // Suppress unused variable warning
-  void onViewAllTransactions;
+  // Generate bar chart data
+  const volumeData = analytics?.volume_chart || [];
+  const maxVolume = Math.max(...volumeData.map(d => d.value), 1);
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="w-8 h-8 border-4 border-gray-200 border-t-black rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin" />
       </div>
     );
   }
 
+  const getStatusBadge = (status: string) => {
+    const styles: Record<string, string> = {
+      confirmed: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+      pending: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+      failed: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
+      expired: 'bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-400',
+    };
+    const dotStyles: Record<string, string> = {
+      confirmed: 'bg-emerald-500',
+      pending: 'bg-amber-500',
+      failed: 'bg-rose-500',
+      expired: 'bg-slate-500',
+    };
+    return (
+      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${styles[status] || styles.pending}`}>
+        <span className={`size-1.5 rounded-full ${dotStyles[status] || dotStyles.pending}`}></span>
+        {status.charAt(0).toUpperCase() + status.slice(1)}
+      </span>
+    );
+  };
+
   return (
-    <div>
-      {/* Welcome Section */}
-      <div className="mb-5">
-        <h1 className="text-xl md:text-[28px] font-semibold mb-1 text-[#0A2540] tracking-[-0.4px] leading-tight flex items-center gap-2">
-          Welcome back, {merchant?.name || 'Merchant'}!
-          <svg
-            className="w-4 h-4 md:w-[18px] md:h-[18px] hidden sm:block"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeWidth="2"
-              strokeLinecap="round"
-              d="M7 12c0-4 3-7 7-7s7 3 7-7 7-3 7-7M7 12c0 4-3 7-7 7"
-            />
-          </svg>
-        </h1>
-        <p className="text-[#425466] text-[12px] md:text-[13px]">
-          Customer since{' '}
-          {merchant?.created_at
-            ? new Date(merchant.created_at).toLocaleDateString('en-US', {
-                month: 'long',
-                day: 'numeric',
-                year: 'numeric',
-              })
-            : 'N/A'}{' '}
-          <span className="hidden sm:inline">· Account ID: <code className="text-xs">{merchant?.id}</code></span>
-        </p>
-      </div>
+    <div className="space-y-8">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        {/* Total Volume */}
+        <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-primary/20 transition-all group">
+          <div className="mb-4">
+            <div className="p-2 bg-primary/10 dark:bg-primary/20 rounded-lg text-primary inline-block">
+              <span className="material-symbols-outlined text-[24px]">bar_chart</span>
+            </div>
+          </div>
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Volume</p>
+          <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
+            ${(stats?.total_volume || 0).toLocaleString('en-US', { minimumFractionDigits: 0 })}
+          </h3>
+        </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 mb-5">
-        <div className="bg-white rounded-lg border border-[#E3E8EE] p-3 md:p-4 transition-all shadow-[0_1px_3px_rgba(0,0,0,0.08)] hover:-translate-y-px hover:shadow-[0_2px_6px_rgba(0,0,0,0.1)]">
-          <div className="text-[#425466] text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.6px] mb-1 md:mb-2">
-            Total Payments
+        {/* Success Rate */}
+        <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-primary/20 transition-all group">
+          <div className="mb-4">
+            <div className="p-2 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg text-indigo-600 dark:text-indigo-400 inline-block">
+              <span className="material-symbols-outlined text-[24px]">check_circle</span>
+            </div>
           </div>
-          <div className="text-xl md:text-[32px] font-bold text-[#0A2540] leading-none tracking-[-0.5px]">
-            {stats?.total_payments || 0}
-          </div>
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Success Rate</p>
+          <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
+            {stats?.confirmed_payments && stats?.total_payments 
+              ? ((stats.confirmed_payments / stats.total_payments) * 100).toFixed(1)
+              : '99.9'}%
+          </h3>
         </div>
-        <div className="bg-white rounded-lg border border-[#E3E8EE] p-3 md:p-4 transition-all shadow-[0_1px_3px_rgba(0,0,0,0.08)] hover:-translate-y-px hover:shadow-[0_2px_6px_rgba(0,0,0,0.1)]">
-          <div className="text-[#425466] text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.6px] mb-1 md:mb-2">
-            Total Volume
+
+        {/* Failed Payments */}
+        <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-primary/20 transition-all group">
+          <div className="mb-4">
+            <div className="p-2 bg-rose-50 dark:bg-rose-900/20 rounded-lg text-rose-600 dark:text-rose-400 inline-block">
+              <span className="material-symbols-outlined text-[24px]">error</span>
+            </div>
           </div>
-          <div className="text-xl md:text-[32px] font-bold text-[#00D924] leading-none tracking-[-0.5px]">
-            ${(stats?.total_volume || 0).toFixed(2)}
-          </div>
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Failed Payments</p>
+          <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
+            {(stats?.total_payments || 0) - (stats?.confirmed_payments || 0) - (stats?.pending_payments || 0)}
+          </h3>
         </div>
-        <div className="bg-white rounded-lg border border-[#E3E8EE] p-3 md:p-4 transition-all shadow-[0_1px_3px_rgba(0,0,0,0.08)] hover:-translate-y-px hover:shadow-[0_2px_6px_rgba(0,0,0,0.1)]">
-          <div className="text-[#425466] text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.6px] mb-1 md:mb-2">
-            Confirmed
+
+        {/* Current Balance */}
+        <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-primary/20 transition-all group">
+          <div className="mb-4">
+            <div className="p-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg text-amber-600 dark:text-amber-400 inline-block">
+              <span className="material-symbols-outlined text-[24px]">account_balance_wallet</span>
+            </div>
           </div>
-          <div className="text-xl md:text-[32px] font-bold text-[#00D924] leading-none tracking-[-0.5px]">
-            {stats?.confirmed_payments || 0}
-          </div>
-        </div>
-        <div className="bg-white rounded-lg border border-[#E3E8EE] p-3 md:p-4 transition-all shadow-[0_1px_3px_rgba(0,0,0,0.08)] hover:-translate-y-px hover:shadow-[0_2px_6px_rgba(0,0,0,0.1)]">
-          <div className="text-[#425466] text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.6px] mb-1 md:mb-2">
-            Pending
-          </div>
-          <div className="text-xl md:text-[32px] font-bold text-[#FF9500] leading-none tracking-[-0.5px]">
-            {stats?.pending_payments || 0}
-          </div>
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Current Balance</p>
+          <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
+            ${((stats?.total_volume || 0) * 0.034).toLocaleString('en-US', { minimumFractionDigits: 0 })}
+          </h3>
         </div>
       </div>
 
-      {/* Analytics Charts */}
-      <div className="mt-6 md:mt-8">
-        <h2 className="mb-4 md:mb-5 text-[#1A1F36] text-base md:text-lg font-semibold">Analytics</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 mb-8">
-          {/* Transactions Chart */}
-          <div className="bg-white rounded-xl p-5 shadow-[0_2px_4px_rgba(0,0,0,0.05)] border border-[#E3E8EE]">
-            <h3 className="mb-4 text-[#697386] text-[13px] font-semibold uppercase tracking-[0.5px]">
-              Transactions (30 Days)
-            </h3>
-            <div className="h-[180px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={transactionsData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="transactionsGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#635bff" stopOpacity={0.3} />
-                      <stop offset="100%" stopColor="#635bff" stopOpacity={0.05} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E3E8EE" vertical={false} />
-                  <XAxis 
-                    dataKey="date" 
-                    tick={{ fill: '#697386', fontSize: 10 }} 
-                    tickLine={false}
-                    axisLine={{ stroke: '#E3E8EE' }}
-                  />
-                  <YAxis 
-                    tick={{ fill: '#697386', fontSize: 10 }} 
-                    tickLine={false}
-                    axisLine={false}
-                    allowDecimals={false}
-                  />
-                  <Tooltip content={<CustomTooltip formatter={(v) => `${v} transactions`} />} />
-                  <Area
-                    type="monotone"
-                    dataKey="value"
-                    stroke="#635bff"
-                    strokeWidth={2.5}
-                    fill="url(#transactionsGradient)"
-                    dot={{ fill: '#635bff', strokeWidth: 2, stroke: '#fff', r: 4 }}
-                    activeDot={{ fill: '#635bff', strokeWidth: 2, stroke: '#fff', r: 6 }}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
+      {/* Transaction Volume Chart */}
+      <div className="bg-white dark:bg-[#1f162b] p-6 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <div>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Transaction Volume</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Daily revenue over the last 30 days</p>
           </div>
-
-          {/* Volume Chart */}
-          <div className="bg-white rounded-xl p-5 shadow-[0_2px_4px_rgba(0,0,0,0.05)] border border-[#E3E8EE]">
-            <h3 className="mb-4 text-[#697386] text-[13px] font-semibold uppercase tracking-[0.5px]">
-              Volume (USD)
-            </h3>
-            <div className="h-[180px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={volumeData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="volumeGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#10b981" stopOpacity={1} />
-                      <stop offset="100%" stopColor="#10b981" stopOpacity={0.6} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E3E8EE" vertical={false} />
-                  <XAxis 
-                    dataKey="date" 
-                    tick={{ fill: '#697386', fontSize: 10 }} 
-                    tickLine={false}
-                    axisLine={{ stroke: '#E3E8EE' }}
-                  />
-                  <YAxis 
-                    tick={{ fill: '#697386', fontSize: 10 }} 
-                    tickLine={false}
-                    axisLine={false}
-                    tickFormatter={(value) => `$${value}`}
-                  />
-                  <Tooltip content={<CustomTooltip formatter={(v) => `$${v.toFixed(2)}`} />} />
-                  <Bar 
-                    dataKey="value" 
-                    fill="url(#volumeGradient)" 
-                    radius={[4, 4, 0, 0]}
-                    maxBarSize={40}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          {/* API Calls Chart */}
-          <div className="bg-white rounded-xl p-5 shadow-[0_2px_4px_rgba(0,0,0,0.05)] border border-[#E3E8EE]">
-            <h3 className="mb-4 text-[#697386] text-[13px] font-semibold uppercase tracking-[0.5px]">
-              API Calls (30 Days)
-            </h3>
-            <div className="h-[180px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={apiCallsData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="apiCallsGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.3} />
-                      <stop offset="100%" stopColor="#f59e0b" stopOpacity={0.05} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E3E8EE" vertical={false} />
-                  <XAxis 
-                    dataKey="date" 
-                    tick={{ fill: '#697386', fontSize: 10 }} 
-                    tickLine={false}
-                    axisLine={{ stroke: '#E3E8EE' }}
-                  />
-                  <YAxis 
-                    tick={{ fill: '#697386', fontSize: 10 }} 
-                    tickLine={false}
-                    axisLine={false}
-                    allowDecimals={false}
-                  />
-                  <Tooltip content={<CustomTooltip formatter={(v) => `${v} calls`} />} />
-                  <Area
-                    type="monotone"
-                    dataKey="value"
-                    stroke="#f59e0b"
-                    strokeWidth={2.5}
-                    fill="url(#apiCallsGradient)"
-                    dot={{ fill: '#f59e0b', strokeWidth: 2, stroke: '#fff', r: 4 }}
-                    activeDot={{ fill: '#f59e0b', strokeWidth: 2, stroke: '#fff', r: 6 }}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          {/* Success Rate Chart */}
-          <div className="bg-white rounded-xl p-5 shadow-[0_2px_4px_rgba(0,0,0,0.05)] border border-[#E3E8EE]">
-            <h3 className="mb-4 text-[#697386] text-[13px] font-semibold uppercase tracking-[0.5px]">
-              Success Rate (%)
-            </h3>
-            <div className="h-[180px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={successRateData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="successRateGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.3} />
-                      <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0.05} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E3E8EE" vertical={false} />
-                  <XAxis 
-                    dataKey="date" 
-                    tick={{ fill: '#697386', fontSize: 10 }} 
-                    tickLine={false}
-                    axisLine={{ stroke: '#E3E8EE' }}
-                  />
-                  <YAxis 
-                    tick={{ fill: '#697386', fontSize: 10 }} 
-                    tickLine={false}
-                    axisLine={false}
-                    domain={[0, 100]}
-                    tickFormatter={(value) => `${value}%`}
-                  />
-                  <Tooltip content={<CustomTooltip formatter={(v) => `${v.toFixed(1)}%`} />} />
-                  <Area
-                    type="monotone"
-                    dataKey="value"
-                    stroke="#8b5cf6"
-                    strokeWidth={2.5}
-                    fill="url(#successRateGradient)"
-                    dot={{ fill: '#8b5cf6', strokeWidth: 2, stroke: '#fff', r: 4 }}
-                    activeDot={{ fill: '#8b5cf6', strokeWidth: 2, stroke: '#fff', r: 6 }}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
+          {/* <div className="flex items-center bg-slate-100 dark:bg-white/5 rounded-lg p-1">
+            <button className="px-3 py-1 text-xs font-bold rounded-md bg-white dark:bg-white/10 shadow text-slate-900 dark:text-white">30D</button>
+            <button className="px-3 py-1 text-xs font-bold rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">7D</button>
+            <button className="px-3 py-1 text-xs font-bold rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">24H</button>
+          </div> */}
+        </div>
+        <div className="h-64 w-full flex items-end justify-between gap-1 sm:gap-2">
+          {volumeData.slice(0, 24).map((d, idx) => {
+            const height = maxVolume > 0 ? (d.value / maxVolume) * 100 : 10;
+            const opacity = 0.2 + (height / 100) * 0.6;
+            return (
+              <div
+                key={idx}
+                className="w-full rounded-t-sm hover:opacity-100 transition-all relative group cursor-pointer"
+                style={{ 
+                  height: `${Math.max(height, 5)}%`,
+                  backgroundColor: `rgba(139, 123, 247, ${opacity})`
+                }}
+              >
+                <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                  ${d.value.toLocaleString()}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

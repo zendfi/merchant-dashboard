@@ -1,18 +1,20 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { webhooks, WebhookStats } from '@/lib/api';
 import { useMerchant } from '@/lib/merchant-context';
 import { useNotification } from '@/lib/notifications';
 import WebhookModal from '@/components/WebhookModal';
 
 export default function WebhooksTab() {
-  const { merchant, refreshMerchant } = useMerchant();
+  const { merchant } = useMerchant();
   const { showNotification } = useNotification();
   const [stats, setStats] = useState<WebhookStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isTesting, setIsTesting] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
+
+  const isConfigured = !!(merchant?.webhook_url);
 
   useEffect(() => {
     loadStats();
@@ -31,113 +33,196 @@ export default function WebhooksTab() {
   };
 
   const handleTestWebhook = async () => {
+    if (!isConfigured) {
+      showNotification('Error', 'Please configure your webhook URL first', 'error');
+      return;
+    }
     setIsTesting(true);
     try {
-      const result = await webhooks.test();
-      
-      if (result.success) {
-        showNotification(
-          'Webhook Test Successful',
-          `Status: ${result.status_code}, Response time: ${result.response_time_ms}ms`,
-          'success'
-        );
-      } else {
-        showNotification(
-          'Webhook Test Failed',
-          result.error || result.message || 'Unknown error',
-          'error'
-        );
-      }
+      await webhooks.test();
+      showNotification('Test Sent!', 'A test webhook event has been sent to your endpoint', 'success');
     } catch (error) {
-      showNotification(
-        'Test Failed',
-        error instanceof Error ? error.message : 'Failed to test webhook',
-        'error'
-      );
+      showNotification('Test Failed', error instanceof Error ? error.message : 'Failed to send test webhook', 'error');
     } finally {
       setIsTesting(false);
     }
   };
 
-  const isConfigured = !!merchant?.webhook_url;
+  const statCards = [
+    {
+      label: 'Success Rate',
+      value: stats ? `${parseFloat(stats.success_rate || '0').toFixed(1)}%` : '—',
+      icon: 'trending_up',
+      color: 'emerald',
+    },
+    {
+      label: 'Total Sent',
+      value: stats?.total_deliveries?.toLocaleString() || '0',
+      icon: 'send',
+      color: 'primary',
+    },
+    {
+      label: 'Successful',
+      value: stats?.successful_deliveries?.toLocaleString() || '0',
+      icon: 'check_circle',
+      color: 'emerald',
+    },
+    {
+      label: 'Failed',
+      value: stats?.failed_deliveries?.toLocaleString() || '0',
+      icon: 'error',
+      color: 'rose',
+    },
+  ];
+
+  const webhookEvents = [
+    { name: 'payment.completed', description: 'When a payment is successfully completed' },
+    { name: 'payment.failed', description: 'When a payment fails or is declined' },
+    { name: 'payment.pending', description: 'When a payment is initiated and pending' },
+    { name: 'payment.expired', description: 'When a payment link expires without completion' },
+    { name: 'payout.completed', description: 'When a payout is successfully sent' },
+    { name: 'payout.failed', description: 'When a payout fails to process' },
+  ];
+
+  const colorMap: Record<string, { bg: string; text: string; border: string; iconBg: string }> = {
+    emerald: {
+      bg: 'bg-emerald-50 dark:bg-emerald-900/20',
+      text: 'text-emerald-600 dark:text-emerald-400',
+      border: 'border-emerald-100 dark:border-emerald-800',
+      iconBg: 'bg-emerald-100 dark:bg-emerald-900/40',
+    },
+    primary: {
+      bg: 'bg-primary/5 dark:bg-primary/10',
+      text: 'text-primary',
+      border: 'border-primary/10 dark:border-primary/20',
+      iconBg: 'bg-primary/10 dark:bg-primary/20',
+    },
+    rose: {
+      bg: 'bg-rose-50 dark:bg-rose-900/20',
+      text: 'text-rose-600 dark:text-rose-400',
+      border: 'border-rose-100 dark:border-rose-800',
+      iconBg: 'bg-rose-100 dark:bg-rose-900/40',
+    },
+  };
 
   return (
-    <div>
-      <h1 className="mb-4 md:mb-6 text-lg md:text-xl font-semibold text-[#0A2540]">Webhook Configuration</h1>
-      <h2 className="mb-3 md:mb-4 text-base md:text-lg font-semibold text-[#0A2540]">Webhook Settings</h2>
-
-      {/* Webhook Status */}
-      <div
-        className={`flex items-center gap-2 p-2.5 px-3 bg-white rounded-md border text-xs md:text-[13px] shadow-[0_1px_3px_rgba(0,0,0,0.08)] ${
-          isConfigured
-            ? 'border-[#00D924] bg-[#ECFDF5]'
-            : 'border-[#FF9500] bg-[#FEF3C7]'
-        }`}
-      >
-        <span
-          className={`w-2 h-2 rounded-full ${
-            isConfigured ? 'bg-[#00D924]' : 'bg-[#FF9500]'
-          }`}
-        />
-        <span className="break-all">
-          <strong>Webhook:</strong>{' '}
-          {isConfigured
-            ? <span className="hidden sm:inline">Configured at {merchant?.webhook_url}</span>
-            : 'Not configured'}
-          {isConfigured && (
-            <span className="sm:hidden">Configured</span>
-          )}
-          {!isConfigured && (
-            <span className="hidden sm:inline"> - Set up webhooks to receive real-time notifications</span>
-          )}
-        </span>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Webhooks</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Receive real-time notifications for payment events</p>
+        </div>
+        <div className="flex gap-3">
+          <button
+            onClick={handleTestWebhook}
+            disabled={isTesting || !isConfigured}
+            className="px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-xl font-semibold text-sm cursor-pointer transition-all hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            <span className="material-symbols-outlined text-[18px]">send</span>
+            {isTesting ? 'Sending...' : 'Test Webhook'}
+          </button>
+          <button
+            onClick={() => setShowModal(true)}
+            className="px-4 py-2.5 bg-primary text-white rounded-xl font-semibold text-sm cursor-pointer transition-all hover:bg-primary/90 flex items-center gap-2"
+          >
+            <span className="material-symbols-outlined text-[18px]">{isConfigured ? 'edit' : 'add'}</span>
+            {isConfigured ? 'Update Webhook' : 'Configure Webhook'}
+          </button>
+        </div>
       </div>
 
-      {/* Webhook Stats */}
-      {stats && stats.total_deliveries > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-2.5 my-3">
-          <div className="p-2.5 px-3 bg-white rounded-md border border-[#E3E8EE] shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
-            <div className="text-[10px] text-[#425466] uppercase tracking-[0.6px] font-bold mb-1">
-              Success Rate
-            </div>
-            <div className="text-base md:text-lg font-bold text-[#00D924]">{stats.success_rate}%</div>
+      {/* Status Banner */}
+      {isConfigured ? (
+        <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-4 border border-emerald-200 dark:border-emerald-800 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center">
+            <span className="material-symbols-outlined text-emerald-600 dark:text-emerald-400 text-xl">check_circle</span>
           </div>
-          <div className="p-2.5 px-3 bg-white rounded-md border border-[#E3E8EE] shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
-            <div className="text-[10px] text-[#425466] uppercase tracking-[0.6px] font-bold mb-1">
-              Total Sent
-            </div>
-            <div className="text-base md:text-lg font-bold text-[#0A2540]">{stats.total_deliveries}</div>
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">Webhook Active</div>
+            <div className="text-xs text-emerald-600 dark:text-emerald-400 truncate">{merchant?.webhook_url}</div>
           </div>
-          <div className="p-2.5 px-3 bg-white rounded-md border border-[#E3E8EE] shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
-            <div className="text-[10px] text-[#425466] uppercase tracking-[0.6px] font-bold mb-1">
-              Successful
-            </div>
-            <div className="text-base md:text-lg font-bold text-[#0A2540]">{stats.successful_deliveries}</div>
+        </div>
+      ) : (
+        <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-4 border border-amber-200 dark:border-amber-800 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
+            <span className="material-symbols-outlined text-amber-600 dark:text-amber-400 text-xl">warning</span>
           </div>
-          <div className="p-2.5 px-3 bg-white rounded-md border border-[#E3E8EE] shadow-[0_1px_3px_rgba(0,0,0,0.08)]">
-            <div className="text-[10px] text-[#425466] uppercase tracking-[0.6px] font-bold mb-1">
-              Failed
-            </div>
-            <div className="text-base md:text-lg font-bold text-[#0A2540]">{stats.failed_deliveries}</div>
+          <div className="flex-1">
+            <div className="text-sm font-semibold text-amber-800 dark:text-amber-300">No Webhook Configured</div>
+            <div className="text-xs text-amber-600 dark:text-amber-400">Set up a webhook URL to receive real-time payment notifications</div>
           </div>
         </div>
       )}
 
-      {/* Actions */}
-      <div className="flex gap-2 mt-3 flex-wrap">
-        <button
-          onClick={() => setShowModal(true)}
-          className="px-3 md:px-4 py-2 rounded-md text-xs md:text-[13px] font-semibold cursor-pointer transition-all inline-flex items-center gap-1.5 bg-[#635BFF] text-white border-none shadow-[0_1px_3px_rgba(0,0,0,0.12)] hover:bg-[#5449D6] hover:-translate-y-px hover:shadow-[0_2px_6px_rgba(0,0,0,0.15)]"
-        >
-          Update Webhook
-        </button>
-        <button
-          onClick={handleTestWebhook}
-          disabled={isTesting || !isConfigured}
-          className="px-3 md:px-4 py-2 rounded-md text-xs md:text-[13px] font-semibold cursor-pointer transition-all inline-flex items-center gap-1.5 bg-white text-[#635BFF] border border-[#E3E8EE] shadow-[0_1px_3px_rgba(0,0,0,0.08)] hover:bg-[#FAFBFC] hover:border-[#635BFF] disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isTesting ? 'Testing...' : 'Test Webhook'}
-        </button>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {statCards.map((card) => {
+          const colors = colorMap[card.color] || colorMap.primary;
+          return (
+            <div
+              key={card.label}
+              className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div className={`w-9 h-9 rounded-lg ${colors.iconBg} flex items-center justify-center`}>
+                  <span className={`material-symbols-outlined text-[20px] ${colors.text}`}>{card.icon}</span>
+                </div>
+              </div>
+              <div className="text-2xl font-bold text-slate-900 dark:text-white mb-0.5">
+                {isLoading ? '—' : card.value}
+              </div>
+              <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">{card.label}</div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Webhook Events */}
+      <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800">
+        <div className="p-5 border-b border-slate-100 dark:border-slate-800">
+          <h3 className="text-base font-bold text-slate-900 dark:text-white">Supported Events</h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Events that will be sent to your webhook endpoint</p>
+        </div>
+        <div className="divide-y divide-slate-100 dark:divide-slate-800">
+          {webhookEvents.map((event) => (
+            <div key={event.name} className="px-5 py-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-primary/10 dark:bg-primary/20 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-primary text-[18px]">webhook</span>
+                </div>
+                <div>
+                  <div className="font-mono text-sm font-semibold text-slate-900 dark:text-white">{event.name}</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">{event.description}</div>
+                </div>
+              </div>
+              <span className="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 px-2.5 py-1 rounded-lg text-[11px] font-semibold uppercase">Active</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Webhook Payload Example */}
+      <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800">
+        <div className="p-5 border-b border-slate-100 dark:border-slate-800">
+          <h3 className="text-base font-bold text-slate-900 dark:text-white">Example Payload</h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">This is the JSON payload sent to your webhook URL</p>
+        </div>
+        <div className="p-5">
+          <pre className="bg-slate-50 dark:bg-[#281e36] rounded-xl p-4 border border-slate-100 dark:border-slate-800 text-sm font-mono text-slate-900 dark:text-slate-300 overflow-x-auto">
+{`{
+  "event": "payment.completed",
+  "data": {
+    "id": "pay_1234567890",
+    "amount": 10.00,
+    "token": "USDC",
+    "status": "completed",
+    "created_at": "2024-01-15T10:30:00Z"
+  },
+  "timestamp": "2024-01-15T10:30:05Z"
+}`}
+          </pre>
+        </div>
       </div>
 
       {/* Webhook Modal */}
@@ -146,8 +231,9 @@ export default function WebhooksTab() {
         onClose={() => setShowModal(false)}
         currentUrl={merchant?.webhook_url || null}
         onSaved={() => {
-          refreshMerchant();
+          setShowModal(false);
           loadStats();
+          showNotification('Webhook Updated', 'Your webhook URL has been saved', 'success');
         }}
       />
     </div>

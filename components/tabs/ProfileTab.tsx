@@ -13,46 +13,50 @@ export default function ProfileTab({ onSwitchTab }: ProfileTabProps) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="spinner spinner-dark" />
+        <div className="w-8 h-8 border-3 border-slate-200 border-t-primary rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div>
-      <h1 className="mb-4 md:mb-6 text-lg md:text-xl font-semibold text-[#0A2540]">Profile & Settings</h1>
+    <div className="space-y-8">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Profile & Settings</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400">Manage your account information and preferences</p>
+      </div>
 
       {/* Account Overview */}
-      <div className="mb-6 md:mb-8">
-        <h2 className="mb-3 md:mb-4 text-base md:text-lg font-semibold text-[#0A2540]">Account Information</h2>
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Account Information</h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-5">
-          <div className="bg-[#F6F9FC] p-4 md:p-5 rounded-xl">
-            <strong className="block mb-1.5 md:mb-2 text-[#697386] text-[10px] md:text-xs uppercase tracking-[0.5px]">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               Business Name
-            </strong>
-            <p className="text-[#1A1F36] m-0 text-sm md:text-base font-semibold">{merchant?.name}</p>
+            </span>
+            <p className="text-slate-900 dark:text-white mt-1 font-semibold">{merchant?.name}</p>
           </div>
 
-          <div className="bg-[#F6F9FC] p-4 md:p-5 rounded-xl">
-            <strong className="block mb-1.5 md:mb-2 text-[#697386] text-[10px] md:text-xs uppercase tracking-[0.5px]">
+          <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               Email Address
-            </strong>
-            <p className="text-[#1A1F36] m-0 text-sm md:text-base break-all">{merchant?.email}</p>
+            </span>
+            <p className="text-slate-900 dark:text-white mt-1 break-all">{merchant?.email}</p>
           </div>
 
-          <div className="bg-[#F6F9FC] p-4 md:p-5 rounded-xl">
-            <strong className="block mb-1.5 md:mb-2 text-[#697386] text-[10px] md:text-xs uppercase tracking-[0.5px]">
+          <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               Account ID
-            </strong>
-            <p className="text-[#1A1F36] m-0 font-mono text-xs md:text-sm break-all">{merchant?.id}</p>
+            </span>
+            <p className="text-slate-900 dark:text-white mt-1 font-mono text-sm break-all">{merchant?.id}</p>
           </div>
 
-          <div className="bg-[#F6F9FC] p-4 md:p-5 rounded-xl">
-            <strong className="block mb-1.5 md:mb-2 text-[#697386] text-[10px] md:text-xs uppercase tracking-[0.5px]">
+          <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               Member Since
-            </strong>
-            <p className="text-[#1A1F36] m-0 text-sm md:text-base">
+            </span>
+            <p className="text-slate-900 dark:text-white mt-1">
               {merchant?.created_at
                 ? new Date(merchant.created_at).toLocaleDateString('en-US', {
                     month: 'long',
@@ -66,67 +70,58 @@ export default function ProfileTab({ onSwitchTab }: ProfileTabProps) {
       </div>
 
       {/* Wallet Information */}
-      <div className="mb-6 md:mb-8">
-        <h2 className="mb-3 md:mb-4 text-base md:text-lg font-semibold text-[#0A2540]">Wallet Configuration</h2>
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Wallet Configuration</h2>
 
-        <div className="bg-[#F6F9FC] p-4 md:p-5 rounded-xl">
-          <strong className="block mb-2 md:mb-3 text-[#697386] text-[10px] md:text-xs uppercase tracking-[0.5px]">
+        <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800">
+          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
             Settlement Wallet Address
-          </strong>
-          <div className="bg-[#FAFBFC] p-2.5 md:p-3 px-3 md:px-3.5 rounded-md border border-[#E3E8EE] font-mono text-[10px] md:text-xs break-all text-[#0A2540] mb-2">
+          </span>
+          <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-lg border border-slate-200 dark:border-slate-700 font-mono text-sm break-all text-slate-900 dark:text-white mt-3">
             {merchant?.wallet_address}
           </div>
-          <p className="text-[#697386] text-xs md:text-[13px] m-0">
+          <p className="text-slate-500 dark:text-slate-400 text-sm mt-2">
             All payments are automatically settled to this wallet address.
           </p>
         </div>
       </div>
 
       {/* Security & Access */}
-      <div className="mb-6 md:mb-8">
-        <h2 className="mb-3 md:mb-4 text-base md:text-lg font-semibold text-[#0A2540]">Security & Access</h2>
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Security & Access</h2>
 
-        <div className="grid gap-3 md:gap-4">
-          <div className="bg-[#F6F9FC] p-4 md:p-5 rounded-xl flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-0">
+        <div className="space-y-3">
+          <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
             <div>
-              <strong className="block mb-1 text-[#1A1F36] text-sm md:text-base">API Keys</strong>
-              <p className="text-[#697386] m-0 text-xs md:text-[13px]">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-[20px] text-primary">key</span>
+                <strong className="text-slate-900 dark:text-white">API Keys</strong>
+              </div>
+              <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
                 Manage your API keys for integration
               </p>
             </div>
             <button
               onClick={() => onSwitchTab('api-keys')}
-              className="px-4 py-2 bg-white border border-[#E3E8EE] rounded-md text-[#5B6EE8] text-sm font-medium cursor-pointer hover:bg-[#FAFBFC] w-full sm:w-auto"
+              className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-primary text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
             >
               View Keys
             </button>
           </div>
 
-          <div className="bg-[#F6F9FC] p-5 rounded-xl flex justify-between items-center">
+          <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
             <div>
-              <strong className="block mb-1 text-[#1A1F36]">Session Keys</strong>
-              <p className="text-[#697386] m-0 text-[13px]">
-                Temporary payment authorization keys
-              </p>
-            </div>
-            <button
-              onClick={() => onSwitchTab('session-keys')}
-              className="px-4 py-2 bg-white border border-[#E3E8EE] rounded-md text-[#5B6EE8] font-medium cursor-pointer hover:bg-[#FAFBFC]"
-            >
-              View Keys
-            </button>
-          </div>
-
-          <div className="bg-[#F6F9FC] p-5 rounded-xl flex justify-between items-center">
-            <div>
-              <strong className="block mb-1 text-[#1A1F36]">Webhooks</strong>
-              <p className="text-[#697386] m-0 text-[13px]">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-[20px] text-primary">webhook</span>
+                <strong className="text-slate-900 dark:text-white">Webhooks</strong>
+              </div>
+              <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
                 Configure real-time event notifications
               </p>
             </div>
             <button
               onClick={() => onSwitchTab('webhooks')}
-              className="px-4 py-2 bg-white border border-[#E3E8EE] rounded-md text-[#5B6EE8] font-medium cursor-pointer hover:bg-[#FAFBFC]"
+              className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-primary text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
             >
               Configure
             </button>
@@ -135,68 +130,50 @@ export default function ProfileTab({ onSwitchTab }: ProfileTabProps) {
       </div>
 
       {/* Wallet Security */}
-      <div className="mb-8">
-        <h2 className="mb-4 text-lg font-semibold text-[#0A2540]">Wallet Security</h2>
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Wallet Security</h2>
         <DangerZone />
       </div>
 
       {/* Resources */}
-      <div>
-        <h2 className="mb-4 text-lg font-semibold text-[#0A2540]">Resources</h2>
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Resources</h2>
 
-        <div className="grid gap-4">
+        <div className="grid gap-3">
           <a
             href="https://zendfi.tech/docs"
             target="_blank"
             rel="noopener noreferrer"
-            className="bg-[#F6F9FC] p-5 rounded-xl flex justify-between items-center no-underline text-inherit hover:bg-[#EEF2FF]"
+            className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800 flex justify-between items-center no-underline hover:border-primary/30 transition-colors"
           >
             <div>
-              <strong className="block mb-1 text-[#1A1F36]">Documentation</strong>
-              <p className="text-[#697386] m-0 text-[13px]">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-[20px] text-primary">description</span>
+                <strong className="text-slate-900 dark:text-white">Documentation</strong>
+              </div>
+              <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
                 API reference, guides, and tutorials
               </p>
             </div>
-            <svg
-              width="20"
-              height="20"
-              fill="none"
-              stroke="#5B6EE8"
-              viewBox="0 0 24 24"
-              strokeWidth="2"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-              />
-            </svg>
+            <span className="material-symbols-outlined text-[20px] text-primary">open_in_new</span>
           </a>
 
           <a
             href="https://github.com/zendfi"
             target="_blank"
             rel="noopener noreferrer"
-            className="bg-[#F6F9FC] p-5 rounded-xl flex justify-between items-center no-underline text-inherit hover:bg-[#EEF2FF]"
+            className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800 flex justify-between items-center no-underline hover:border-primary/30 transition-colors"
           >
             <div>
-              <strong className="block mb-1 text-[#1A1F36]">GitHub</strong>
-              <p className="text-[#697386] m-0 text-[13px]">Open source code and examples</p>
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-[20px] text-primary">code</span>
+                <strong className="text-slate-900 dark:text-white">GitHub</strong>
+              </div>
+              <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+                Open source code and examples
+              </p>
             </div>
-            <svg
-              width="20"
-              height="20"
-              fill="none"
-              stroke="#5B6EE8"
-              viewBox="0 0 24 24"
-              strokeWidth="2"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-              />
-            </svg>
+            <span className="material-symbols-outlined text-[20px] text-primary">open_in_new</span>
           </a>
         </div>
       </div>
