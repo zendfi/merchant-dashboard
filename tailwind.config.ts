@@ -1,6 +1,7 @@
 import type { Config } from 'tailwindcss';
 
 const config: Config = {
+  darkMode: 'class',
   content: [
     './pages/**/*.{js,ts,jsx,tsx,mdx}',
     './components/**/*.{js,ts,jsx,tsx,mdx}',
@@ -9,18 +10,24 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // ZendFi Brand Colors
+        // ZendFi Brand Colors - Light Lilac Theme
         primary: {
-          50: '#F0F4FF',
-          100: '#D1DBFF',
-          200: '#A3B7FF',
-          300: '#7593FF',
-          400: '#635BFF',
-          500: '#5449D6',
-          600: '#453BB3',
-          700: '#362D8F',
-          800: '#271F6C',
-          900: '#180F48',
+          DEFAULT: '#8B7BF7',
+          light: '#ede9fe',
+          50: '#f5f3ff',
+          100: '#ede9fe',
+          200: '#ddd6fe',
+          300: '#c4b5fd',
+          400: '#a78bfa',
+          500: '#8B7BF7',
+          600: '#7c6dee',
+          700: '#6d5fd5',
+          800: '#5b4fb3',
+          900: '#4a4091',
+        },
+        background: {
+          light: '#f7f6f8',
+          dark: '#191022',
         },
         success: {
           50: '#ECFDF5',
@@ -72,7 +79,8 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'sans-serif'],
+        sans: ['Manrope', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'sans-serif'],
+        display: ['Manrope', 'sans-serif'],
         mono: ['JetBrains Mono', 'Courier New', 'monospace'],
       },
       boxShadow: {

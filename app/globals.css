@@ -1,10 +1,15 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
   --foreground-rgb: 10, 37, 64;
-  --background-rgb: 250, 251, 252;
+  --background-rgb: 247, 246, 248;
+  --primary: #8B7BF7;
+  --primary-light: #ede9fe;
 }
 
 * {
@@ -14,16 +19,152 @@
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-  background: #FAFBFC;
-  color: #0A2540;
-  line-height: 1.4;
-  font-size: 13px;
+  font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  background: #f7f6f8;
+  color: #0f172a;
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Material Symbols styling */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.material-symbols-filled {
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
 
 /* Spinner Animation */
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* Loading Screen Animations */
+@keyframes loading-float {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-20px) scale(1.05); }
+}
+
+@keyframes loading-float-delayed {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(15px) scale(1.08); }
+}
+
+@keyframes loading-pulse {
+  0%, 100% { opacity: 0.4; transform: scale(1.5); }
+  50% { opacity: 0.8; transform: scale(1.7); }
+}
+
+@keyframes loading-shimmer {
+  0% { transform: translateX(-100%) rotate(15deg); }
+  100% { transform: translateX(200%) rotate(15deg); }
+}
+
+@keyframes loading-logo-entrance {
+  0% { opacity: 0; transform: scale(0.5) translateY(10px); }
+  60% { opacity: 1; transform: scale(1.05) translateY(-2px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes loading-text-entrance {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes loading-bar-entrance {
+  0% { opacity: 0; transform: scaleX(0.8); }
+  100% { opacity: 1; transform: scaleX(1); }
+}
+
+@keyframes loading-dot-bounce {
+  0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+  40% { opacity: 1; transform: scale(1.2); }
+}
+
+@keyframes loading-fadeout {
+  0% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.02); }
+}
+
+.loading-float {
+  animation: loading-float 6s ease-in-out infinite;
+}
+
+.loading-float-delayed {
+  animation: loading-float-delayed 7s ease-in-out infinite;
+  animation-delay: 1s;
+}
+
+.loading-pulse {
+  animation: loading-pulse 2s ease-in-out infinite;
+}
+
+.loading-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.15) 50%,
+    transparent 100%
+  );
+  animation: loading-shimmer 2s ease-in-out infinite;
+}
+
+.loading-logo-entrance {
+  animation: loading-logo-entrance 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.loading-text-entrance {
+  opacity: 0;
+  animation: loading-text-entrance 0.6s ease-out 0.3s forwards;
+}
+
+.loading-bar-entrance {
+  opacity: 0;
+  animation: loading-bar-entrance 0.5s ease-out 0.5s forwards;
+}
+
+.loading-dot-1 {
+  animation: loading-dot-bounce 1.4s ease-in-out infinite;
+}
+
+.loading-dot-2 {
+  animation: loading-dot-bounce 1.4s ease-in-out 0.2s infinite;
+}
+
+.loading-dot-3 {
+  animation: loading-dot-bounce 1.4s ease-in-out 0.4s infinite;
+}
+
+.loading-fadeout {
+  animation: loading-fadeout 0.4s ease-out forwards;
+  pointer-events: none;
 }
 
 .spinner {
