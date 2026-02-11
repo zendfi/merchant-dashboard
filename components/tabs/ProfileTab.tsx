@@ -1,6 +1,7 @@
 'use client';
 
 import { useMerchant } from '@/lib/merchant-context';
+import { useCurrency } from '@/lib/currency-context';
 import DangerZone from '@/components/DangerZone';
 
 interface ProfileTabProps {
@@ -9,6 +10,7 @@ interface ProfileTabProps {
 
 export default function ProfileTab({ onSwitchTab }: ProfileTabProps) {
   const { merchant, isLoading } = useMerchant();
+  const { currency, toggleCurrency, exchangeRate, isLoadingRate } = useCurrency();
 
   if (isLoading) {
     return (
@@ -125,6 +127,57 @@ export default function ProfileTab({ onSwitchTab }: ProfileTabProps) {
             >
               Configure
             </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Display Preferences */}
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Display Preferences</h2>
+
+        <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-[20px] text-primary">currency_exchange</span>
+              <strong className="text-slate-900 dark:text-white">Display Currency</strong>
+            </div>
+            <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+              Choose how amounts are displayed across the dashboard
+            </p>
+            {isLoadingRate ? (
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
+                Loading exchange rate...
+              </p>
+            ) : exchangeRate ? (
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
+                Current rate: ₦{exchangeRate.toFixed(2)} = $1.00
+              </p>
+            ) : (
+              <p className="text-xs text-rose-500 dark:text-rose-400 mt-2">
+                Unable to load exchange rate
+              </p>
+            )}
+          </div>
+          <div className="flex items-center gap-3">
+            <span className={`text-sm font-medium ${currency === 'USD' ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}>
+              USD
+            </span>
+            <button
+              type="button"
+              onClick={toggleCurrency}
+              className={`relative w-11 h-6 rounded-full transition-colors ${
+                currency === 'NGN' ? 'bg-primary' : 'bg-slate-200 dark:bg-slate-700'
+              }`}
+            >
+              <span
+                className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform shadow ${
+                  currency === 'NGN' ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </button>
+            <span className={`text-sm font-medium ${currency === 'NGN' ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}>
+              NGN
+            </span>
           </div>
         </div>
       </div>

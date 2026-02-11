@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useMode } from '@/lib/mode-context';
+import { useCurrency } from '@/lib/currency-context';
 import { transactions as transactionsApi, Transaction, merchant as merchantApi, DashboardStats } from '@/lib/api';
 
 interface TransactionsTabProps {
@@ -12,6 +13,7 @@ interface TransactionsTabProps {
 
 export default function TransactionsTab({ limit = 25, showViewAll = true, onCreatePayment }: TransactionsTabProps) {
   const { mode } = useMode();
+  const { currency, exchangeRate } = useCurrency();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -63,14 +65,14 @@ export default function TransactionsTab({ limit = 25, showViewAll = true, onCrea
   const exportToCSV = () => {
     if (filteredTransactions.length === 0) return;
 
-    const headers = ['Transaction ID', 'Status', 'Amount (USD)', 'Token', 'Customer Wallet', 'Date', 'Description'];
+    const headers = ['Transaction ID', 'Status', `Amount (${currency})`, 'Token', 'Customer Wallet', 'Date', 'Description'];
     const rows = filteredTransactions.map((tx) => {
       const metadata = tx.metadata as Record<string, string> | null;
       const description = metadata?.description || `Payment ${tx.id.slice(0, 8)}`;
       return [
         tx.id,
         tx.status || 'pending',
-        tx.amount_usd.toFixed(2),
+        formatAmount(tx.amount_usd),
         tx.token || 'USDC',
         tx.customer_wallet || 'Anonymous',
         new Date(tx.created_at).toISOString(),
@@ -122,6 +124,34 @@ export default function TransactionsTab({ limit = 25, showViewAll = true, onCrea
     return stats.pending_payments * avgAmount;
   };
 
+  // Convert USD amount to display currency
+  const convertAmount = (usdAmount: number): number => {
+    if (currency === 'NGN' && exchangeRate) {
+      return usdAmount * exchangeRate;
+    }
+    return usdAmount;
+  };
+
+  // Format amount for display
+  const formatAmount = (usdAmount: number): string => {
+    const displayValue = convertAmount(usdAmount);
+    if (currency === 'NGN') {
+      return `₦${displayValue.toFixed(2)}`;
+    } else {
+      return `$${displayValue.toFixed(2)}`;
+    }
+  };
+
+  // Format full amount (for stats cards)
+  const formatFullAmount = (usdAmount: number): string => {
+    const displayValue = convertAmount(usdAmount);
+    if (currency === 'NGN') {
+      return `₦${displayValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+    } else {
+      return `$${displayValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -162,7 +192,7 @@ export default function TransactionsTab({ limit = 25, showViewAll = true, onCrea
         <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800">
           <span className="text-sm text-slate-500 dark:text-slate-400">Total Volume (30d)</span>
           <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
-            ${(stats?.total_volume || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            {formatFullAmount(stats?.total_volume || 0)}
           </p>
         </div>
         <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800">
@@ -174,7 +204,7 @@ export default function TransactionsTab({ limit = 25, showViewAll = true, onCrea
         <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800">
           <span className="text-sm text-slate-500 dark:text-slate-400">Pending Amount</span>
           <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
-            ${calculatePendingAmount().toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            {formatFullAmount(calculatePendingAmount())}
           </p>
         </div>
       </div>
@@ -240,7 +270,7 @@ export default function TransactionsTab({ limit = 25, showViewAll = true, onCrea
                   {getStatusBadge(tx.status || 'pending')}
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="font-bold text-slate-900 dark:text-white">${tx.amount_usd.toFixed(2)}</span>
+                  <span className="font-bold text-slate-900 dark:text-white">{formatAmount(tx.amount_usd)}</span>
                   <span className="text-slate-500">{tx.token || 'USDC'}</span>
                 </div>
                 <div className="text-right text-slate-500 text-xs">
@@ -269,7 +299,7 @@ export default function TransactionsTab({ limit = 25, showViewAll = true, onCrea
                       <span className="text-amber-500 font-mono text-sm">{tx.id.slice(0, 8)}</span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="font-bold text-slate-900 dark:text-white">${tx.amount_usd.toFixed(2)}</span>
+                      <span className="font-bold text-slate-900 dark:text-white">{formatAmount(tx.amount_usd)}</span>
                     </td>
                     <td className="px-6 py-4 text-slate-600 dark:text-slate-400">
                       {tx.token || 'USDC'}

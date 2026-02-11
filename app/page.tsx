@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ModeProvider } from '@/lib/mode-context';
 import { MerchantProvider, useMerchant } from '@/lib/merchant-context';
 import { NotificationProvider } from '@/lib/notifications';
+import { CurrencyProvider } from '@/lib/currency-context';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
 import WalletModal from '@/components/WalletModal';
@@ -130,9 +131,11 @@ export default function DashboardPage() {
   return (
     <NotificationProvider>
       <ModeProvider>
-        <MerchantProvider>
-          <DashboardContent />
-        </MerchantProvider>
+        <CurrencyProvider>
+          <MerchantProvider>
+            <DashboardContent />
+          </MerchantProvider>
+        </CurrencyProvider>
       </ModeProvider>
     </NotificationProvider>
   );

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useMerchant } from '@/lib/merchant-context';
 import { useMode } from '@/lib/mode-context';
+import { useCurrency } from '@/lib/currency-context';
 import { merchant as merchantApi, DashboardStats, DashboardAnalytics, transactions as transactionsApi, Transaction } from '@/lib/api';
 
 interface OverviewTabProps {
@@ -12,6 +13,7 @@ interface OverviewTabProps {
 export default function OverviewTab({ onViewAllTransactions }: OverviewTabProps) {
   const { merchant } = useMerchant();
   const { mode } = useMode();
+  const { currency, exchangeRate } = useCurrency();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [analytics, setAnalytics] = useState<DashboardAnalytics | null>(null);
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
@@ -50,11 +52,40 @@ export default function OverviewTab({ onViewAllTransactions }: OverviewTabProps)
     return [0, nice * 0.25, nice * 0.5, nice * 0.75, nice].map(v => Math.round(v));
   })();
   const chartMax = yTicks[yTicks.length - 1] || 1;
-  const formatAmount = (v: number) => {
-    if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`;
-    if (v >= 1_000) return `$${(v / 1_000).toFixed(v >= 10_000 ? 0 : 1)}K`;
-    return `$${v}`;
+  
+  // Convert USD amount to display currency
+  const convertAmount = (usdAmount: number): number => {
+    if (currency === 'NGN' && exchangeRate) {
+      return usdAmount * exchangeRate;
+    }
+    return usdAmount;
   };
+
+  // Format amount for display
+  const formatAmount = (v: number) => {
+    const displayValue = convertAmount(v);
+    if (currency === 'NGN') {
+      if (displayValue >= 1_000_000_000) return `₦${(displayValue / 1_000_000_000).toFixed(1)}B`;
+      if (displayValue >= 1_000_000) return `₦${(displayValue / 1_000_000).toFixed(1)}M`;
+      if (displayValue >= 1_000) return `₦${(displayValue / 1_000).toFixed(displayValue >= 10_000 ? 0 : 1)}K`;
+      return `₦${Math.round(displayValue).toLocaleString('en-US')}`;
+    } else {
+      if (displayValue >= 1_000_000) return `$${(displayValue / 1_000_000).toFixed(1)}M`;
+      if (displayValue >= 1_000) return `$${(displayValue / 1_000).toFixed(displayValue >= 10_000 ? 0 : 1)}K`;
+      return `$${displayValue}`;
+    }
+  };
+
+  // Format full amount (for stats cards)
+  const formatFullAmount = (usdAmount: number): string => {
+    const displayValue = convertAmount(usdAmount);
+    if (currency === 'NGN') {
+      return `₦${Math.round(displayValue).toLocaleString('en-US', { minimumFractionDigits: 0 })}`;
+    } else {
+      return `$${displayValue.toLocaleString('en-US', { minimumFractionDigits: 0 })}`;
+    }
+  };
+
   const totalSlots = Math.max(30, volumeData.length);
 
   if (isLoading) {
@@ -99,7 +130,7 @@ export default function OverviewTab({ onViewAllTransactions }: OverviewTabProps)
           </div>
           <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Volume</p>
           <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
-            ${(stats?.total_volume || 0).toLocaleString('en-US', { minimumFractionDigits: 0 })}
+            {formatFullAmount(stats?.total_volume || 0)}
           </h3>
         </div>
 
@@ -140,7 +171,7 @@ export default function OverviewTab({ onViewAllTransactions }: OverviewTabProps)
           </div>
           <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Current Balance</p>
           <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
-            ${((stats?.total_volume || 0) * 0.034).toLocaleString('en-US', { minimumFractionDigits: 0 })}
+            {formatFullAmount((stats?.total_volume || 0) * 0.034)}
           </h3>
         </div>
       </div>
@@ -204,7 +235,10 @@ export default function OverviewTab({ onViewAllTransactions }: OverviewTabProps)
                         }}
                       >
                         <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 pointer-events-none">
-                          ${d.value.toLocaleString()}
+                          {currency === 'NGN' && exchangeRate 
+                            ? `₦${Math.round(d.value * exchangeRate).toLocaleString()}`
+                            : `$${d.value.toLocaleString()}`
+                          }
                         </div>
                       </div>
                     );

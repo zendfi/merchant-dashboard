@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ModeProvider, useMode } from '@/lib/mode-context';
 import { MerchantProvider, useMerchant } from '@/lib/merchant-context';
+import { CurrencyProvider, useCurrency } from '@/lib/currency-context';
 import { NotificationProvider } from '@/lib/notifications';
 import { transactions as transactionsApi, Transaction } from '@/lib/api';
 
@@ -13,6 +14,7 @@ function TransactionsContent() {
   const searchParams = useSearchParams();
   const { mode } = useMode();
   const { merchant } = useMerchant();
+  const { currency, exchangeRate } = useCurrency();
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -74,6 +76,24 @@ function TransactionsContent() {
     if (searchQuery) params.set('search', searchQuery);
     params.set('page', page.toString());
     router.push(`/transactions?${params.toString()}`);
+  };
+
+  // Convert USD amount to display currency
+  const convertAmount = (usdAmount: number): number => {
+    if (currency === 'NGN' && exchangeRate) {
+      return usdAmount * exchangeRate;
+    }
+    return usdAmount;
+  };
+
+  // Format amount for display
+  const formatAmount = (usdAmount: number): string => {
+    const displayValue = convertAmount(usdAmount);
+    if (currency === 'NGN') {
+      return `₦${displayValue.toFixed(2)}`;
+    } else {
+      return `$${displayValue.toFixed(2)}`;
+    }
   };
 
   const getStatusClass = (status: string | undefined) => {
@@ -308,7 +328,7 @@ function TransactionsContent() {
                         </span>
                       </td>
                       <td className="p-4 border-b border-[#F1F5F9]">
-                        <strong className="text-[#0A2540]">${tx.amount_usd.toFixed(2)}</strong>
+                        <strong className="text-[#0A2540]">{formatAmount(tx.amount_usd)}</strong>
                       </td>
                       <td className="p-4 border-b border-[#F1F5F9] text-sm">
                         {tx.token || 'USDC'}
@@ -390,9 +410,11 @@ export default function TransactionsPage() {
   return (
     <NotificationProvider>
       <ModeProvider>
-        <MerchantProvider>
-          <TransactionsPageWrapper />
-        </MerchantProvider>
+        <CurrencyProvider>
+          <MerchantProvider>
+            <TransactionsPageWrapper />
+          </MerchantProvider>
+        </CurrencyProvider>
       </ModeProvider>
     </NotificationProvider>
   );
