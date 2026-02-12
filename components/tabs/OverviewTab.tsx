@@ -52,7 +52,7 @@ export default function OverviewTab({ onViewAllTransactions }: OverviewTabProps)
     return [0, nice * 0.25, nice * 0.5, nice * 0.75, nice].map(v => Math.round(v));
   })();
   const chartMax = yTicks[yTicks.length - 1] || 1;
-  
+
   // Convert USD amount to display currency
   const convertAmount = (usdAmount: number): number => {
     if (currency === 'NGN' && exchangeRate) {
@@ -118,70 +118,70 @@ export default function OverviewTab({ onViewAllTransactions }: OverviewTabProps)
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
         {/* Total Volume */}
-        <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-primary/20 transition-all group">
-          <div className="mb-4">
-            <div className="p-2 bg-primary/10 dark:bg-primary/20 rounded-lg text-primary inline-block">
-              <span className="material-symbols-outlined text-[24px]">bar_chart</span>
+        <div className="bg-gradient-to-br from-white to-slate-50/50 dark:from-[#1f162b] dark:to-[#1a0d26] p-4 rounded-xl border border-slate-100 dark:border-slate-800 shadow-card hover:shadow-card-hover hover:border-primary/30 hover:-translate-y-0.5 transition-all duration-250 group">
+          <div className="mb-3">
+            <div className="p-1.5 bg-primary/10 dark:bg-primary/20 rounded-lg text-primary inline-block">
+              <span className="material-symbols-outlined text-[20px]">bar_chart</span>
             </div>
           </div>
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Volume</p>
-          <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
+          <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Total Volume</p>
+          <h3 className="text-xl font-bold text-slate-900 dark:text-white mt-0.5">
             {formatFullAmount(stats?.total_volume || 0)}
           </h3>
         </div>
 
         {/* Success Rate */}
-        <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-primary/20 transition-all group">
-          <div className="mb-4">
-            <div className="p-2 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg text-indigo-600 dark:text-indigo-400 inline-block">
-              <span className="material-symbols-outlined text-[24px]">check_circle</span>
+        <div className="bg-gradient-to-br from-white to-indigo-50/30 dark:from-[#1f162b] dark:to-indigo-950/20 p-4 rounded-xl border border-slate-100 dark:border-slate-800 shadow-card hover:shadow-card-hover hover:border-indigo-200 dark:hover:border-indigo-900 hover:-translate-y-0.5 transition-all duration-250 group">
+          <div className="mb-3">
+            <div className="p-1.5 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg text-indigo-600 dark:text-indigo-400 inline-block">
+              <span className="material-symbols-outlined text-[20px]">check_circle</span>
             </div>
           </div>
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Success Rate</p>
-          <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
-            {stats?.confirmed_payments && stats?.total_payments 
+          <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Success Rate</p>
+          <h3 className="text-xl font-bold text-slate-900 dark:text-white mt-0.5">
+            {stats?.confirmed_payments && stats?.total_payments
               ? ((stats.confirmed_payments / stats.total_payments) * 100).toFixed(1)
               : '99.9'}%
           </h3>
         </div>
 
         {/* Failed Payments */}
-        <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-primary/20 transition-all group">
-          <div className="mb-4">
-            <div className="p-2 bg-rose-50 dark:bg-rose-900/20 rounded-lg text-rose-600 dark:text-rose-400 inline-block">
-              <span className="material-symbols-outlined text-[24px]">error</span>
+        <div className="bg-gradient-to-br from-white to-rose-50/30 dark:from-[#1f162b] dark:to-rose-950/20 p-4 rounded-xl border border-slate-100 dark:border-slate-800 shadow-card hover:shadow-card-hover hover:border-rose-200 dark:hover:border-rose-900 hover:-translate-y-0.5 transition-all duration-250 group">
+          <div className="mb-3">
+            <div className="p-1.5 bg-rose-50 dark:bg-rose-900/20 rounded-lg text-rose-600 dark:text-rose-400 inline-block">
+              <span className="material-symbols-outlined text-[20px]">error</span>
             </div>
           </div>
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Failed Payments</p>
-          <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
+          <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Failed Payments</p>
+          <h3 className="text-xl font-bold text-slate-900 dark:text-white mt-0.5">
             {(stats?.total_payments || 0) - (stats?.confirmed_payments || 0) - (stats?.pending_payments || 0)}
           </h3>
         </div>
 
         {/* Current Balance */}
-        <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-primary/20 transition-all group">
-          <div className="mb-4">
-            <div className="p-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg text-amber-600 dark:text-amber-400 inline-block">
-              <span className="material-symbols-outlined text-[24px]">account_balance_wallet</span>
+        <div className="bg-gradient-to-br from-white to-amber-50/30 dark:from-[#1f162b] dark:to-amber-950/20 p-4 rounded-xl border border-slate-100 dark:border-slate-800 shadow-card hover:shadow-card-hover hover:border-amber-200 dark:hover:border-amber-900 hover:-translate-y-0.5 transition-all duration-250 group">
+          <div className="mb-3">
+            <div className="p-1.5 bg-amber-50 dark:bg-amber-900/20 rounded-lg text-amber-600 dark:text-amber-400 inline-block">
+              <span className="material-symbols-outlined text-[20px]">account_balance_wallet</span>
             </div>
           </div>
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Current Balance</p>
-          <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
+          <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Current Balance</p>
+          <h3 className="text-xl font-bold text-slate-900 dark:text-white mt-0.5">
             {formatFullAmount((stats?.total_volume || 0) * 0.034)}
           </h3>
         </div>
       </div>
 
       {/* Transaction Volume Chart */}
-      <div className="bg-white dark:bg-[#1f162b] p-6 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+      <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800 shadow-card">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-5">
           <div>
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Transaction Volume</h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Daily revenue over the last 30 days</p>
+            <h3 className="text-base font-bold text-slate-900 dark:text-white">Transaction Volume</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Daily revenue over the last 30 days</p>
           </div>
           {/* <div className="flex items-center bg-slate-100 dark:bg-white/5 rounded-lg p-1">
             <button className="px-3 py-1 text-xs font-bold rounded-md bg-white dark:bg-white/10 shadow text-slate-900 dark:text-white">30D</button>
@@ -192,7 +192,7 @@ export default function OverviewTab({ onViewAllTransactions }: OverviewTabProps)
         {/* Chart with axes */}
         <div className="flex">
           {/* Y-Axis */}
-          <div className="flex flex-col justify-between items-end pr-3 pb-7 h-64 shrink-0">
+          <div className="flex flex-col justify-between items-end pr-2.5 pb-6 h-56 shrink-0">
             {[...yTicks].reverse().map((tick, i) => (
               <span key={i} className="text-[10px] sm:text-xs text-slate-400 dark:text-slate-500 font-medium leading-none">
                 {formatAmount(tick)}
@@ -203,7 +203,7 @@ export default function OverviewTab({ onViewAllTransactions }: OverviewTabProps)
           {/* Bars + X-Axis */}
           <div className="flex-1 min-w-0 flex flex-col">
             {/* Grid lines + bars */}
-            <div className="h-64 w-full relative">
+            <div className="h-56 w-full relative">
               {/* Horizontal grid lines */}
               {yTicks.map((_, i) => (
                 <div
@@ -235,7 +235,7 @@ export default function OverviewTab({ onViewAllTransactions }: OverviewTabProps)
                         }}
                       >
                         <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 pointer-events-none">
-                          {currency === 'NGN' && exchangeRate 
+                          {currency === 'NGN' && exchangeRate
                             ? `₦${Math.round(d.value * exchangeRate).toLocaleString()}`
                             : `$${d.value.toLocaleString()}`
                           }

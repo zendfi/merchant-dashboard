@@ -96,8 +96,8 @@ function DashboardContent() {
         </div>
       )}
 
-      <Sidebar 
-        activeTab={activeTab} 
+      <Sidebar
+        activeTab={activeTab}
         onTabChange={(tab) => {
           handleTabChange(tab);
           setSidebarOpen(false);
@@ -106,15 +106,15 @@ function DashboardContent() {
         onClose={() => setSidebarOpen(false)}
       />
       <main className="flex-1 flex flex-col h-full overflow-hidden relative">
-        <Header 
-          onOpenWallet={() => setShowWalletModal(true)} 
+        <Header
+          onOpenWallet={() => setShowWalletModal(true)}
           onCreatePaymentLink={() => setShowPaymentLinkModal(true)}
           onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
           sidebarOpen={sidebarOpen}
           activeTab={activeTab}
         />
 
-        <div className="flex-1 overflow-y-auto p-4 lg:p-8 pb-20">
+        <div className="flex-1 overflow-y-auto p-3 lg:p-6 pb-20">
           <div className="max-w-7xl mx-auto">
             {renderTab()}
           </div>

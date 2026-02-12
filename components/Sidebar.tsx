@@ -52,35 +52,35 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }: Sid
     <>
       {/* Mobile Overlay */}
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 z-[150] lg:hidden"
           onClick={onClose}
         />
       )}
-      
+
       {/* Sidebar */}
       <aside className={`
         fixed lg:sticky top-0 left-0 h-screen z-[200]
-        w-64 bg-white dark:bg-[#1f162b] border-r border-slate-200 dark:border-slate-800 
+        w-56 bg-white dark:bg-[#1f162b] border-r border-slate-200/80 dark:border-slate-800/80 
         flex flex-col shrink-0 transition-all duration-300
         ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
         {/* Logo */}
-        <div className="px-5 py-5 flex items-center gap-3">
-             <Link href="/" className="flex items-center">
-              <Image
-                src="/logo.png"
-                alt="Zendfi Logo"
-                width={120}
-                height={32}
-                className="h-8 w-auto filter hue-rotate-[19deg] dark:hue-rotate-[13deg] brightness-110"
-                priority
-              />
-            </Link>
+        <div className="px-4 py-4 flex items-center gap-3 border-b border-slate-100 dark:border-slate-800">
+          <Link href="/" className="flex items-center">
+            <Image
+              src="/logo.png"
+              alt="Zendfi Logo"
+              width={110}
+              height={28}
+              className="h-7 w-auto filter hue-rotate-[19deg] dark:hue-rotate-[13deg] brightness-110"
+              priority
+            />
+          </Link>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-4 flex flex-col gap-1 overflow-y-auto py-4">
+        <nav className="flex-1 px-3 flex flex-col gap-0.5 overflow-y-auto py-3">
           {mainNavItems.map((item) => (
             <button
               key={item.id}
@@ -88,19 +88,18 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }: Sid
                 onTabChange(item.id);
                 onClose();
               }}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg w-full text-left transition-colors group ${
-                activeTab === item.id
-                  ? 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-purple-300'
-                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
-              }`}
+              className={`flex items-center gap-2.5 px-3 py-2 rounded-lg w-full text-left transition-all duration-250 group ${activeTab === item.id
+                  ? 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-purple-300 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
+                }`}
             >
-              <span 
-                className="material-symbols-outlined group-hover:scale-110 transition-transform"
+              <span
+                className="material-symbols-outlined group-hover:scale-110 transition-transform text-[20px]"
                 style={activeTab === item.id ? { fontVariationSettings: "'FILL' 1" } : {}}
               >
                 {item.icon}
               </span>
-              <span className={`text-sm ${activeTab === item.id ? 'font-semibold' : 'font-medium'}`}>
+              <span className={`text-[13px] ${activeTab === item.id ? 'font-semibold' : 'font-medium'}`}>
                 {item.label}
               </span>
             </button>
@@ -108,7 +107,7 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }: Sid
         </nav>
 
         {/* Bottom Section */}
-        <div className="p-4 border-t border-slate-200 dark:border-slate-800">
+        <div className="p-3 border-t border-slate-200 dark:border-slate-800">
           {settingsNavItems.map((item) => (
             <button
               key={item.id}
@@ -116,24 +115,23 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }: Sid
                 onTabChange(item.id);
                 onClose();
               }}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg w-full text-left transition-colors ${
-                activeTab === item.id
-                  ? 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-purple-300'
-                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
-              }`}
+              className={`flex items-center gap-2.5 px-3 py-2 rounded-lg w-full text-left transition-all duration-250 ${activeTab === item.id
+                  ? 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-purple-300 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
+                }`}
             >
-              <span className="material-symbols-outlined">{item.icon}</span>
-              <span className="text-sm font-medium">{item.label}</span>
+              <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
+              <span className="text-[13px] font-medium">{item.label}</span>
             </button>
           ))}
-          
+
           {/* User Profile */}
-          <div className="mt-4 flex items-center gap-3 px-3">
-            <div className="size-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold">
+          <div className="mt-3 flex items-center gap-2.5 px-3">
+            <div className="size-7 rounded-full bg-primary flex items-center justify-center text-white text-[11px] font-bold">
               {merchant?.name?.charAt(0) || 'A'}
             </div>
             <div className="flex flex-col">
-              <span className="text-xs font-bold text-slate-900 dark:text-white">{merchant?.name || 'Merchant'}</span>
+              <span className="text-[11px] font-bold text-slate-900 dark:text-white">{merchant?.name || 'Merchant'}</span>
               <span className="text-[10px] text-slate-500 dark:text-slate-400">Admin</span>
             </div>
           </div>

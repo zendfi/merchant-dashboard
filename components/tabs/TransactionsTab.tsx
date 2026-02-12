@@ -28,8 +28,8 @@ export default function TransactionsTab({ limit = 25, showViewAll = true, onCrea
       setIsLoading(true);
       try {
         const [txData, statsData] = await Promise.all([
-          transactionsApi.list({ 
-            mode, 
+          transactionsApi.list({
+            mode,
             limit,
             page: currentPage,
             status: statusFilter !== 'all' ? statusFilter : undefined,
@@ -161,7 +161,7 @@ export default function TransactionsTab({ limit = 25, showViewAll = true, onCrea
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -169,7 +169,7 @@ export default function TransactionsTab({ limit = 25, showViewAll = true, onCrea
           <p className="text-sm text-slate-500 dark:text-slate-400">View and manage all payment activities and cash flow.</p>
         </div>
         <div className="flex items-center gap-3">
-          <button 
+          <button
             onClick={exportToCSV}
             disabled={filteredTransactions.length === 0}
             className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -177,7 +177,7 @@ export default function TransactionsTab({ limit = 25, showViewAll = true, onCrea
             <span className="material-symbols-outlined text-[18px]">download</span>
             Export CSV
           </button>
-          <button 
+          <button
             onClick={onCreatePayment}
             className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors"
           >
@@ -188,22 +188,22 @@ export default function TransactionsTab({ limit = 25, showViewAll = true, onCrea
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800">
-          <span className="text-sm text-slate-500 dark:text-slate-400">Total Volume (30d)</span>
-          <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="bg-white dark:bg-[#1f162b] p-4 rounded-xl border border-slate-100 dark:border-slate-800 shadow-card">
+          <span className="text-xs text-slate-500 dark:text-slate-400">Total Volume (30d)</span>
+          <p className="text-xl font-bold text-slate-900 dark:text-white mt-0.5">
             {formatFullAmount(stats?.total_volume || 0)}
           </p>
         </div>
-        <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800">
-          <span className="text-sm text-slate-500 dark:text-slate-400">Success Rate</span>
-          <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
+        <div className="bg-white dark:bg-[#1f162b] p-4 rounded-xl border border-slate-100 dark:border-slate-800 shadow-card">
+          <span className="text-xs text-slate-500 dark:text-slate-400">Success Rate</span>
+          <p className="text-xl font-bold text-slate-900 dark:text-white mt-0.5">
             {calculateSuccessRate()}%
           </p>
         </div>
-        <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800">
-          <span className="text-sm text-slate-500 dark:text-slate-400">Pending Amount</span>
-          <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
+        <div className="bg-white dark:bg-[#1f162b] p-4 rounded-xl border border-slate-100 dark:border-slate-800 shadow-card">
+          <span className="text-xs text-slate-500 dark:text-slate-400">Pending Amount</span>
+          <p className="text-xl font-bold text-slate-900 dark:text-white mt-0.5">
             {formatFullAmount(calculatePendingAmount())}
           </p>
         </div>
@@ -222,7 +222,7 @@ export default function TransactionsTab({ limit = 25, showViewAll = true, onCrea
           />
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <select 
+          <select
             value={dateFilter}
             onChange={(e) => setDateFilter(e.target.value)}
             className="px-3 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
@@ -231,7 +231,7 @@ export default function TransactionsTab({ limit = 25, showViewAll = true, onCrea
             <option value="7">Date: Last 7 days</option>
             <option value="90">Date: Last 90 days</option>
           </select>
-          <select 
+          <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             className="px-3 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
@@ -285,27 +285,27 @@ export default function TransactionsTab({ limit = 25, showViewAll = true, onCrea
             <table className="w-full">
               <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
                 <tr>
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">ID</th>
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Amount</th>
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Token</th>
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
-                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Date</th>
+                  <th className="text-left px-4 py-3 text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">ID</th>
+                  <th className="text-left px-4 py-3 text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Amount</th>
+                  <th className="text-left px-4 py-3 text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Token</th>
+                  <th className="text-left px-4 py-3 text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
+                  <th className="text-left px-4 py-3 text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Date</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {filteredTransactions.map((tx) => (
                   <tr key={tx.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-                    <td className="px-6 py-4">
-                      <span className="text-amber-500 font-mono text-sm">{tx.id.slice(0, 8)}</span>
+                    <td className="px-4 py-2.5">
+                      <span className="text-amber-500 font-mono text-xs">{tx.id.slice(0, 8)}</span>
                     </td>
-                    <td className="px-6 py-4">
-                      <span className="font-bold text-slate-900 dark:text-white">{formatAmount(tx.amount_usd)}</span>
+                    <td className="px-4 py-2.5">
+                      <span className="font-bold text-slate-900 dark:text-white text-sm">{formatAmount(tx.amount_usd)}</span>
                     </td>
-                    <td className="px-6 py-4 text-slate-600 dark:text-slate-400">
+                    <td className="px-4 py-2.5 text-slate-600 dark:text-slate-400 text-xs">
                       {tx.token || 'USDC'}
                     </td>
-                    <td className="px-6 py-4">{getStatusBadge(tx.status || 'pending')}</td>
-                    <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">
+                    <td className="px-4 py-2.5">{getStatusBadge(tx.status || 'pending')}</td>
+                    <td className="px-4 py-2.5 text-xs text-slate-600 dark:text-slate-400">
                       {new Date(tx.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} {new Date(tx.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                     </td>
                   </tr>
