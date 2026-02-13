@@ -185,9 +185,9 @@ export default function WebhooksTab() {
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={stats.chart_data}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" className="dark:stroke-slate-700" />
-                <XAxis 
-                  dataKey="date" 
-                  stroke="#94a3b8" 
+                <XAxis
+                  dataKey="date"
+                  stroke="#94a3b8"
                   tick={{ fill: '#64748b' }}
                   tickFormatter={(value) => {
                     const date = new Date(value);
@@ -195,8 +195,8 @@ export default function WebhooksTab() {
                   }}
                 />
                 <YAxis stroke="#94a3b8" tick={{ fill: '#64748b' }} />
-                <Tooltip 
-                  contentStyle={{ 
+                <Tooltip
+                  contentStyle={{
                     backgroundColor: '#1f162b',
                     border: '1px solid #334155',
                     borderRadius: '8px',
@@ -208,18 +208,18 @@ export default function WebhooksTab() {
                   }}
                 />
                 <Legend />
-                <Line 
-                  type="monotone" 
-                  dataKey="successful" 
-                  stroke="#10b981" 
+                <Line
+                  type="monotone"
+                  dataKey="successful"
+                  stroke="#10b981"
                   strokeWidth={2}
                   name="Successful"
                   dot={{ fill: '#10b981' }}
                 />
-                <Line 
-                  type="monotone" 
-                  dataKey="failed" 
-                  stroke="#f43f5e" 
+                <Line
+                  type="monotone"
+                  dataKey="failed"
+                  stroke="#f43f5e"
                   strokeWidth={2}
                   name="Failed"
                   dot={{ fill: '#f43f5e' }}
@@ -244,7 +244,7 @@ export default function WebhooksTab() {
         currentUrl={merchant?.webhook_url || null}
         onSaved={async () => {
           await refreshMerchant(); // Refresh merchant profile to get updated webhook_url
-          loadStats();
+          await loadStats(); // Refresh webhook stats
         }}
       />
     </div>

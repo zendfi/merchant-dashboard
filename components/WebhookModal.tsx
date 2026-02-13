@@ -43,12 +43,14 @@ export default function WebhookModal({ isOpen, onClose, currentUrl, onSaved }: W
       const result = await webhooks.update(webhookUrl.trim() || null);
       setSuccess(result.message);
       showNotification('Webhook Updated', result.message, 'success');
-      
-      // Wait a bit for user to see success message, then refresh merchant data before closing
-      setTimeout(async () => {
-        await onSaved(); // Wait for merchant context to refresh
+
+      // Wait for merchant context to refresh with updated webhook data
+      await onSaved();
+
+      // Small delay to show success message before closing
+      setTimeout(() => {
         onClose();
-      }, 1500);
+      }, 800);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update webhook');
     } finally {
