@@ -7,7 +7,7 @@ import { useNotification } from '@/lib/notifications';
 import WebhookModal from '@/components/WebhookModal';
 
 export default function WebhooksTab() {
-  const { merchant } = useMerchant();
+  const { merchant, refreshMerchant } = useMerchant();
   const { showNotification } = useNotification();
   const [stats, setStats] = useState<WebhookStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -230,10 +230,10 @@ export default function WebhooksTab() {
         isOpen={showModal}
         onClose={() => setShowModal(false)}
         currentUrl={merchant?.webhook_url || null}
-        onSaved={() => {
+        onSaved={async () => {
           setShowModal(false);
+          await refreshMerchant(); // Refresh merchant profile to get updated webhook_url
           loadStats();
-          showNotification('Webhook Updated', 'Your webhook URL has been saved', 'success');
         }}
       />
     </div>
