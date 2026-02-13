@@ -66,14 +66,14 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }: Sid
         ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
         {/* Logo */}
-        <div className="px-4 py-4 flex items-center gap-3">
+        <div className="px-4 py-4 flex items-center gap-3 border-b border-slate-100 dark:border-slate-800">
           <Link href="/" className="flex items-center">
             <Image
               src="/logo.png"
               alt="Zendfi Logo"
-              width={110}
-              height={28}
-              className="h-7 w-auto filter hue-rotate-[19deg] dark:hue-rotate-[13deg] brightness-110"
+              width={100}
+              height={26}
+              className="h-6 w-auto filter hue-rotate-[19deg] dark:hue-rotate-[13deg] brightness-110"
               priority
             />
           </Link>

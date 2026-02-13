@@ -154,14 +154,14 @@ export default function WebhooksTab() {
           return (
             <div
               key={card.label}
-              className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800"
+              className="bg-white dark:bg-[#1f162b] p-4 rounded-xl border border-slate-100 dark:border-slate-800 shadow-card hover:shadow-card-hover hover:border-primary/30 hover:-translate-y-0.5 transition-all duration-250 group"
             >
               <div className="flex items-center justify-between mb-3">
-                <div className={`w-9 h-9 rounded-lg ${colors.iconBg} flex items-center justify-center`}>
-                  <span className={`material-symbols-outlined text-[20px] ${colors.text}`}>{card.icon}</span>
+                <div className={`w-8 h-8 rounded-lg ${colors.iconBg} flex items-center justify-center`}>
+                  <span className={`material-symbols-outlined text-[18px] ${colors.text}`}>{card.icon}</span>
                 </div>
               </div>
-              <div className="text-2xl font-bold text-slate-900 dark:text-white mb-0.5">
+              <div className="text-xl font-bold text-slate-900 dark:text-white mb-0.5">
                 {isLoading ? '—' : card.value}
               </div>
               <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">{card.label}</div>
