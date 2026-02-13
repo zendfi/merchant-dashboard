@@ -243,7 +243,9 @@ export const auth = {
 export const merchant = {
   // Get current merchant profile
   getProfile: async (): Promise<MerchantProfile> => {
-    return apiCall('/api/v1/merchants/me');
+    // Add cache-busting parameter to ensure fresh data
+    const timestamp = Date.now();
+    return apiCall(`/api/v1/merchants/me?_t=${timestamp}`);
   },
 
   // Get dashboard stats

@@ -243,8 +243,12 @@ export default function WebhooksTab() {
         onClose={() => setShowModal(false)}
         currentUrl={merchant?.webhook_url || null}
         onSaved={async () => {
+          console.log('WebhooksTab onSaved called');
+          console.log('Current merchant before refresh:', merchant);
           await refreshMerchant(); // Refresh merchant profile to get updated webhook_url
+          console.log('Merchant refreshed, new merchant:', merchant);
           await loadStats(); // Refresh webhook stats
+          console.log('Stats reloaded');
         }}
       />
     </div>

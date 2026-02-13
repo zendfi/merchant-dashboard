@@ -61,12 +61,12 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }: Sid
       {/* Sidebar */}
       <aside className={`
         fixed lg:sticky top-0 left-0 h-screen z-[200]
-        w-56 bg-white dark:bg-[#1f162b] border-r border-slate-200/80 dark:border-slate-800/80 
+        w-56 bg-transparent 
         flex flex-col shrink-0 transition-all duration-300
         ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
         {/* Logo */}
-        <div className="px-4 py-4 flex items-center gap-3 border-b border-slate-100 dark:border-slate-800">
+        <div className="px-4 py-4 flex items-center gap-3">
           <Link href="/" className="flex items-center">
             <Image
               src="/logo.png"
@@ -89,8 +89,8 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }: Sid
                 onClose();
               }}
               className={`flex items-center gap-2.5 px-3 py-2 rounded-lg w-full text-left transition-all duration-250 group ${activeTab === item.id
-                  ? 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-purple-300 shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-purple-300 shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
                 }`}
             >
               <span
@@ -107,7 +107,7 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }: Sid
         </nav>
 
         {/* Bottom Section */}
-        <div className="p-3 border-t border-slate-200 dark:border-slate-800">
+        <div className="p-3">
           {settingsNavItems.map((item) => (
             <button
               key={item.id}
@@ -116,8 +116,8 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }: Sid
                 onClose();
               }}
               className={`flex items-center gap-2.5 px-3 py-2 rounded-lg w-full text-left transition-all duration-250 ${activeTab === item.id
-                  ? 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-purple-300 shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-purple-300 shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
                 }`}
             >
               <span className="material-symbols-outlined text-[20px]">{item.icon}</span>

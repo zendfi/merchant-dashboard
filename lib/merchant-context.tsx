@@ -18,12 +18,16 @@ export function MerchantProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
 
   const refreshMerchant = useCallback(async () => {
+    console.log('refreshMerchant called');
     setIsLoading(true);
     setError(null);
     try {
       const profile = await merchantApi.getProfile();
+      console.log('Merchant profile fetched:', profile);
+      console.log('Webhook URL in profile:', profile.webhook_url);
       setMerchant(profile);
     } catch (err) {
+      console.error('Error refreshing merchant:', err);
       setError(err instanceof Error ? err.message : 'Failed to load merchant profile');
     } finally {
       setIsLoading(false);

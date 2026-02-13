@@ -51,7 +51,7 @@ export default function Header({ onOpenWallet, onToggleSidebar, sidebarOpen, act
   };
 
   return (
-    <header className="h-14 shrink-0 px-4 lg:px-6 flex items-center justify-between bg-white/60 dark:bg-[#1f162b]/60 backdrop-blur-xl sticky top-0 z-[5] border-b border-slate-200/60 dark:border-slate-800/60 transition-all duration-250">
+    <header className="h-16 shrink-0 px-6 lg:px-8 flex items-center justify-between border-b border-slate-100 dark:border-white/5 transition-all duration-250">
       {/* Mobile Menu Button */}
       <button
         onClick={onToggleSidebar}
@@ -95,21 +95,21 @@ export default function Header({ onOpenWallet, onToggleSidebar, sidebarOpen, act
         </a>
 
         {/* Mode Toggle */}
-        <div className="hidden lg:flex bg-slate-100 dark:bg-white/5 p-0.5 rounded-md">
+        <div className="hidden lg:flex bg-slate-100 dark:bg-white/5 p-1 rounded-lg">
           <button
             onClick={() => handleModeChange('live')}
-            className={`px-2.5 py-1 rounded text-[11px] font-bold transition-all duration-250 ${mode === 'live'
-                ? 'bg-white dark:bg-slate-700 shadow-xs text-slate-900 dark:text-white'
-                : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+            className={`px-3 py-1.5 rounded-md text-[12px] font-bold transition-all duration-250 ${mode === 'live'
+              ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white'
+              : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
           >
             Mainnet
           </button>
           <button
             onClick={() => handleModeChange('test')}
-            className={`px-2.5 py-1 rounded text-[11px] font-bold transition-all duration-250 ${mode === 'test'
-                ? 'bg-white dark:bg-slate-700 shadow-xs text-slate-900 dark:text-white'
-                : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+            className={`px-3 py-1.5 rounded-md text-[12px] font-bold transition-all duration-250 ${mode === 'test'
+              ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white'
+              : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
           >
             Devnet
