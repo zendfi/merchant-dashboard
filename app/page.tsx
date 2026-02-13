@@ -16,6 +16,7 @@ import TransactionsTab from '@/components/tabs/TransactionsTab';
 import ApiKeysTab from '@/components/tabs/ApiKeysTab';
 import WebhooksTab from '@/components/tabs/WebhooksTab';
 import ProfileTab from '@/components/tabs/ProfileTab';
+import SupportTab from '@/components/tabs/SupportTab';
 
 function DashboardContent() {
   const router = useRouter();
@@ -80,6 +81,8 @@ function DashboardContent() {
         return <ApiKeysTab />;
       case 'webhooks':
         return <WebhooksTab />;
+      case 'support':
+        return <SupportTab />;
       case 'profile':
         return <ProfileTab onSwitchTab={handleTabChange} />;
       default:

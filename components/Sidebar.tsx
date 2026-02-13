@@ -12,15 +12,23 @@ interface SidebarProps {
   onClose: () => void;
 }
 
-const mainNavItems = [
+interface NavItem {
+  id: string;
+  label: string;
+  icon: string;
+  action?: string;
+}
+
+const mainNavItems: NavItem[] = [
   { id: 'overview', label: 'Overview', icon: 'dashboard' },
   { id: 'transactions', label: 'Transactions', icon: 'payments' },
   { id: 'api-keys', label: 'API Keys', icon: 'vpn_key' },
   { id: 'webhooks', label: 'Webhooks', icon: 'webhook' },
-  // { id: 'session-keys', label: 'Reports', icon: 'analytics' },
+  { id: 'support', label: 'Live Support', icon: 'support_agent' },
 ];
 
-const settingsNavItems = [
+const settingsNavItems: NavItem[] = [
+  { id: 'feedback', label: 'Feedback', icon: 'thumb_up', action: 'mailto:hello@zendfi.tech?subject=Log Feedback' },
   { id: 'profile', label: 'Settings', icon: 'settings' },
 ];
 
@@ -108,22 +116,36 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }: Sid
 
         {/* Bottom Section */}
         <div className="p-3">
-          {settingsNavItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => {
-                onTabChange(item.id);
-                onClose();
-              }}
-              className={`flex items-center gap-2.5 px-3 py-2 rounded-lg w-full text-left transition-all duration-250 ${activeTab === item.id
-                ? 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-purple-300 shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
-                }`}
-            >
-              <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
-              <span className="text-[13px] font-medium">{item.label}</span>
-            </button>
-          ))}
+          {settingsNavItems.map((item) => {
+            if (item.action) {
+              return (
+                <a
+                  key={item.id}
+                  href={item.action}
+                  className="flex items-center gap-2.5 px-3 py-2 rounded-lg w-full text-left transition-all duration-250 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white"
+                >
+                  <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
+                  <span className="text-[13px] font-medium">{item.label}</span>
+                </a>
+              );
+            }
+            return (
+              <button
+                key={item.id}
+                onClick={() => {
+                  onTabChange(item.id);
+                  onClose();
+                }}
+                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg w-full text-left transition-all duration-250 ${activeTab === item.id
+                  ? 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-purple-300 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+              >
+                <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
+                <span className="text-[13px] font-medium">{item.label}</span>
+              </button>
+            );
+          })}
 
           {/* User Profile */}
           <div className="mt-3 flex items-center gap-2.5 px-3">
