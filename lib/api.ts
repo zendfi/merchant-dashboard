@@ -93,6 +93,11 @@ export interface WebhookStats {
   success_rate: string;
   last_delivery_at: string | null;
   avg_attempts: number | null;
+  chart_data: Array<{
+    date: string;
+    successful: number;
+    failed: number;
+  }>;
 }
 
 export interface PaymentLink {

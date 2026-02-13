@@ -51,7 +51,7 @@ export default function Header({ onOpenWallet, onToggleSidebar, sidebarOpen, act
   };
 
   return (
-    <header className="h-14 shrink-0 px-4 lg:px-6 flex items-center justify-between bg-white/60 dark:bg-[#1f162b]/60 backdrop-blur-xl sticky top-0 z-10 border-b border-slate-200/60 dark:border-slate-800/60 transition-all duration-250">
+    <header className="h-14 shrink-0 px-4 lg:px-6 flex items-center justify-between bg-white/60 dark:bg-[#1f162b]/60 backdrop-blur-xl sticky top-0 z-[5] border-b border-slate-200/60 dark:border-slate-800/60 transition-all duration-250">
       {/* Mobile Menu Button */}
       <button
         onClick={onToggleSidebar}

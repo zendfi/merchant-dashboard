@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { webhooks } from '@/lib/api';
 import { useNotification } from '@/lib/notifications';
 
@@ -8,7 +9,7 @@ interface WebhookModalProps {
   isOpen: boolean;
   onClose: () => void;
   currentUrl: string | null;
-  onSaved: () => void;
+  onSaved: () => Promise<void> | void;
 }
 
 export default function WebhookModal({ isOpen, onClose, currentUrl, onSaved }: WebhookModalProps) {
@@ -17,6 +18,20 @@ export default function WebhookModal({ isOpen, onClose, currentUrl, onSaved }: W
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Update webhookUrl when currentUrl changes (e.g., after merchant refresh)
+  useEffect(() => {
+    if (isOpen) {
+      setWebhookUrl(currentUrl || '');
+      setError('');
+      setSuccess('');
+    }
+  }, [isOpen, currentUrl]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,9 +43,11 @@ export default function WebhookModal({ isOpen, onClose, currentUrl, onSaved }: W
       const result = await webhooks.update(webhookUrl.trim() || null);
       setSuccess(result.message);
       showNotification('Webhook Updated', result.message, 'success');
-      setTimeout(() => {
+      
+      // Wait a bit for user to see success message, then refresh merchant data before closing
+      setTimeout(async () => {
+        await onSaved(); // Wait for merchant context to refresh
         onClose();
-        onSaved();
       }, 1500);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update webhook');
@@ -39,11 +56,11 @@ export default function WebhookModal({ isOpen, onClose, currentUrl, onSaved }: W
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
-  return (
+  const modalContent = (
     <div
-      className="fixed inset-0 bg-black/50 dark:bg-black/70 z-[1000] flex justify-center items-center backdrop-blur-sm transition-opacity"
+      className="fixed inset-0 bg-black/50 dark:bg-black/70 z-[9999] flex justify-center items-center backdrop-blur-sm transition-opacity"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -124,4 +141,6 @@ export default function WebhookModal({ isOpen, onClose, currentUrl, onSaved }: W
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }

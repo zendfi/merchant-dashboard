@@ -5,6 +5,7 @@ import { webhooks, WebhookStats } from '@/lib/api';
 import { useMerchant } from '@/lib/merchant-context';
 import { useNotification } from '@/lib/notifications';
 import WebhookModal from '@/components/WebhookModal';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 export default function WebhooksTab() {
   const { merchant, refreshMerchant } = useMerchant();
@@ -73,15 +74,6 @@ export default function WebhooksTab() {
       icon: 'error',
       color: 'rose',
     },
-  ];
-
-  const webhookEvents = [
-    { name: 'payment.completed', description: 'When a payment is successfully completed' },
-    { name: 'payment.failed', description: 'When a payment fails or is declined' },
-    { name: 'payment.pending', description: 'When a payment is initiated and pending' },
-    { name: 'payment.expired', description: 'When a payment link expires without completion' },
-    { name: 'payout.completed', description: 'When a payout is successfully sent' },
-    { name: 'payout.failed', description: 'When a payout fails to process' },
   ];
 
   const colorMap: Record<string, { bg: string; text: string; border: string; iconBg: string }> = {
@@ -178,50 +170,70 @@ export default function WebhooksTab() {
         })}
       </div>
 
-      {/* Webhook Events */}
+      {/* Webhook Delivery Chart */}
       <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800">
         <div className="p-5 border-b border-slate-100 dark:border-slate-800">
-          <h3 className="text-base font-bold text-slate-900 dark:text-white">Supported Events</h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Events that will be sent to your webhook endpoint</p>
-        </div>
-        <div className="divide-y divide-slate-100 dark:divide-slate-800">
-          {webhookEvents.map((event) => (
-            <div key={event.name} className="px-5 py-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-primary/10 dark:bg-primary/20 flex items-center justify-center">
-                  <span className="material-symbols-outlined text-primary text-[18px]">webhook</span>
-                </div>
-                <div>
-                  <div className="font-mono text-sm font-semibold text-slate-900 dark:text-white">{event.name}</div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400">{event.description}</div>
-                </div>
-              </div>
-              <span className="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 px-2.5 py-1 rounded-lg text-[11px] font-semibold uppercase">Active</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Webhook Payload Example */}
-      <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800">
-        <div className="p-5 border-b border-slate-100 dark:border-slate-800">
-          <h3 className="text-base font-bold text-slate-900 dark:text-white">Example Payload</h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">This is the JSON payload sent to your webhook URL</p>
+          <h3 className="text-base font-bold text-slate-900 dark:text-white">Delivery History</h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Successful vs Failed webhook deliveries over the last 30 days</p>
         </div>
         <div className="p-5">
-          <pre className="bg-slate-50 dark:bg-[#281e36] rounded-xl p-4 border border-slate-100 dark:border-slate-800 text-sm font-mono text-slate-900 dark:text-slate-300 overflow-x-auto">
-{`{
-  "event": "payment.completed",
-  "data": {
-    "id": "pay_1234567890",
-    "amount": 10.00,
-    "token": "USDC",
-    "status": "completed",
-    "created_at": "2024-01-15T10:30:00Z"
-  },
-  "timestamp": "2024-01-15T10:30:05Z"
-}`}
-          </pre>
+          {isLoading ? (
+            <div className="h-[300px] flex items-center justify-center">
+              <div className="text-slate-400 dark:text-slate-500">Loading chart data...</div>
+            </div>
+          ) : stats?.chart_data && stats.chart_data.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={stats.chart_data}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" className="dark:stroke-slate-700" />
+                <XAxis 
+                  dataKey="date" 
+                  stroke="#94a3b8" 
+                  tick={{ fill: '#64748b' }}
+                  tickFormatter={(value) => {
+                    const date = new Date(value);
+                    return `${date.getMonth() + 1}/${date.getDate()}`;
+                  }}
+                />
+                <YAxis stroke="#94a3b8" tick={{ fill: '#64748b' }} />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#1f162b',
+                    border: '1px solid #334155',
+                    borderRadius: '8px',
+                    color: '#fff'
+                  }}
+                  labelFormatter={(value) => {
+                    const date = new Date(value);
+                    return date.toLocaleDateString();
+                  }}
+                />
+                <Legend />
+                <Line 
+                  type="monotone" 
+                  dataKey="successful" 
+                  stroke="#10b981" 
+                  strokeWidth={2}
+                  name="Successful"
+                  dot={{ fill: '#10b981' }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="failed" 
+                  stroke="#f43f5e" 
+                  strokeWidth={2}
+                  name="Failed"
+                  dot={{ fill: '#f43f5e' }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-[300px] flex items-center justify-center">
+              <div className="text-center">
+                <span className="material-symbols-outlined text-slate-300 dark:text-slate-600 text-5xl mb-2">insert_chart</span>
+                <p className="text-slate-500 dark:text-slate-400">No webhook delivery data yet</p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -231,7 +243,6 @@ export default function WebhooksTab() {
         onClose={() => setShowModal(false)}
         currentUrl={merchant?.webhook_url || null}
         onSaved={async () => {
-          setShowModal(false);
           await refreshMerchant(); // Refresh merchant profile to get updated webhook_url
           loadStats();
         }}
