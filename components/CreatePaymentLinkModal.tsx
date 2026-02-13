@@ -134,7 +134,26 @@ export default function CreatePaymentLinkModal({ isOpen, onClose }: CreatePaymen
         }
       }
 
-      const amountNgn = ngnAmount && parseFloat(ngnAmount) > 0 ? parseFloat(ngnAmount) : undefined;
+      let amountNgn = ngnAmount && parseFloat(ngnAmount) > 0 ? parseFloat(ngnAmount) : undefined;
+
+      // For onramp, enforce minimum 1000 NGN and ensure amount_ngn is set
+      if (onramp) {
+        if (!amountNgn && exchangeRate) {
+          amountNgn = parseFloat(amount) * exchangeRate;
+        }
+
+        if (amountNgn && amountNgn < 1000) {
+          setError('Onramp payments must be at least ₦1,000');
+          setIsLoading(false);
+          return;
+        }
+
+        if (!amountNgn) {
+          setError('Unable to calculate NGN amount. Please try again.');
+          setIsLoading(false);
+          return;
+        }
+      }
 
       const link = await paymentLinks.create(apiKey, {
         amount: parseFloat(amount),
@@ -202,11 +221,10 @@ export default function CreatePaymentLinkModal({ isOpen, onClose }: CreatePaymen
           {step === 'form' ? (
             <form onSubmit={handleSubmit} className="space-y-5">
               {/* Mode indicator */}
-              <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${
-                mode === 'live'
+              <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${mode === 'live'
                   ? 'bg-emerald-50 text-emerald-600'
                   : 'bg-primary/10 text-primary'
-              }`}>
+                }`}>
                 <span className={`w-2 h-2 rounded-full ${mode === 'live' ? 'bg-emerald-500' : 'bg-primary'}`} />
                 {mode === 'live' ? 'Live Mode' : 'Test Mode'}
               </div>
@@ -435,14 +453,12 @@ export default function CreatePaymentLinkModal({ isOpen, onClose }: CreatePaymen
                     <button
                       type="button"
                       onClick={() => setOnramp(!onramp)}
-                      className={`relative w-11 h-6 rounded-full transition-colors ${
-                        onramp ? 'bg-primary' : 'bg-slate-200 dark:bg-slate-700'
-                      }`}
+                      className={`relative w-11 h-6 rounded-full transition-colors ${onramp ? 'bg-primary' : 'bg-slate-200 dark:bg-slate-700'
+                        }`}
                     >
                       <span
-                        className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform shadow ${
-                          onramp ? 'translate-x-5' : 'translate-x-0'
-                        }`}
+                        className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform shadow ${onramp ? 'translate-x-5' : 'translate-x-0'
+                          }`}
                       />
                     </button>
                   </div>
@@ -528,11 +544,10 @@ export default function CreatePaymentLinkModal({ isOpen, onClose }: CreatePaymen
                     />
                     <button
                       onClick={() => copyToClipboard(createdLink?.hosted_page_url || '', 'hosted')}
-                      className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
-                        copied === 'hosted'
+                      className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors ${copied === 'hosted'
                           ? 'bg-emerald-500 text-white'
                           : 'bg-primary text-white hover:bg-primary/90'
-                      }`}
+                        }`}
                     >
                       {copied === 'hosted' ? 'Copied!' : 'Copy'}
                     </button>
@@ -553,11 +568,10 @@ export default function CreatePaymentLinkModal({ isOpen, onClose }: CreatePaymen
                     />
                     <button
                       onClick={() => copyToClipboard(createdLink?.payment_url || '', 'direct')}
-                      className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
-                        copied === 'direct'
+                      className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors ${copied === 'direct'
                           ? 'bg-emerald-500 text-white'
                           : 'bg-primary text-white hover:bg-primary/90'
-                      }`}
+                        }`}
                     >
                       {copied === 'direct' ? 'Copied!' : 'Copy'}
                     </button>
@@ -575,11 +589,10 @@ export default function CreatePaymentLinkModal({ isOpen, onClose }: CreatePaymen
                     </code>
                     <button
                       onClick={() => copyToClipboard(createdLink?.link_code || '', 'code')}
-                      className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
-                        copied === 'code'
+                      className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors ${copied === 'code'
                           ? 'bg-emerald-500 text-white'
                           : 'bg-primary text-white hover:bg-primary/90'
-                      }`}
+                        }`}
                     >
                       {copied === 'code' ? 'Copied!' : 'Copy'}
                     </button>
