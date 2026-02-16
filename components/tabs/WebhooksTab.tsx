@@ -171,7 +171,7 @@ export default function WebhooksTab() {
       </div>
 
       {/* Webhook Delivery Chart */}
-      <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800">
+      <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 shadow-card hover:shadow-card-hover hover:border-primary/30 hover:-translate-y-0.5 transition-all duration-250 group">
         <div className="p-5 border-b border-slate-100 dark:border-slate-800">
           <h3 className="text-base font-bold text-slate-900 dark:text-white">Delivery History</h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Successful vs Failed webhook deliveries over the last 30 days</p>

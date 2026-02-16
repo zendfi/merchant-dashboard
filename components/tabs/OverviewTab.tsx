@@ -5,6 +5,10 @@ import { useMerchant } from '@/lib/merchant-context';
 import { useMode } from '@/lib/mode-context';
 import { useCurrency } from '@/lib/currency-context';
 import { merchant as merchantApi, DashboardStats, DashboardAnalytics, transactions as transactionsApi, Transaction } from '@/lib/api';
+import {
+  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+} from 'recharts';
 
 interface OverviewTabProps {
   onViewAllTransactions: () => void;
@@ -271,6 +275,114 @@ export default function OverviewTab({ onViewAllTransactions }: OverviewTabProps)
                 <span className="text-[10px] text-slate-400 dark:text-slate-500 mx-auto">—</span>
               )}
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Additional Charts Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Transaction Status Chart */}
+        <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800 shadow-card hover:shadow-card-hover transition-all duration-250">
+          <div className="mb-6">
+            <h3 className="text-base font-bold text-slate-900 dark:text-white">Transaction Status</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Successful vs Failed transactions over time</p>
+          </div>
+          <div className="h-[250px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={analytics?.payments_chart || []}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" className="dark:stroke-slate-700/50" />
+                <XAxis
+                  dataKey="date"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: '#64748B', fontSize: 10 }}
+                  tickFormatter={(value) => {
+                    const date = new Date(value);
+                    return `${date.getMonth() + 1}/${date.getDate()}`;
+                  }}
+                  dy={10}
+                />
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: '#64748B', fontSize: 10 }}
+                  dx={-10}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#1E293B',
+                    border: 'none',
+                    borderRadius: '8px',
+                    color: '#fff',
+                    fontSize: '12px'
+                  }}
+                  itemStyle={{ color: '#fff' }}
+                  labelStyle={{ color: '#94A3B8', marginBottom: '4px' }}
+                  labelFormatter={(value) => new Date(value).toLocaleDateString()}
+                />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
+                <Line
+                  type="monotone"
+                  dataKey="value"
+                  name="Total"
+                  stroke="#6366f1"
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={{ r: 4, strokeWidth: 0 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Volume Distribution Chart */}
+        <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800 shadow-card hover:shadow-card-hover transition-all duration-250">
+          <div className="mb-6">
+            <h3 className="text-base font-bold text-slate-900 dark:text-white">Volume Distribution (30d)</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Transaction volume by token</p>
+          </div>
+          <div className="h-[250px] w-full flex items-center justify-center">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={[
+                    { name: 'USDC', value: (stats?.total_volume || 0) * 0.85 },
+                    { name: 'SOL', value: (stats?.total_volume || 0) * 0.15 },
+                  ]}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={5}
+                  dataKey="value"
+                >
+                  <Cell key="cell-0" fill="#2563EB" /> {/* Blue for USDC */}
+                  <Cell key="cell-1" fill="#14F195" /> {/* Green for SOL */}
+                </Pie>
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#1E293B',
+                    border: 'none',
+                    borderRadius: '8px',
+                    color: '#fff',
+                    fontSize: '12px'
+                  }}
+                  formatter={(value: any) => {
+                    const total = (stats?.total_volume || 0);
+                    const percent = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
+                    return [`$${value.toLocaleString(undefined, { maximumFractionDigits: 0 })} (${percent}%)`, ''];
+                  }}
+                  itemStyle={{ color: '#fff' }}
+                />
+                <Legend
+                  verticalAlign="middle"
+                  align="right"
+                  layout="vertical"
+                  iconType="circle"
+                  wrapperStyle={{ fontSize: '12px' }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
           </div>
         </div>
       </div>

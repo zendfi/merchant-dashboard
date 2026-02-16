@@ -35,7 +35,7 @@ export default function Header({ onOpenWallet, onToggleSidebar, sidebarOpen, act
       toggleMode();
       showNotification(
         'Mode Switched',
-        `You are now viewing ${newMode === 'test' ? 'Devnet' : 'Mainnet'} data.`,
+        `You are now viewing ${newMode === 'test' ? 'Sandbox' : 'Live'} data.`,
         'info'
       );
     }
@@ -103,7 +103,7 @@ export default function Header({ onOpenWallet, onToggleSidebar, sidebarOpen, act
               : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
           >
-            Mainnet
+            Live
           </button>
           <button
             onClick={() => handleModeChange('test')}
@@ -112,7 +112,7 @@ export default function Header({ onOpenWallet, onToggleSidebar, sidebarOpen, act
               : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
           >
-            Devnet
+            Sandbox
           </button>
         </div>
 

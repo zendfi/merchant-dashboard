@@ -254,9 +254,8 @@ export default function SetupPage() {
               const isCurrent = i === currentStepIndex;
               return (
                 <div key={step.key} className="flex items-center gap-3">
-                  <div className={`size-8 rounded-lg flex items-center justify-center transition-all ${
-                    isComplete ? 'bg-white/30' : isCurrent ? 'bg-white/20 ring-2 ring-white/50' : 'bg-white/10'
-                  }`}>
+                  <div className={`size-8 rounded-lg flex items-center justify-center transition-all ${isComplete ? 'bg-white/30' : isCurrent ? 'bg-white/20 ring-2 ring-white/50' : 'bg-white/10'
+                    }`}>
                     <span className="material-symbols-outlined text-white text-lg" style={isComplete ? { fontVariationSettings: "'FILL' 1" } : undefined}>
                       {isComplete ? 'check_circle' : step.icon}
                     </span>
@@ -288,9 +287,8 @@ export default function SetupPage() {
             {/* Mobile Step Indicator */}
             <div className="flex items-center gap-2 mb-6 lg:hidden">
               {STEPS.map((step, i) => (
-                <div key={step.key} className={`h-1 flex-1 rounded-full transition-all ${
-                  i <= currentStepIndex ? 'bg-primary' : 'bg-slate-200 dark:bg-slate-700'
-                }`} />
+                <div key={step.key} className={`h-1 flex-1 rounded-full transition-all ${i <= currentStepIndex ? 'bg-primary' : 'bg-slate-200 dark:bg-slate-700'
+                  }`} />
               ))}
             </div>
 
@@ -536,7 +534,7 @@ export default function SetupPage() {
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Test API Key</label>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">Devnet</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">Sandbox</span>
                   </div>
                   <div className="relative">
                     <input
@@ -559,7 +557,7 @@ export default function SetupPage() {
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Live API Key</label>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-md">Mainnet</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-md">Live</span>
                   </div>
                   <div className="relative">
                     <input

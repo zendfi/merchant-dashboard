@@ -17,7 +17,7 @@ type BankStep = 'amount' | 'email' | 'otp' | 'bank' | 'account' | 'confirm' | 'p
 const TOKEN_LOGOS: Record<string, string> = {
   SOL: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png',
   USDC: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png',
-//   USDT: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/Es9vMFrzaCERmKfrWkRbKsY6amJC5EGWSFE7gSWiDmMb/logo.svg',
+  //   USDT: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/Es9vMFrzaCERmKfrWkRbKsY6amJC5EGWSFE7gSWiDmMb/logo.svg',
 };
 
 export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
@@ -310,17 +310,15 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
 
   return (
     <div
-      className={`fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm z-[1000] transition-all ${
-        isOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
-      }`}
+      className={`fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm z-[1000] transition-all ${isOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
+        }`}
       onClick={(e) => {
         if (e.target === e.currentTarget && bankStep !== 'processing') onClose();
       }}
     >
       <div
-        className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-[#1f162b] rounded-2xl w-[90%] max-w-[440px] h-[85vh] max-h-[600px] overflow-hidden shadow-2xl transition-transform ${
-          isOpen ? 'scale-100' : 'scale-95'
-        }`}
+        className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-[#1f162b] rounded-2xl w-[90%] max-w-[440px] h-[85vh] max-h-[600px] overflow-hidden shadow-2xl transition-transform ${isOpen ? 'scale-100' : 'scale-95'
+          }`}
       >
         {/* Navigation container */}
         <div className="relative w-full h-full">
@@ -339,7 +337,7 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
                 <div className="flex items-center gap-2">
                   <h2 className="text-base font-bold text-slate-900 dark:text-white m-0">Your Wallet</h2>
                   <span className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2.5 py-1 rounded-lg text-[11px] font-semibold uppercase tracking-[0.5px] text-slate-500 dark:text-slate-400">
-                    {mode === 'test' ? 'Devnet' : 'Mainnet'}
+                    {mode === 'test' ? 'Sandbox' : 'Live'}
                   </span>
                 </div>
                 <button
@@ -506,17 +504,16 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
                     {[
                       { id: 'SOL', name: 'SOL', logo: TOKEN_LOGOS.SOL, balance: walletData?.sol_balance.toFixed(4) || '0' },
                       { id: 'USDC', name: 'USDC', logo: TOKEN_LOGOS.USDC, balance: walletData?.usdc_balance.toFixed(2) || '0' },
-                    //   { id: 'USDT', name: 'USDT', logo: TOKEN_LOGOS.USDT, balance: '0.00' },
+                      //   { id: 'USDT', name: 'USDT', logo: TOKEN_LOGOS.USDT, balance: '0.00' },
                     ].map((token) => (
                       <button
                         key={token.id}
                         type="button"
                         onClick={() => setSelectedToken(token.id)}
-                        className={`flex-1 p-3 rounded-xl border-2 text-center transition-all cursor-pointer flex flex-col items-center ${
-                          selectedToken === token.id
+                        className={`flex-1 p-3 rounded-xl border-2 text-center transition-all cursor-pointer flex flex-col items-center ${selectedToken === token.id
                             ? 'border-primary bg-primary/5 dark:bg-primary/10'
                             : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-[#281e36] hover:border-primary/40'
-                        }`}
+                          }`}
                       >
                         <img src={token.logo} alt={token.name} className="w-7 h-7 rounded-full mb-1" />
                         <div className={`text-xs font-bold ${selectedToken === token.id ? 'text-primary' : 'text-slate-900 dark:text-white'}`}>{token.name}</div>
@@ -590,7 +587,7 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-slate-500 dark:text-slate-400">Network</span>
-                        <span className="text-slate-900 dark:text-white">Solana {mode === 'test' ? 'Devnet' : 'Mainnet'}</span>
+                        <span className="text-slate-900 dark:text-white">Solana {mode === 'test' ? 'Sandbox' : 'Live'}</span>
                       </div>
                     </div>
                   </div>
@@ -651,7 +648,7 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
               {/* Network Badge */}
               <div className="flex items-center gap-1.5 bg-primary/10 dark:bg-primary/20 text-primary px-3 py-1.5 rounded-full text-xs font-semibold mb-6">
                 <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
-                Solana {mode === 'test' ? 'Devnet' : 'Mainnet'}
+                Solana {mode === 'test' ? 'Sandbox' : 'Live'}
               </div>
 
               {/* QR Code */}
@@ -686,11 +683,10 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
               {/* Copy Button */}
               <button
                 onClick={copyWalletAddress}
-                className={`w-full p-3.5 border-none rounded-xl font-semibold text-sm cursor-pointer transition-all flex items-center justify-center gap-2 ${
-                  addressCopied
+                className={`w-full p-3.5 border-none rounded-xl font-semibold text-sm cursor-pointer transition-all flex items-center justify-center gap-2 ${addressCopied
                     ? 'bg-emerald-600 text-white'
                     : 'bg-primary text-white hover:bg-primary/90'
-                }`}
+                  }`}
               >
                 <span className="material-symbols-outlined text-[18px]">
                   {addressCopied ? 'check' : 'content_copy'}
@@ -764,11 +760,10 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
                   {['amount', 'email', 'otp', 'bank', 'account', 'confirm'].map((s, i) => (
                     <div
                       key={s}
-                      className={`h-1 flex-1 rounded-full transition-all ${
-                        ['amount', 'email', 'otp', 'bank', 'account', 'confirm', 'processing'].indexOf(bankStep) >= i
+                      className={`h-1 flex-1 rounded-full transition-all ${['amount', 'email', 'otp', 'bank', 'account', 'confirm', 'processing'].indexOf(bankStep) >= i
                           ? 'bg-primary'
                           : 'bg-slate-200 dark:bg-slate-700'
-                      }`}
+                        }`}
                     />
                   ))}
                 </div>
@@ -890,11 +885,10 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
                             if (e.key === 'Backspace' && !otpDigits[index] && index > 0) otpInputRefs.current[index - 1]?.focus();
                           }}
                           autoFocus={index === 0 && currentView === 'bank-withdrawal' && bankStep === 'otp'}
-                          className={`w-12 h-14 text-center text-xl font-semibold border-2 rounded-xl transition-all focus:outline-none ${
-                            digit
+                          className={`w-12 h-14 text-center text-xl font-semibold border-2 rounded-xl transition-all focus:outline-none ${digit
                               ? 'border-primary bg-primary/5 dark:bg-primary/10 text-primary'
                               : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:border-primary'
-                          }`}
+                            }`}
                         />
                       ))}
                     </div>
