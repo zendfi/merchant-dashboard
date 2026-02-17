@@ -57,6 +57,13 @@ export interface ApiKey {
   last_used_at: string | null;
 }
 
+export interface ApiUsageTimelineEntry {
+  time: string;
+  total: number;
+  successful: number;
+  failed: number;
+}
+
 export interface Transaction {
   id: string;
   amount_usd: number;
@@ -309,6 +316,11 @@ export const apiKeys = {
     return apiCall(`/api/v1/merchants/me/api-keys/${keyId}/regenerate`, {
       method: 'POST',
     });
+  },
+
+  // Get API usage timeline
+  getUsageTimeline: async (hours: number = 168): Promise<{ timeline: ApiUsageTimelineEntry[] }> => {
+    return apiCall(`/api/v1/merchants/me/api-keys/usage?hours=${hours}`);
   },
 };
 

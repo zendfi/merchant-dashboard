@@ -2,16 +2,20 @@
 
 import { useEffect, useState } from 'react';
 import { useMode } from '@/lib/mode-context';
-import { apiKeys as apiKeysApi, ApiKey } from '@/lib/api';
+import { apiKeys as apiKeysApi, ApiKey, ApiUsageTimelineEntry } from '@/lib/api';
 import { useNotification } from '@/lib/notifications';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 export default function ApiKeysTab() {
   const { mode } = useMode();
   const { showNotification } = useNotification();
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
+  const [usageTimeline, setUsageTimeline] = useState<ApiUsageTimelineEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingUsage, setIsLoadingUsage] = useState(true);
   const [showCopyModal, setShowCopyModal] = useState(false);
   const [newApiKey, setNewApiKey] = useState('');
+  const [timeRange, setTimeRange] = useState(168); // 7 days in hours
 
   useEffect(() => {
     const loadApiKeys = async () => {
@@ -28,6 +32,22 @@ export default function ApiKeysTab() {
 
     loadApiKeys();
   }, []);
+
+  useEffect(() => {
+    const loadUsageTimeline = async () => {
+      setIsLoadingUsage(true);
+      try {
+        const result = await apiKeysApi.getUsageTimeline(timeRange);
+        setUsageTimeline(result.timeline || []);
+      } catch (error) {
+        console.error('Failed to load usage timeline:', error);
+      } finally {
+        setIsLoadingUsage(false);
+      }
+    };
+
+    loadUsageTimeline();
+  }, [timeRange]);
 
   const filteredKeys = apiKeys.filter((key) => key.mode === mode);
 
@@ -100,6 +120,101 @@ export default function ApiKeysTab() {
         <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
           {mode === 'test' ? 'Test Mode' : 'Live Mode'}
         </span>
+      </div>
+
+      {/* API Usage Chart */}
+      <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white">API Usage</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Track your API request volume over time</p>
+          </div>
+          <select
+            value={timeRange}
+            onChange={(e) => setTimeRange(Number(e.target.value))}
+            className="px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+          >
+            <option value={24}>Last 24 hours</option>
+            <option value={168}>Last 7 days</option>
+            <option value={720}>Last 30 days</option>
+          </select>
+        </div>
+        
+        {isLoadingUsage ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="w-8 h-8 border-3 border-slate-200 border-t-primary rounded-full animate-spin" />
+          </div>
+        ) : usageTimeline.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20">
+            <span className="material-symbols-outlined text-[48px] text-slate-300 mb-4">show_chart</span>
+            <p className="text-slate-500 dark:text-slate-400">No API usage data yet</p>
+            <p className="text-sm text-slate-400">Start making API calls to see your usage graph</p>
+          </div>
+        ) : (
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={usageTimeline.map(entry => ({
+                  time: new Date(entry.time).toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric',
+                    hour: timeRange <= 24 ? '2-digit' : undefined,
+                  }),
+                  Total: entry.total,
+                  Successful: entry.successful,
+                  Failed: entry.failed,
+                }))}
+                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                <XAxis 
+                  dataKey="time" 
+                  stroke="#94a3b8"
+                  style={{ fontSize: '12px' }}
+                />
+                <YAxis 
+                  stroke="#94a3b8"
+                  style={{ fontSize: '12px' }}
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '8px',
+                    fontSize: '12px'
+                  }}
+                />
+                <Legend 
+                  wrapperStyle={{ fontSize: '12px' }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="Total" 
+                  stroke="#8b5cf6" 
+                  strokeWidth={2}
+                  dot={{ fill: '#8b5cf6', r: 3 }}
+                  activeDot={{ r: 5 }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="Successful" 
+                  stroke="#10b981" 
+                  strokeWidth={2}
+                  dot={{ fill: '#10b981', r: 3 }}
+                  activeDot={{ r: 5 }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="Failed" 
+                  stroke="#ef4444" 
+                  strokeWidth={2}
+                  dot={{ fill: '#ef4444', r: 3 }}
+                  activeDot={{ r: 5 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       </div>
 
       {filteredKeys.length === 0 ? (
