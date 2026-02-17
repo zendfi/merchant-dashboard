@@ -3,11 +3,11 @@
 import { useState, useRef, useEffect } from 'react';
 import { useMerchant } from '@/lib/merchant-context';
 import { support } from '@/lib/api';
-import { useNotifications } from '@/lib/notifications';
+import { useNotification } from '@/lib/notifications';
 
 export default function SupportTab() {
     const { merchant } = useMerchant();
-    const { showNotification } = useNotifications();
+    const { showNotification } = useNotification();
     const [messages, setMessages] = useState<{ id: string; sender: 'user' | 'agent'; text: string; timestamp: Date }[]>([
         {
             id: '1',
