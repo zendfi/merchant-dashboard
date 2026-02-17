@@ -26,7 +26,7 @@ const config: Config = {
           900: '#4a4091',
         },
         background: {
-          light: '#f7f6f8',
+          light: '#ffffff',
           dark: '#191022',
         },
         success: {

@@ -28,7 +28,7 @@ export default function LoadingScreen() {
     if (!visible) return null;
 
     return (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#f7f6f8] dark:bg-[#0f0a18] transition-opacity duration-500">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-white dark:bg-[#0f0a18] transition-opacity duration-500">
 
             <div className="relative flex flex-col items-center gap-8">
                 {/* Brand name */}
