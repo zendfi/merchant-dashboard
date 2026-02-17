@@ -20,8 +20,19 @@ export default function TransactionsTab({ limit = 25, showViewAll = true, onCrea
   const [total, setTotal] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('30');
+
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchQuery(searchInput);
+      setCurrentPage(1); // Reset to first page on new search
+    }, 500); // 500ms delay
+
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -65,7 +76,7 @@ export default function TransactionsTab({ limit = 25, showViewAll = true, onCrea
   const exportToCSV = () => {
     if (filteredTransactions.length === 0) return;
 
-    const headers = ['Transaction ID', 'Status', `Amount (${currency})`, 'Token', 'Customer Wallet', 'Date', 'Description'];
+    const headers = ['Transaction ID', 'Status', `Amount (${currency})`, 'Token', 'Customer Email', 'Customer Name', 'Customer Wallet', 'Date', 'Description'];
     const rows = filteredTransactions.map((tx) => {
       const metadata = tx.metadata as Record<string, string> | null;
       const description = metadata?.description || `Payment ${tx.id.slice(0, 8)}`;
@@ -74,6 +85,8 @@ export default function TransactionsTab({ limit = 25, showViewAll = true, onCrea
         tx.status || 'pending',
         formatAmount(tx.amount_usd),
         tx.token || 'USDC',
+        tx.customer_email || '',
+        tx.customer_name || '',
         tx.customer_wallet || 'Anonymous',
         new Date(tx.created_at).toISOString(),
         description,
@@ -216,8 +229,14 @@ export default function TransactionsTab({ limit = 25, showViewAll = true, onCrea
           <input
             type="text"
             placeholder="Search by ID, email, or customer name"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                setSearchQuery(searchInput);
+                setCurrentPage(1);
+              }
+            }}
             className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
           />
         </div>
@@ -233,7 +252,10 @@ export default function TransactionsTab({ limit = 25, showViewAll = true, onCrea
           </select>
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setCurrentPage(1); // Reset to first page on filter change
+            }}
             className="px-3 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
           >
             <option value="all">Status: All</option>
@@ -286,6 +308,7 @@ export default function TransactionsTab({ limit = 25, showViewAll = true, onCrea
               <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
                 <tr>
                   <th className="text-left px-4 py-3 text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">ID</th>
+                  <th className="text-left px-4 py-3 text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Customer</th>
                   <th className="text-left px-4 py-3 text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Amount</th>
                   <th className="text-left px-4 py-3 text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Token</th>
                   <th className="text-left px-4 py-3 text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
@@ -297,6 +320,20 @@ export default function TransactionsTab({ limit = 25, showViewAll = true, onCrea
                   <tr key={tx.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
                     <td className="px-4 py-2.5">
                       <span className="text-amber-500 font-mono text-xs">{tx.id.slice(0, 8)}</span>
+                    </td>
+                    <td className="px-4 py-2.5">
+                      <div className="flex flex-col">
+                        {tx.customer_email ? (
+                          <>
+                            <span className="text-sm text-slate-900 dark:text-white font-medium">{tx.customer_name || 'Customer'}</span>
+                            <span className="text-xs text-slate-500 dark:text-slate-400">{tx.customer_email}</span>
+                          </>
+                        ) : tx.customer_wallet ? (
+                          <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">{tx.customer_wallet.slice(0, 8)}...{tx.customer_wallet.slice(-6)}</span>
+                        ) : (
+                          <span className="text-xs text-slate-400 dark:text-slate-500">Anonymous</span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-2.5">
                       <span className="font-bold text-slate-900 dark:text-white text-sm">{formatAmount(tx.amount_usd)}</span>

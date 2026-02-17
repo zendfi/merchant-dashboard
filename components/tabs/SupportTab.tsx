@@ -2,9 +2,12 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useMerchant } from '@/lib/merchant-context';
+import { support } from '@/lib/api';
+import { useNotifications } from '@/lib/notifications';
 
 export default function SupportTab() {
     const { merchant } = useMerchant();
+    const { showNotification } = useNotifications();
     const [messages, setMessages] = useState<{ id: string; sender: 'user' | 'agent'; text: string; timestamp: Date }[]>([
         {
             id: '1',
@@ -27,7 +30,7 @@ export default function SupportTab() {
 
     const handleSendMessage = async (e?: React.FormEvent) => {
         e?.preventDefault();
-        if (!newMessage.trim()) return;
+        if (!newMessage.trim() || isSending) return;
 
         const userMsg = {
             id: Date.now().toString(),
@@ -37,27 +40,36 @@ export default function SupportTab() {
         };
 
         setMessages(prev => [...prev, userMsg]);
+        const messageToSend = newMessage;
         setNewMessage('');
         setIsSending(true);
 
-        // Simulate sending to email/backend
         try {
-            // In a real app, this would call an API endpoint that sends an email
-            // await api.sendSupportMessage(newMessage);
-
-            // Simulate reply after a delay
+            const response = await support.sendMessage(messageToSend);
+            
+            // Add agent confirmation response
             setTimeout(() => {
                 setMessages(prev => [...prev, {
                     id: (Date.now() + 1).toString(),
                     sender: 'agent',
-                    text: "Thanks for reaching out! We've received your message and our support team will get back to you via email shortly.",
+                    text: response.message || "Thanks for reaching out! We've received your message and our support team will get back to you via email shortly.",
                     timestamp: new Date()
                 }]);
                 setIsSending(false);
-            }, 1000);
+            }, 500);
+
+            showNotification('Message sent successfully!', 'success');
         } catch (error) {
             console.error('Failed to send message:', error);
+            showNotification(
+                error instanceof Error ? error.message : 'Failed to send message. Please try again.',
+                'error'
+            );
             setIsSending(false);
+            
+            // Remove the user message on error
+            setMessages(prev => prev.filter(m => m.id !== userMsg.id));
+            setNewMessage(messageToSend);
         }
     };
 

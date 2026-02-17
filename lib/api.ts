@@ -63,6 +63,8 @@ export interface Transaction {
   token: string;
   status: string;
   customer_wallet: string | null;
+  customer_email?: string | null;
+  customer_name?: string | null;
   metadata: Record<string, unknown> | null;
   has_splits: boolean;
   created_at: string;
@@ -541,6 +543,17 @@ export const offramp = {
   },
 };
 
+// Support APIs
+export const support = {
+  // Send support message
+  sendMessage: async (message: string): Promise<{ success: boolean; message: string }> => {
+    return apiCall('/api/v1/merchants/me/support', {
+      method: 'POST',
+      body: JSON.stringify({ message }),
+    });
+  },
+};
+
 // WebAuthn APIs
 export const webauthn = {
   // Start passkey registration
@@ -618,6 +631,7 @@ export default {
   transactions,
   webhooks,
   wallet,
+  support,
   webauthn,
   paymentLinks,
 };
