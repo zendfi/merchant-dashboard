@@ -71,6 +71,10 @@ export interface Transaction {
   mode?: string;
   split_count?: number;
   payment_token?: string;
+  reconciled: boolean;
+  reconciled_at: string | null;
+  internal_notes: string | null;
+  transaction_signature: string | null;
 }
 
 export interface DashboardStats {
@@ -318,6 +322,11 @@ export const transactions = {
       page?: number;
       status?: string;
       search?: string;
+      reconciled?: boolean;
+      start_date?: string;
+      end_date?: string;
+      sort_by?: 'amount' | 'status' | 'created_at';
+      sort_order?: 'asc' | 'desc';
     } = {}
   ): Promise<{ transactions: Transaction[]; total: number; showing: number }> => {
     const searchParams = new URLSearchParams();
@@ -326,8 +335,33 @@ export const transactions = {
     if (params.page) searchParams.set('page', params.page.toString());
     if (params.status) searchParams.set('status', params.status);
     if (params.search) searchParams.set('search', params.search);
+    if (params.reconciled !== undefined) searchParams.set('reconciled', params.reconciled.toString());
+    if (params.start_date) searchParams.set('start_date', params.start_date);
+    if (params.end_date) searchParams.set('end_date', params.end_date);
+    if (params.sort_by) searchParams.set('sort_by', params.sort_by);
+    if (params.sort_order) searchParams.set('sort_order', params.sort_order);
 
     return apiCall(`/api/v1/merchants/me/transactions?${searchParams.toString()}`);
+  },
+
+  // Update transaction reconciliation
+  update: async (
+    transactionId: string,
+    data: {
+      reconciled?: boolean;
+      internal_notes?: string;
+    }
+  ): Promise<{
+    id: string;
+    reconciled: boolean;
+    reconciled_at: string | null;
+    internal_notes: string | null;
+  }> => {
+    return apiCall(`/api/v1/merchants/me/transactions/${transactionId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
   },
 };
 

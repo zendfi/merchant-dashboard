@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useMode } from '@/lib/mode-context';
 import { useCurrency } from '@/lib/currency-context';
 import { transactions as transactionsApi, Transaction, merchant as merchantApi, DashboardStats } from '@/lib/api';
+import TransactionDetailModal from '../TransactionDetailModal';
+import { ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 
 interface TransactionsTabProps {
   limit?: number;
@@ -22,7 +24,13 @@ export default function TransactionsTab({ limit = 25, showViewAll = true, onCrea
   const [searchQuery, setSearchQuery] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [dateFilter, setDateFilter] = useState('30');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [reconciledFilter, setReconciledFilter] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<'amount' | 'status' | 'created_at'>('created_at');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Debounce search
   useEffect(() => {
@@ -34,52 +42,79 @@ export default function TransactionsTab({ limit = 25, showViewAll = true, onCrea
     return () => clearTimeout(timer);
   }, [searchInput]);
 
-  useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true);
-      try {
-        const [txData, statsData] = await Promise.all([
-          transactionsApi.list({
-            mode,
-            limit,
-            page: currentPage,
-            status: statusFilter !== 'all' ? statusFilter : undefined,
-            search: searchQuery || undefined,
-          }),
-          merchantApi.getStats(mode),
-        ]);
-        setTransactions(txData.transactions || []);
-        setTotal(txData.total || 0);
-        setStats(statsData);
-      } catch (error) {
-        console.error('Failed to load transactions:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const loadData = async () => {
+    setIsLoading(true);
+    try {
+      const [txData, statsData] = await Promise.all([
+        transactionsApi.list({
+          mode,
+          limit,
+          page: currentPage,
+          status: statusFilter !== 'all' ? statusFilter : undefined,
+          search: searchQuery || undefined,
+          reconciled: reconciledFilter === 'all' ? undefined : reconciledFilter === 'true',
+          start_date: startDate || undefined,
+          end_date: endDate || undefined,
+          sort_by: sortBy,
+          sort_order: sortOrder,
+        }),
+        merchantApi.getStats(mode),
+      ]);
+      setTransactions(txData.transactions || []);
+      setTotal(txData.total || 0);
+      setStats(statsData);
+    } catch (error) {
+      console.error('Failed to load transactions:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     loadData();
-  }, [mode, limit, currentPage, statusFilter, searchQuery]);
+  }, [mode, limit, currentPage, statusFilter, searchQuery, reconciledFilter, startDate, endDate, sortBy, sortOrder]);
 
   const totalPages = Math.ceil(total / limit);
 
-  // Filter transactions by date (client-side since API doesn't support date filtering)
-  const filteredTransactions = transactions.filter((tx) => {
-    const txDate = new Date(tx.created_at);
-    const now = new Date();
-    const daysAgo = parseInt(dateFilter, 10);
-    const cutoffDate = new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000);
-    return txDate >= cutoffDate;
-  });
+  const handleSort = (column: 'amount' | 'status' | 'created_at') => {
+    if (sortBy === column) {
+      // Toggle sort order
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      // New column, default to desc
+      setSortBy(column);
+      setSortOrder('desc');
+    }
+    setCurrentPage(1);
+  };
+
+  const getSortIcon = (column: 'amount' | 'status' | 'created_at') => {
+    if (sortBy !== column) {
+      return <ArrowUpDown size={14} className="opacity-40" />;
+    }
+    return sortOrder === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />;
+  };
+
+  const handleRowClick = (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setIsModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    setSelectedTransaction(null);
+  };
+
+  const handleModalUpdate = () => {
+    loadData(); // Refresh the list
+  };
 
   // Export transactions to CSV
   const exportToCSV = () => {
-    if (filteredTransactions.length === 0) return;
+    if (transactions.length === 0) return;
 
-    const headers = ['Transaction ID', 'Status', `Amount (${currency})`, 'Token', 'Customer Email', 'Customer Name', 'Customer Wallet', 'Date', 'Description'];
-    const rows = filteredTransactions.map((tx) => {
-      const metadata = tx.metadata as Record<string, string> | null;
-      const description = metadata?.description || `Payment ${tx.id.slice(0, 8)}`;
+    const headers = ['Transaction ID', 'Status', `Amount (${currency})`, 'Token', 'Customer Email', 'Customer Name', 'Customer Wallet', 'Date', 'Reconciled', 'Notes'];
+    const rows = transactions.map((tx) => {
       return [
         tx.id,
         tx.status || 'pending',
@@ -89,7 +124,8 @@ export default function TransactionsTab({ limit = 25, showViewAll = true, onCrea
         tx.customer_name || '',
         tx.customer_wallet || 'Anonymous',
         new Date(tx.created_at).toISOString(),
-        description,
+        tx.reconciled ? 'Yes' : 'No',
+        tx.internal_notes || '',
       ];
     });
 
@@ -223,7 +259,7 @@ export default function TransactionsTab({ limit = 25, showViewAll = true, onCrea
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col lg:flex-row gap-4">
+      <div className="flex flex-col gap-4">
         <div className="flex-1 relative">
           <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
           <input
@@ -241,20 +277,32 @@ export default function TransactionsTab({ limit = 25, showViewAll = true, onCrea
           />
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <select
-            value={dateFilter}
-            onChange={(e) => setDateFilter(e.target.value)}
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => {
+              setStartDate(e.target.value);
+              setCurrentPage(1);
+            }}
             className="px-3 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-          >
-            <option value="30">Date: Last 30 days</option>
-            <option value="7">Date: Last 7 days</option>
-            <option value="90">Date: Last 90 days</option>
-          </select>
+            placeholder="Start Date"
+          />
+          <span className="text-slate-400 text-sm">to</span>
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => {
+              setEndDate(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="px-3 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+            placeholder="End Date"
+          />
           <select
             value={statusFilter}
             onChange={(e) => {
               setStatusFilter(e.target.value);
-              setCurrentPage(1); // Reset to first page on filter change
+              setCurrentPage(1);
             }}
             className="px-3 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
           >
@@ -264,11 +312,23 @@ export default function TransactionsTab({ limit = 25, showViewAll = true, onCrea
             <option value="failed">Failed</option>
             <option value="refunded">Refunded</option>
           </select>
+          <select
+            value={reconciledFilter}
+            onChange={(e) => {
+              setReconciledFilter(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="px-3 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+          >
+            <option value="all">Reconciled: All</option>
+            <option value="true">Reconciled</option>
+            <option value="false">Not Reconciled</option>
+          </select>
         </div>
       </div>
 
       {/* Table */}
-      {filteredTransactions.length === 0 ? (
+      {transactions.length === 0 ? (
         <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 p-12 text-center">
           <span className="material-symbols-outlined text-[48px] text-slate-300 mb-4">receipt_long</span>
           <p className="text-slate-500 dark:text-slate-400 mb-4">No transactions yet. Start accepting payments!</p>
@@ -285,8 +345,12 @@ export default function TransactionsTab({ limit = 25, showViewAll = true, onCrea
         <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 overflow-hidden">
           {/* Mobile Card View */}
           <div className="lg:hidden divide-y divide-slate-100 dark:divide-slate-800">
-            {filteredTransactions.map((tx) => (
-              <div key={tx.id} className="p-4 space-y-3">
+            {transactions.map((tx) => (
+              <div
+                key={tx.id}
+                onClick={() => handleRowClick(tx)}
+                className="p-4 space-y-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors"
+              >
                 <div className="flex items-center justify-between">
                   <span className="text-amber-500 font-mono text-sm">{tx.id.slice(0, 8)}</span>
                   {getStatusBadge(tx.status || 'pending')}
@@ -295,8 +359,15 @@ export default function TransactionsTab({ limit = 25, showViewAll = true, onCrea
                   <span className="font-bold text-slate-900 dark:text-white">{formatAmount(tx.amount_usd)}</span>
                   <span className="text-slate-500">{tx.token || 'USDC'}</span>
                 </div>
-                <div className="text-right text-slate-500 text-xs">
-                  {new Date(tx.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} {new Date(tx.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-500">
+                    {new Date(tx.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} {new Date(tx.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                  {tx.reconciled && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      Reconciled
+                    </span>
+                  )}
                 </div>
               </div>
             ))}
@@ -309,15 +380,44 @@ export default function TransactionsTab({ limit = 25, showViewAll = true, onCrea
                 <tr>
                   <th className="text-left px-4 py-3 text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">ID</th>
                   <th className="text-left px-4 py-3 text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Customer</th>
-                  <th className="text-left px-4 py-3 text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Amount</th>
+                  <th
+                    onClick={() => handleSort('amount')}
+                    className="text-left px-4 py-3 text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
+                  >
+                    <div className="flex items-center gap-1">
+                      Amount
+                      {getSortIcon('amount')}
+                    </div>
+                  </th>
                   <th className="text-left px-4 py-3 text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Token</th>
-                  <th className="text-left px-4 py-3 text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
-                  <th className="text-left px-4 py-3 text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Date</th>
+                  <th
+                    onClick={() => handleSort('status')}
+                    className="text-left px-4 py-3 text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
+                  >
+                    <div className="flex items-center gap-1">
+                      Status
+                      {getSortIcon('status')}
+                    </div>
+                  </th>
+                  <th
+                    onClick={() => handleSort('created_at')}
+                    className="text-left px-4 py-3 text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
+                  >
+                    <div className="flex items-center gap-1">
+                      Date
+                      {getSortIcon('created_at')}
+                    </div>
+                  </th>
+                  <th className="text-left px-4 py-3 text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Reconciled</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {filteredTransactions.map((tx) => (
-                  <tr key={tx.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+                {transactions.map((tx) => (
+                  <tr
+                    key={tx.id}
+                    onClick={() => handleRowClick(tx)}
+                    className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors cursor-pointer"
+                  >
                     <td className="px-4 py-2.5">
                       <span className="text-amber-500 font-mono text-xs">{tx.id.slice(0, 8)}</span>
                     </td>
@@ -345,6 +445,15 @@ export default function TransactionsTab({ limit = 25, showViewAll = true, onCrea
                     <td className="px-4 py-2.5 text-xs text-slate-600 dark:text-slate-400">
                       {new Date(tx.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} {new Date(tx.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                     </td>
+                    <td className="px-4 py-2.5">
+                      {tx.reconciled ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          ✓
+                        </span>
+                      ) : (
+                        <span className="text-slate-300 dark:text-slate-600">–</span>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -354,7 +463,7 @@ export default function TransactionsTab({ limit = 25, showViewAll = true, onCrea
           {/* Pagination */}
           <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100 dark:border-slate-800">
             <p className="text-sm text-slate-500">
-              Showing <span className="font-medium text-slate-900 dark:text-white">{filteredTransactions.length}</span> of <span className="font-medium text-primary">{total.toLocaleString()}</span> results
+              Showing <span className="font-medium text-slate-900 dark:text-white">{transactions.length}</span> of <span className="font-medium text-primary">{total.toLocaleString()}</span> results
             </p>
             <div className="flex items-center gap-2">
               <button
@@ -375,6 +484,14 @@ export default function TransactionsTab({ limit = 25, showViewAll = true, onCrea
           </div>
         </div>
       )}
+
+      {/* Transaction Detail Modal */}
+      <TransactionDetailModal
+        transaction={selectedTransaction}
+        isOpen={isModalOpen}
+        onClose={handleModalClose}
+        onUpdate={handleModalUpdate}
+      />
     </div>
   );
 }
