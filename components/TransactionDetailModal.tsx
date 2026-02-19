@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Transaction, transactions } from '@/lib/api';
-import { X, Check, Copy, ExternalLink } from 'lucide-react';
+import { X, Check, Copy, ExternalLink, Flag, AlertTriangle, Loader2 } from 'lucide-react';
 
 interface TransactionDetailModalProps {
   transaction: Transaction | null;
@@ -23,6 +23,10 @@ export default function TransactionDetailModal({
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
   const [mounted, setMounted] = useState(false);
+  const [isFlagging, setIsFlagging] = useState(false);
+  const [flagSuccess, setFlagSuccess] = useState(false);
+  const [showFlagInput, setShowFlagInput] = useState(false);
+  const [flagReason, setFlagReason] = useState('');
 
   useEffect(() => {
     setMounted(true);
@@ -32,6 +36,9 @@ export default function TransactionDetailModal({
     if (transaction) {
       setReconciled(transaction.reconciled);
       setInternalNotes(transaction.internal_notes || '');
+      setFlagSuccess(transaction.flagged_for_review ?? false);
+      setFlagReason(transaction.flag_reason ?? '');
+      setShowFlagInput(false);
     }
   }, [transaction]);
 
@@ -53,6 +60,23 @@ export default function TransactionDetailModal({
       console.error(err);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleFlag = async () => {
+    if (!transaction) return;
+    setIsFlagging(true);
+    setError('');
+    try {
+      await transactions.flagForReview(transaction.id, flagReason || undefined);
+      setFlagSuccess(true);
+      setShowFlagInput(false);
+      onUpdate();
+    } catch (err) {
+      setError('Failed to flag payment for review');
+      console.error(err);
+    } finally {
+      setIsFlagging(false);
     }
   };
 
@@ -116,7 +140,24 @@ export default function TransactionDetailModal({
                 </button>
               </div>
             </div>
-            <div>
+            <div className="flex items-center gap-2 flex-wrap justify-end">
+              {/* Payment source badge */}
+              {transaction.is_onramp ? (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                  Onramp
+                </span>
+              ) : (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  Solana Pay
+                </span>
+              )}
+              {/* Flagged badge */}
+              {(transaction.flagged_for_review || flagSuccess) && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                  <Flag size={11} />
+                  Flagged
+                </span>
+              )}
               <span
                 className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(
                   transaction.status
@@ -273,6 +314,76 @@ export default function TransactionDetailModal({
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-md p-3">
               <p className="text-sm text-red-800">{error}</p>
+            </div>
+          )}
+
+          {/* ── Flag for Review ─────────────────────────────────────────── */}
+          {transaction.status !== 'confirmed' && (
+            <div className="border border-orange-200 rounded-lg p-4 bg-orange-50 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle size={16} className="text-orange-600" />
+                  <h3 className="text-sm font-semibold text-orange-900">
+                    Payment stuck or not settling?
+                  </h3>
+                </div>
+                {(transaction.flagged_for_review || flagSuccess) && (
+                  <span className="text-xs text-orange-700 font-medium">Already flagged ✓</span>
+                )}
+              </div>
+              <p className="text-xs text-orange-700">
+                If this payment appears stuck, flag it for admin review. Our team will check the
+                on-chain status and manually trigger settlement if needed.
+              </p>
+              {!(transaction.flagged_for_review || flagSuccess) && (
+                <>
+                  {showFlagInput ? (
+                    <div className="space-y-2">
+                      <textarea
+                        value={flagReason}
+                        onChange={(e) => setFlagReason(e.target.value)}
+                        rows={2}
+                        maxLength={500}
+                        placeholder="Optional: describe the issue (e.g. 'Customer confirmed payment on their end 20 mins ago, still pending')"
+                        className="w-full px-3 py-2 text-xs border border-orange-300 rounded-md focus:ring-orange-500 focus:border-orange-500 bg-white"
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handleFlag}
+                          disabled={isFlagging}
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-orange-600 rounded-md hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          {isFlagging ? (
+                            <Loader2 size={12} className="animate-spin" />
+                          ) : (
+                            <Flag size={12} />
+                          )}
+                          {isFlagging ? 'Flagging…' : 'Confirm Flag'}
+                        </button>
+                        <button
+                          onClick={() => setShowFlagInput(false)}
+                          className="px-3 py-1.5 text-xs font-medium text-orange-700 hover:text-orange-900 transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setShowFlagInput(true)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-orange-700 border border-orange-400 rounded-md hover:bg-orange-100 transition-colors"
+                    >
+                      <Flag size={12} />
+                      Flag for Review
+                    </button>
+                  )}
+                </>
+              )}
+              {flagSuccess && !transaction.flagged_for_review && (
+                <p className="text-xs text-green-700 font-medium">
+                  ✓ Flagged successfully. Admin will review shortly.
+                </p>
+              )}
             </div>
           )}
         </div>

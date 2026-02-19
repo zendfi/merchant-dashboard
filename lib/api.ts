@@ -82,6 +82,13 @@ export interface Transaction {
   reconciled_at: string | null;
   internal_notes: string | null;
   transaction_signature: string | null;
+  // Payment recovery fields
+  flagged_for_review: boolean;
+  flagged_at: string | null;
+  flag_reason: string | null;
+  is_onramp: boolean;
+  paj_order_id: string | null;
+  paj_external_order_id: string | null;
 }
 
 export interface DashboardStats {
@@ -375,6 +382,18 @@ export const transactions = {
       body: JSON.stringify(data),
     });
   },
+
+  // Flag a payment for admin review
+  flagForReview: async (
+    transactionId: string,
+    reason?: string
+  ): Promise<{ success: boolean; payment_id: string; message: string }> => {
+    return apiCall(`/api/v1/merchants/me/transactions/${transactionId}/flag`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason: reason ?? null }),
+    });
+  },
 };
 
 // Webhook APIs
@@ -422,7 +441,8 @@ export const wallet = {
       authenticator_data: number[];
       signature: number[];
       client_data_json: number[];
-    }
+    },
+    mode: 'test' | 'live' = 'live'
   ): Promise<{ success: boolean; explorer_url: string }> => {
     return apiCall('/api/v1/merchants/me/wallet/withdraw', {
       method: 'POST',
@@ -431,6 +451,7 @@ export const wallet = {
         amount,
         token,
         passkey_signature: passkeySignature,
+        mode,
       }),
     });
   },

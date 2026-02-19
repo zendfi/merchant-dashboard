@@ -180,7 +180,7 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
       if (!passkeySignature) throw new Error('Passkey authentication cancelled');
 
       const tokenFormatted = selectedToken === 'SOL' ? 'Sol' : 'Usdc';
-      const result = await walletApi.withdraw(recipientAddress, amount, tokenFormatted, passkeySignature);
+      const result = await walletApi.withdraw(recipientAddress, amount, tokenFormatted, passkeySignature, mode);
       showNotification('Transaction Sent!', `Successfully sent ${amount} ${selectedToken} to ${recipientAddress.substring(0, 8)}...`, 'success');
       handleBackToMain();
       await loadWalletInfo();
