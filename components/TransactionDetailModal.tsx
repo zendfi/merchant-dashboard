@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Transaction, transactions } from '@/lib/api';
 import { X, Check, Copy, ExternalLink } from 'lucide-react';
 
@@ -21,6 +22,11 @@ export default function TransactionDetailModal({
   const [internalNotes, setInternalNotes] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (transaction) {
@@ -30,6 +36,7 @@ export default function TransactionDetailModal({
   }, [transaction]);
 
   if (!isOpen || !transaction) return null;
+  if (!mounted) return null;
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -77,8 +84,8 @@ export default function TransactionDetailModal({
     }
   };
 
-  return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-lg flex items-center justify-center z-[99999] p-4">
+  return createPortal(
+    <div className="fixed inset-0 bg-black/75 backdrop-blur-md flex items-center justify-center z-[99999] p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
@@ -297,6 +304,7 @@ export default function TransactionDetailModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
