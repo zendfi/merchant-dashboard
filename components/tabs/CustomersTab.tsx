@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useMode } from '@/lib/mode-context';
 import { useCurrency } from '@/lib/currency-context';
 import {
@@ -424,7 +425,7 @@ function CustomerDetailPanel({
     p.shipping_address_line1 || p.shipping_city || p.shipping_country
   );
 
-  return (
+  const modal = (
     <>
       {/* Backdrop */}
       <div
@@ -650,6 +651,8 @@ function CustomerDetailPanel({
       </div>
     </>
   );
+
+  return createPortal(modal, document.body);
 }
 
 // ── Small primitives ──────────────────────────────────────────────────────────
