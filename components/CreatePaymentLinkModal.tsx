@@ -496,8 +496,7 @@ export default function CreatePaymentLinkModal({ isOpen, onClose }: CreatePaymen
                           Charge service fee to payer
                         </label>
                         <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                          Adds a fee of the higher of ₦30 or 2.5% of the NGN amount, shown separately at checkout. 
-                          Turn off to cover the cost yourself.
+                          Adds ₦30 or 2.5% (whichever is higher), shown at checkout. Turn off to cover it yourself.
                         </p>
                       </div>
                       <button
