@@ -33,6 +33,7 @@ export default function CreatePaymentLinkModal({ isOpen, onClose }: CreatePaymen
   const [expiresIn, setExpiresIn] = useState('');
   const [onramp, setOnramp] = useState(false);
   const [payerServiceCharge, setPayerServiceCharge] = useState(true);
+  const [collectCustomerInfo, setCollectCustomerInfo] = useState(false);
 
   // Success state
   const [createdLink, setCreatedLink] = useState<PaymentLink | null>(null);
@@ -166,6 +167,7 @@ export default function CreatePaymentLinkModal({ isOpen, onClose }: CreatePaymen
         onramp,
         amount_ngn: amountNgn,
         payer_service_charge: onramp ? payerServiceCharge : undefined,
+        collect_customer_info: collectCustomerInfo || undefined,
       });
 
       setCreatedLink(link);
@@ -461,6 +463,27 @@ export default function CreatePaymentLinkModal({ isOpen, onClose }: CreatePaymen
                       <span
                         className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform shadow ${onramp ? 'translate-x-5' : 'translate-x-0'
                           }`}
+                      />
+                    </button>
+                  </div>
+
+                  {/* Collect Customer Info Toggle */}
+                  <div className="flex items-center justify-between py-2">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-900 dark:text-white">
+                        Collect customer details
+                      </label>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        Ask for name, phone, company &amp; billing address at checkout
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setCollectCustomerInfo(!collectCustomerInfo)}
+                      className={`relative w-11 h-6 rounded-full transition-colors ${collectCustomerInfo ? 'bg-primary' : 'bg-slate-200 dark:bg-slate-700'}`}
+                    >
+                      <span
+                        className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform shadow ${collectCustomerInfo ? 'translate-x-5' : 'translate-x-0'}`}
                       />
                     </button>
                   </div>

@@ -154,6 +154,8 @@ export interface CreatePaymentLinkRequest {
    * If false/absent, the merchant absorbs any PAJ slippage.
    */
   payer_service_charge?: boolean;
+  /** If true, checkout shows an expanded form collecting name, phone, company & billing address */
+  collect_customer_info?: boolean;
 }
 
 export interface ChartDataPoint {
