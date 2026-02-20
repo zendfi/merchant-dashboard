@@ -238,19 +238,19 @@ export default function TransactionsTab({ limit = 25, showViewAll = true, onCrea
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <div className="bg-white dark:bg-[#1f162b] p-4 rounded-xl border border-slate-100 dark:border-slate-800 shadow-card">
+        <div className="bg-white dark:bg-[#1f162b] p-4 rounded-xl border border-slate-100 dark:border-slate-800">
           <span className="text-xs text-slate-500 dark:text-slate-400">Total Volume (30d)</span>
           <p className="text-xl font-bold text-slate-900 dark:text-white mt-0.5">
             {formatFullAmount(stats?.total_volume || 0)}
           </p>
         </div>
-        <div className="bg-white dark:bg-[#1f162b] p-4 rounded-xl border border-slate-100 dark:border-slate-800 shadow-card">
+        <div className="bg-white dark:bg-[#1f162b] p-4 rounded-xl border border-slate-100 dark:border-slate-800">
           <span className="text-xs text-slate-500 dark:text-slate-400">Success Rate</span>
           <p className="text-xl font-bold text-slate-900 dark:text-white mt-0.5">
             {calculateSuccessRate()}%
           </p>
         </div>
-        <div className="bg-white dark:bg-[#1f162b] p-4 rounded-xl border border-slate-100 dark:border-slate-800 shadow-card">
+        <div className="bg-white dark:bg-[#1f162b] p-4 rounded-xl border border-slate-100 dark:border-slate-800">
           <span className="text-xs text-slate-500 dark:text-slate-400">Pending Amount</span>
           <p className="text-xl font-bold text-slate-900 dark:text-white mt-0.5">
             {formatFullAmount(calculatePendingAmount())}
