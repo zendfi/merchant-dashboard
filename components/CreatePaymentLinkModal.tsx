@@ -473,7 +473,7 @@ export default function CreatePaymentLinkModal({ isOpen, onClose }: CreatePaymen
                           Charge service fee to payer
                         </label>
                         <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                          Adds max(₦30, 3% of NGN amount) on top — shown as a fee breakdown to the customer.
+                          Adds max(₦30, 2.1% of NGN amount) on top, shown as a fee breakdown to the customer.
                           Turn off to absorb slippage yourself.
                         </p>
                       </div>
