@@ -26,6 +26,7 @@ function DashboardContent() {
   const [showWalletModal, setShowWalletModal] = useState(false);
   const [showPaymentLinkModal, setShowPaymentLinkModal] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [headerHidden, setHeaderHidden] = useState(false);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -79,7 +80,7 @@ function DashboardContent() {
       case 'transactions':
         return <TransactionsTab onCreatePayment={() => setShowPaymentLinkModal(true)} />;
       case 'customers':
-        return <CustomersTab />;
+        return <CustomersTab onModalToggle={setHeaderHidden} />;
       case 'api-keys':
         return <ApiKeysTab />;
       case 'webhooks':
@@ -113,13 +114,15 @@ function DashboardContent() {
       />
       <main className="flex-1 flex flex-col h-screen overflow-hidden p-2 lg:p-3 transition-all duration-300">
         <div className="flex-1 bg-white dark:bg-[#1f162b] rounded-[24px] shadow-sm border border-slate-200/50 dark:border-white/5 flex flex-col overflow-hidden relative">
-          <Header
-            onOpenWallet={() => setShowWalletModal(true)}
-            onCreatePaymentLink={() => setShowPaymentLinkModal(true)}
-            onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-            sidebarOpen={sidebarOpen}
-            activeTab={activeTab}
-          />
+          {!headerHidden && (
+            <Header
+              onOpenWallet={() => setShowWalletModal(true)}
+              onCreatePaymentLink={() => setShowPaymentLinkModal(true)}
+              onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+              sidebarOpen={sidebarOpen}
+              activeTab={activeTab}
+            />
+          )}
 
           <div className="flex-1 overflow-y-auto px-4 py-4 lg:px-8 lg:py-6 pb-20 scrollbar-hide">
             <div className="max-w-7xl mx-auto">

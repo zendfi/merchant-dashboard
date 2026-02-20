@@ -62,7 +62,11 @@ const STATUS_STYLES: Record<string, string> = {
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export default function CustomersTab() {
+interface CustomersTabProps {
+  onModalToggle?: (open: boolean) => void;
+}
+
+export default function CustomersTab({ onModalToggle }: CustomersTabProps = {}) {
   const { mode } = useMode();
   const { currency, exchangeRate } = useCurrency();
 
@@ -119,6 +123,7 @@ export default function CustomersTab() {
     setSelected(c);
     setDetail(null);
     setDetailLoading(true);
+    onModalToggle?.(true);
     try {
       const d = await customersApi.getDetail(c.email, mode);
       setDetail(d);
@@ -129,7 +134,17 @@ export default function CustomersTab() {
     }
   };
 
-  const closeDetail = () => { setSelected(null); setDetail(null); };
+  const closeDetail = () => {
+    setSelected(null);
+    setDetail(null);
+    onModalToggle?.(false);
+  };
+
+  // Cleanup: hide header if we unmount while modal is open
+  useEffect(() => {
+    return () => onModalToggle?.(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSort = (col: string) => {
     if (sortBy === col) {
@@ -413,14 +428,15 @@ function CustomerDetailPanel({
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[99998]"
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[99998]"
         onClick={onClose}
       />
 
-      {/* Panel */}
-      <div className="fixed right-0 top-0 h-full w-full max-w-xl bg-white dark:bg-[#1a1128] z-[99999] overflow-y-auto shadow-2xl flex flex-col">
-        {/* Panel header */}
-        <div className="sticky top-0 bg-white dark:bg-[#1a1128] border-b border-slate-100 dark:border-slate-800 px-6 py-4 flex items-center justify-between z-10">
+      {/* Modal */}
+      <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6">
+        <div className="relative bg-white dark:bg-[#1a1128] w-full max-w-2xl rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+        {/* Modal header */}
+        <div className="shrink-0 bg-white dark:bg-[#1a1128] border-b border-slate-100 dark:border-slate-800 px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary font-bold text-sm">
               {initials(customer)}
@@ -443,11 +459,11 @@ function CustomerDetailPanel({
         </div>
 
         {loading ? (
-          <div className="flex-1 flex items-center justify-center">
+          <div className="flex-1 flex items-center justify-center py-20">
             <div className="w-8 h-8 border-3 border-slate-200 border-t-primary rounded-full animate-spin" />
           </div>
         ) : (
-          <div className="flex-1 p-6 space-y-6">
+          <div className="flex-1 overflow-y-auto p-6 space-y-6">
 
             {/* Stats strip */}
             <div className="grid grid-cols-3 gap-3">
@@ -630,6 +646,7 @@ function CustomerDetailPanel({
             )}
           </div>
         )}
+        </div>
       </div>
     </>
   );
