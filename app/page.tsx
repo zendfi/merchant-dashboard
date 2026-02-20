@@ -15,6 +15,7 @@ import OverviewTab from '@/components/tabs/OverviewTab';
 import TransactionsTab from '@/components/tabs/TransactionsTab';
 import ApiKeysTab from '@/components/tabs/ApiKeysTab';
 import WebhooksTab from '@/components/tabs/WebhooksTab';
+import CustomersTab from '@/components/tabs/CustomersTab';
 import ProfileTab from '@/components/tabs/ProfileTab';
 import SupportTab from '@/components/tabs/SupportTab';
 
@@ -77,6 +78,8 @@ function DashboardContent() {
         return <OverviewTab onViewAllTransactions={() => setActiveTab('transactions')} />;
       case 'transactions':
         return <TransactionsTab onCreatePayment={() => setShowPaymentLinkModal(true)} />;
+      case 'customers':
+        return <CustomersTab />;
       case 'api-keys':
         return <ApiKeysTab />;
       case 'webhooks':

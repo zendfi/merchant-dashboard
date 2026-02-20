@@ -22,6 +22,7 @@ interface NavItem {
 const mainNavItems: NavItem[] = [
   { id: 'overview', label: 'Overview', icon: 'dashboard' },
   { id: 'transactions', label: 'Transactions', icon: 'payments' },
+  { id: 'customers', label: 'Customers', icon: 'group' },
   { id: 'api-keys', label: 'API Keys', icon: 'vpn_key' },
   { id: 'webhooks', label: 'Webhooks', icon: 'webhook' },
   { id: 'support', label: 'Live Support', icon: 'support_agent' },

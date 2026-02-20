@@ -697,6 +697,93 @@ export const paymentLinks = {
   },
 };
 
+// Customer APIs
+export interface Customer {
+  email: string;
+  name: string | null;
+  company: string | null;
+  phone: string | null;
+  total_payments: number;
+  confirmed_payments: number;
+  pending_payments: number;
+  failed_payments: number;
+  total_spent: number;
+  avg_order_value: number;
+  first_seen: string;
+  last_seen: string;
+  has_onramp: boolean;
+  billing_country: string | null;
+  billing_city: string | null;
+  churn_risk: boolean;
+  customer_type: 'new' | 'returning' | 'no_payment';
+}
+
+export interface CustomerChartPoint {
+  date: string;
+  count: number;
+  volume: number;
+}
+
+export interface CustomerPayment {
+  id: string;
+  amount_usd: number;
+  status: string;
+  payment_token: string | null;
+  transaction_signature: string | null;
+  created_at: string;
+  is_onramp: boolean;
+  custom_fields: Record<string, unknown> | null;
+}
+
+export interface CustomerDetail {
+  profile: {
+    email: string;
+    name: string | null;
+    phone: string | null;
+    company: string | null;
+    billing_address_line1: string | null;
+    billing_address_line2: string | null;
+    billing_city: string | null;
+    billing_state: string | null;
+    billing_postal_code: string | null;
+    billing_country: string | null;
+    shipping_address_line1: string | null;
+    shipping_address_line2: string | null;
+    shipping_city: string | null;
+    shipping_state: string | null;
+    shipping_postal_code: string | null;
+    shipping_country: string | null;
+    custom_fields: Record<string, unknown> | null;
+    ip_address: string | null;
+    user_agent: string | null;
+    first_seen: string;
+  };
+  payments: CustomerPayment[];
+  chart: CustomerChartPoint[];
+}
+
+export const customers = {
+  list: async (params: {
+    mode?: string;
+    search?: string;
+    sort_by?: string;
+    limit?: number;
+    page?: number;
+  } = {}): Promise<{ customers: Customer[]; total: number; page: number; limit: number }> => {
+    const query = new URLSearchParams();
+    if (params.mode) query.set('mode', params.mode);
+    if (params.search) query.set('search', params.search);
+    if (params.sort_by) query.set('sort_by', params.sort_by);
+    if (params.limit) query.set('limit', String(params.limit));
+    if (params.page) query.set('page', String(params.page));
+    return apiCall(`/api/v1/merchants/me/customers?${query.toString()}`);
+  },
+
+  getDetail: async (email: string, mode = 'live'): Promise<CustomerDetail> => {
+    return apiCall(`/api/v1/merchants/me/customers/${encodeURIComponent(email)}?mode=${mode}`);
+  },
+};
+
 export default {
   auth,
   merchant,
@@ -707,4 +794,5 @@ export default {
   support,
   webauthn,
   paymentLinks,
+  customers,
 };
