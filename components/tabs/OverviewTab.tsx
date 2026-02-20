@@ -126,7 +126,7 @@ export default function OverviewTab({ onViewAllTransactions }: OverviewTabProps)
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
         {/* Total Volume */}
-        <div className="bg-white dark:bg-[#1f162b] p-4 rounded-xl border border-slate-100 dark:border-slate-800 shadow-card hover:shadow-card-hover hover:border-primary/30 hover:-translate-y-0.5 transition-all duration-250 group">
+        <div className="bg-white dark:bg-[#1f162b] p-4 rounded-xl border border-slate-100 dark:border-slate-800 hover:border-primary/30 hover:-translate-y-0.5 transition-all duration-250 group">
           <div className="mb-3">
             <div className="p-1.5 bg-primary/10 dark:bg-primary/20 rounded-lg text-primary inline-block">
               <span className="material-symbols-outlined text-[20px]">bar_chart</span>
@@ -139,7 +139,7 @@ export default function OverviewTab({ onViewAllTransactions }: OverviewTabProps)
         </div>
 
         {/* Success Rate */}
-        <div className="bg-white dark:bg-[#1f162b] p-4 rounded-xl border border-slate-100 dark:border-slate-800 shadow-card hover:shadow-card-hover hover:border-indigo-200 dark:hover:border-indigo-900 hover:-translate-y-0.5 transition-all duration-250 group">
+        <div className="bg-white dark:bg-[#1f162b] p-4 rounded-xl border border-slate-100 dark:border-slate-800 hover:border-indigo-200 dark:hover:border-indigo-900 hover:-translate-y-0.5 transition-all duration-250 group">
           <div className="mb-3">
             <div className="p-1.5 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg text-indigo-600 dark:text-indigo-400 inline-block">
               <span className="material-symbols-outlined text-[20px]">check_circle</span>
@@ -154,7 +154,7 @@ export default function OverviewTab({ onViewAllTransactions }: OverviewTabProps)
         </div>
 
         {/* Failed Payments */}
-        <div className="bg-white dark:bg-[#1f162b] p-4 rounded-xl border border-slate-100 dark:border-slate-800 shadow-card hover:shadow-card-hover hover:border-rose-200 dark:hover:border-rose-900 hover:-translate-y-0.5 transition-all duration-250 group">
+        <div className="bg-white dark:bg-[#1f162b] p-4 rounded-xl border border-slate-100 dark:border-slate-800 hover:border-rose-200 dark:hover:border-rose-900 hover:-translate-y-0.5 transition-all duration-250 group">
           <div className="mb-3">
             <div className="p-1.5 bg-rose-50 dark:bg-rose-900/20 rounded-lg text-rose-600 dark:text-rose-400 inline-block">
               <span className="material-symbols-outlined text-[20px]">error</span>
@@ -167,7 +167,7 @@ export default function OverviewTab({ onViewAllTransactions }: OverviewTabProps)
         </div>
 
         {/* Current Balance */}
-        <div className="bg-white dark:bg-[#1f162b] p-4 rounded-xl border border-slate-100 dark:border-slate-800 shadow-card hover:shadow-card-hover hover:border-amber-200 dark:hover:border-amber-900 hover:-translate-y-0.5 transition-all duration-250 group">
+        <div className="bg-white dark:bg-[#1f162b] p-4 rounded-xl border border-slate-100 dark:border-slate-800 hover:border-amber-200 dark:hover:border-amber-900 hover:-translate-y-0.5 transition-all duration-250 group">
           <div className="mb-3">
             <div className="p-1.5 bg-amber-50 dark:bg-amber-900/20 rounded-lg text-amber-600 dark:text-amber-400 inline-block">
               <span className="material-symbols-outlined text-[20px]">account_balance_wallet</span>
@@ -181,7 +181,7 @@ export default function OverviewTab({ onViewAllTransactions }: OverviewTabProps)
       </div>
 
       {/* Transaction Volume Chart */}
-      <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800 shadow-card">
+      <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-5">
           <div>
             <h3 className="text-base font-bold text-slate-900 dark:text-white">Transaction Volume</h3>
@@ -282,7 +282,7 @@ export default function OverviewTab({ onViewAllTransactions }: OverviewTabProps)
       {/* Additional Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Transaction Status Chart */}
-        <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800 shadow-card hover:shadow-card-hover transition-all duration-250">
+        <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800 transition-all duration-250">
           <div className="mb-6">
             <h3 className="text-base font-bold text-slate-900 dark:text-white">Transaction Status</h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">Successful vs Failed transactions over time</p>
@@ -336,7 +336,7 @@ export default function OverviewTab({ onViewAllTransactions }: OverviewTabProps)
         </div>
 
         {/* Volume Distribution Chart */}
-        <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800 shadow-card hover:shadow-card-hover transition-all duration-250">
+        <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800 transition-all duration-250">
           <div className="mb-6">
             <h3 className="text-base font-bold text-slate-900 dark:text-white">Volume Distribution (30d)</h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">Transaction volume by token</p>
