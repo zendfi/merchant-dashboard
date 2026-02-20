@@ -32,6 +32,7 @@ export default function CreatePaymentLinkModal({ isOpen, onClose }: CreatePaymen
   const [maxUses, setMaxUses] = useState('');
   const [expiresIn, setExpiresIn] = useState('');
   const [onramp, setOnramp] = useState(false);
+  const [payerServiceCharge, setPayerServiceCharge] = useState(true);
 
   // Success state
   const [createdLink, setCreatedLink] = useState<PaymentLink | null>(null);
@@ -164,6 +165,7 @@ export default function CreatePaymentLinkModal({ isOpen, onClose }: CreatePaymen
         expires_at: expiresAt,
         onramp,
         amount_ngn: amountNgn,
+        payer_service_charge: onramp ? payerServiceCharge : undefined,
       });
 
       setCreatedLink(link);
@@ -462,6 +464,32 @@ export default function CreatePaymentLinkModal({ isOpen, onClose }: CreatePaymen
                       />
                     </button>
                   </div>
+
+                  {/* Payer Service Charge Toggle — only shown when onramp is enabled */}
+                  {onramp && (
+                    <div className="flex items-center justify-between py-2 pl-3 border-l-2 border-primary/30">
+                      <div>
+                        <label className="block text-sm font-medium text-slate-900 dark:text-white">
+                          Charge service fee to payer
+                        </label>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                          Adds max(₦30, 3% of NGN amount) on top — shown as a fee breakdown to the customer.
+                          Turn off to absorb slippage yourself.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setPayerServiceCharge(!payerServiceCharge)}
+                        className={`relative w-11 h-6 rounded-full transition-colors ${payerServiceCharge ? 'bg-primary' : 'bg-slate-200 dark:bg-slate-700'
+                          }`}
+                      >
+                        <span
+                          className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform shadow ${payerServiceCharge ? 'translate-x-5' : 'translate-x-0'
+                            }`}
+                        />
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 
