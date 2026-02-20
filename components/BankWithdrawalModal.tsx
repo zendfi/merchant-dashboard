@@ -55,16 +55,14 @@ export default function BankWithdrawalModal({
   const loadRates = async () => {
     try {
       const data = await offramp.getRates();
-      if (data?.rates?.off_ramp_rate?.rate) {
-        setExchangeRate(data.rates.off_ramp_rate.rate);
+      if (data?.rates?.offRampRate?.rate) {
+        setExchangeRate(data.rates.offRampRate.rate);
       } else {
         console.error('Invalid rates response structure:', data);
-        // Default fallback rate if API returns bad data
         setExchangeRate(1450);
       }
     } catch (error) {
       console.error('Failed to load rates:', error);
-      // Default fallback rate
       setExchangeRate(1450);
     }
   };

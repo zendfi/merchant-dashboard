@@ -479,21 +479,21 @@ export const wallet = {
 // Offramp (Bank Withdrawal) Types
 export interface OfframpRates {
   rates: {
-    on_ramp_rate: {
+    onRampRate: {
       id: string;
-      base_currency: string;
-      target_currency: string;
+      baseCurrency: string;
+      targetCurrency: string;
       rate: number;
-      created_at: string;
-      rate_type: string;
+      createdAt: string;
+      type: string;
     };
-    off_ramp_rate: {
+    offRampRate: {
       id: string;
-      base_currency: string;
-      target_currency: string;
+      baseCurrency: string;
+      targetCurrency: string;
       rate: number;
-      created_at: string;
-      rate_type: string;
+      createdAt: string;
+      type: string;
     };
   };
   usdc_balance: number;

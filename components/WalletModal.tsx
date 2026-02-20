@@ -94,8 +94,8 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
   const loadRates = async () => {
     try {
       const data = await offramp.getRates();
-      if (data?.rates?.off_ramp_rate?.rate) {
-        setExchangeRate(data.rates.off_ramp_rate.rate);
+      if (data?.rates?.offRampRate?.rate) {
+        setExchangeRate(data.rates.offRampRate.rate);
       } else {
         setExchangeRate(1450);
       }
