@@ -191,13 +191,13 @@ export default function CreatePaymentLinkModal({ isOpen, onClose }: CreatePaymen
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/50 dark:bg-black/70 z-[200] transition-opacity backdrop-blur-sm"
+        className="fixed inset-0 bg-black/50 dark:bg-black/70 z-[99998] transition-opacity backdrop-blur-sm"
         onClick={onClose}
       />
 
       {/* Side Panel */}
       <div
-        className="fixed right-0 top-0 h-full w-full sm:max-w-[480px] bg-white dark:bg-[#1f162b] z-[201] shadow-2xl transform transition-transform duration-300 ease-out overflow-hidden flex flex-col"
+        className="fixed right-0 top-0 h-full w-full sm:max-w-[480px] bg-white dark:bg-[#1f162b] z-[99999] shadow-2xl transform transition-transform duration-300 ease-out overflow-hidden flex flex-col"
         style={{ transform: isOpen ? 'translateX(0)' : 'translateX(100%)' }}
       >
         {/* Header */}
