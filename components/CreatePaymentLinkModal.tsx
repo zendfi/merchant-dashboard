@@ -496,7 +496,7 @@ export default function CreatePaymentLinkModal({ isOpen, onClose }: CreatePaymen
                           Charge service fee to payer
                         </label>
                         <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                          Adds 2.5% service charge shown at checkout. Turn off to cover it yourself.
+                          Turn off to cover it yourself.
                         </p>
                       </div>
                       <button
