@@ -16,7 +16,7 @@ import {
 import {
   Search, X, ExternalLink, Copy, ChevronRight,
   TrendingUp, Users, AlertTriangle, ArrowUpDown,
-  ChevronUp, ChevronDown,
+  ChevronUp, ChevronDown, Download, RefreshCw,
 } from 'lucide-react';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -85,6 +85,7 @@ export default function CustomersTab({ onModalToggle }: CustomersTabProps = {}) 
   const [selected, setSelected] = useState<Customer | null>(null);
   const [detail, setDetail] = useState<CustomerDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState(false);
 
   const LIMIT = 25;
 
@@ -123,6 +124,7 @@ export default function CustomersTab({ onModalToggle }: CustomersTabProps = {}) 
   const openDetail = async (c: Customer) => {
     setSelected(c);
     setDetail(null);
+    setDetailError(false);
     setDetailLoading(true);
     onModalToggle?.(true);
     try {
@@ -130,15 +132,63 @@ export default function CustomersTab({ onModalToggle }: CustomersTabProps = {}) 
       setDetail(d);
     } catch (e) {
       console.error('Failed to load customer detail', e);
+      setDetailError(true);
     } finally {
       setDetailLoading(false);
     }
   };
 
+  const retryDetail = () => selected && openDetail(selected);
+
   const closeDetail = () => {
     setSelected(null);
     setDetail(null);
+    setDetailError(false);
     onModalToggle?.(false);
+  };
+
+  // ── CSV export ─────────────────────────────────────────────────────────────
+  const exportCSV = (c: Customer, d: CustomerDetail | null) => {
+    const p = d?.profile;
+    const rows: string[][] = [
+      ['Field', 'Value'],
+      ['Email', c.email],
+      ['Name', c.name || ''],
+      ['Company', c.company || ''],
+      ['Phone', p?.phone || ''],
+      ['Customer Type', c.customer_type],
+      ['First Seen', c.first_seen],
+      ['Last Seen', c.last_seen || ''],
+      ['Confirmed Payments', String(c.confirmed_payments)],
+      ['Total Spent (USD)', c.total_spent.toFixed(2)],
+      ['Avg Order Value (USD)', c.avg_order_value.toFixed(2)],
+      ['Billing Address Line 1', p?.billing_address_line1 || ''],
+      ['Billing Address Line 2', p?.billing_address_line2 || ''],
+      ['Billing City', p?.billing_city || ''],
+      ['Billing State', p?.billing_state || ''],
+      ['Billing Postal Code', p?.billing_postal_code || ''],
+      ['Billing Country', p?.billing_country || ''],
+      ['IP Address', p?.ip_address || ''],
+      [],
+      ['--- Payment History ---'],
+      ['Payment ID', 'Date', 'Amount (USD)', 'Status', 'Type', 'Transaction'],
+      ...(d?.payments ?? []).map(pay => [
+        pay.id,
+        new Date(pay.created_at).toISOString(),
+        pay.amount_usd.toFixed(2),
+        pay.status || '',
+        pay.is_onramp ? 'Onramp' : 'Crypto',
+        pay.transaction_signature || '',
+      ]),
+    ];
+    const csv = rows.map(r => r.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `customer-${c.email.replace(/[^a-z0-9]/gi, '_')}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   // Cleanup: hide header if we unmount while modal is open
@@ -389,7 +439,10 @@ export default function CustomersTab({ onModalToggle }: CustomersTabProps = {}) 
           customer={selected}
           detail={detail}
           loading={detailLoading}
+          error={detailError}
           onClose={closeDetail}
+          onRetry={retryDetail}
+          onExport={() => exportCSV(selected, detail)}
           currency={currency}
           exchangeRate={exchangeRate}
         />
@@ -404,14 +457,20 @@ function CustomerDetailPanel({
   customer,
   detail,
   loading,
+  error,
   onClose,
+  onRetry,
+  onExport,
   currency,
   exchangeRate,
 }: {
   customer: Customer;
   detail: CustomerDetail | null;
   loading: boolean;
+  error: boolean;
   onClose: () => void;
+  onRetry: () => void;
+  onExport: () => void;
   currency: string;
   exchangeRate: number | null;
 }) {
@@ -451,17 +510,36 @@ function CustomerDetailPanel({
               )}
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
-          >
-            <X size={18} />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={onExport}
+              title="Export as CSV"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+            >
+              <Download size={16} />
+            </button>
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+            >
+              <X size={18} />
+            </button>
+          </div>
         </div>
 
         {loading ? (
           <div className="flex-1 flex items-center justify-center py-20">
             <div className="w-8 h-8 border-3 border-slate-200 border-t-primary rounded-full animate-spin" />
+          </div>
+        ) : error ? (
+          <div className="flex-1 flex flex-col items-center justify-center py-20 gap-4 text-center px-6">
+            <p className="text-sm text-slate-500 dark:text-slate-400">Failed to load customer details.</p>
+            <button
+              onClick={onRetry}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors"
+            >
+              <RefreshCw size={14} /> Retry
+            </button>
           </div>
         ) : (
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
@@ -571,7 +649,7 @@ function CustomerDetailPanel({
             )}
 
             {/* Payment pattern chart */}
-            {detail && detail.chart.length > 1 && (
+            {detail && detail.chart.length >= 1 && (
               <Section title="Payment Pattern (last 90 days)">
                 <div className="h-[160px] w-full mt-2">
                   <ResponsiveContainer width="100%" height="100%">
