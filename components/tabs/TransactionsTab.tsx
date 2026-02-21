@@ -193,6 +193,14 @@ export default function TransactionsTab({ limit = 25, showViewAll = true, onCrea
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {onCreatePayment && (
+            <button
+              onClick={onCreatePayment}
+              className="flex items-center gap-1.5 px-3 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary/90 transition-colors whitespace-nowrap"
+            >
+              <span className="text-base leading-none">+</span> New Payment
+            </button>
+          )}
           <button
             onClick={exportToCSV}
             disabled={transactions.length === 0}
