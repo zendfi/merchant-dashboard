@@ -9,10 +9,10 @@ import { CurrencyProvider } from '@/lib/currency-context';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
 import WalletModal from '@/components/WalletModal';
-import CreatePaymentLinkModal from '@/components/CreatePaymentLinkModal';
 import LoadingScreen from '@/components/LoadingScreen';
 import OverviewTab from '@/components/tabs/OverviewTab';
 import TransactionsTab from '@/components/tabs/TransactionsTab';
+import PaymentLinksTab from '@/components/tabs/PaymentLinksTab';
 import ApiKeysTab from '@/components/tabs/ApiKeysTab';
 import WebhooksTab from '@/components/tabs/WebhooksTab';
 import CustomersTab from '@/components/tabs/CustomersTab';
@@ -24,7 +24,6 @@ function DashboardContent() {
   const { merchant, isLoading, error } = useMerchant();
   const [activeTab, setActiveTab] = useState('overview');
   const [showWalletModal, setShowWalletModal] = useState(false);
-  const [showPaymentLinkModal, setShowPaymentLinkModal] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [headerHidden, setHeaderHidden] = useState(false);
 
@@ -78,7 +77,9 @@ function DashboardContent() {
       case 'overview':
         return <OverviewTab onViewAllTransactions={() => setActiveTab('transactions')} />;
       case 'transactions':
-        return <TransactionsTab onCreatePayment={() => setShowPaymentLinkModal(true)} />;
+        return <TransactionsTab />;
+      case 'payment-links':
+        return <PaymentLinksTab />;
       case 'customers':
         return <CustomersTab onModalToggle={setHeaderHidden} />;
       case 'api-keys':
@@ -117,7 +118,6 @@ function DashboardContent() {
           {!headerHidden && (
             <Header
               onOpenWallet={() => setShowWalletModal(true)}
-              onCreatePaymentLink={() => setShowPaymentLinkModal(true)}
               onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
               sidebarOpen={sidebarOpen}
               activeTab={activeTab}
@@ -133,7 +133,6 @@ function DashboardContent() {
       </main>
 
       <WalletModal isOpen={showWalletModal} onClose={() => setShowWalletModal(false)} />
-      <CreatePaymentLinkModal isOpen={showPaymentLinkModal} onClose={() => setShowPaymentLinkModal(false)} />
     </div>
   );
 }

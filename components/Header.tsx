@@ -9,7 +9,7 @@ import { auth } from '@/lib/api';
 
 interface HeaderProps {
   onOpenWallet: () => void;
-  onCreatePaymentLink: () => void;
+  onCreatePaymentLink?: () => void;
   onToggleSidebar: () => void;
   sidebarOpen: boolean;
   activeTab: string;
@@ -18,6 +18,7 @@ interface HeaderProps {
 const TAB_LABELS: Record<string, string> = {
   overview: 'Overview',
   transactions: 'Transactions',
+  'payment-links': 'Payment Links',
   'api-keys': 'API Keys',
   'session-keys': 'Session Keys',
   webhooks: 'Webhooks',

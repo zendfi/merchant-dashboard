@@ -135,6 +135,29 @@ export interface PaymentLink {
   is_active: boolean;
   created_at: string;
   onramp: boolean;
+  payer_service_charge: boolean;
+}
+
+export interface PaymentLinkPayment {
+  id: string;
+  amount_usd: number;
+  token: string | null;
+  status: string | null;
+  customer_wallet: string | null;
+  customer_email: string | null;
+  customer_name: string | null;
+  created_at: string;
+}
+
+export interface PaymentLinkDailyCount {
+  date: string;
+  count: number;
+  confirmed: number;
+}
+
+export interface PaymentLinkTransactionsResponse {
+  payments: PaymentLinkPayment[];
+  daily_counts: PaymentLinkDailyCount[];
 }
 
 export interface CreatePaymentLinkRequest {
@@ -680,6 +703,12 @@ export const paymentLinks = {
     return response.json();
   },
 
+  // List payment links (session auth — for merchant dashboard)
+  listSession: async (): Promise<PaymentLink[]> => {
+    const data = await apiCall<{ links: PaymentLink[] }>('/api/v1/merchants/me/payment-links');
+    return data.links;
+  },
+
   // List payment links
   list: async (apiKey: string): Promise<PaymentLink[]> => {
     const response = await fetch(`${API_BASE}/api/v1/payment-links`, {
@@ -693,6 +722,22 @@ export const paymentLinks = {
     if (!response.ok) {
       const error = await response.json().catch(() => ({ error: 'Request failed' }));
       throw new Error(error.message || error.error || 'Failed to list payment links');
+    }
+
+    return response.json();
+  },
+
+  // Get transactions for a specific payment link (dashboard session auth)
+  getLinkTransactions: async (linkCode: string): Promise<PaymentLinkTransactionsResponse> => {
+    const response = await fetch(`${API_BASE}/api/v1/merchants/me/payment-links/${linkCode}/transactions`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Request failed' }));
+      throw new Error(error.message || error.error || 'Failed to fetch link transactions');
     }
 
     return response.json();
