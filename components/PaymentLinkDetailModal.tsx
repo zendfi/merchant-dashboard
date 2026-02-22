@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { paymentLinks as paymentLinksApi, PaymentLink, PaymentLinkPayment, PaymentLinkDailyCount } from '@/lib/api';
 import { X, Copy, ExternalLink, CheckCircle, Clock, TrendingUp, Link } from 'lucide-react';
 import {
@@ -91,7 +92,7 @@ export default function PaymentLinkDetailModal({ link, isOpen, onClose }: Paymen
   const isExpired = link.expires_at && new Date(link.expires_at) < new Date();
   const isActive = link.is_active && !isExpired;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
@@ -389,5 +390,5 @@ export default function PaymentLinkDetailModal({ link, isOpen, onClose }: Paymen
         </div>
       </div>
     </div>
-  );
+  , document.body);
 }

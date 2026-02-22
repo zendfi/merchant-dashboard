@@ -1,6 +1,7 @@
  'use client';
 
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { wallet as walletApi } from '@/lib/api';
 import { useNotification } from '@/lib/notifications';
@@ -134,7 +135,7 @@ export default function DangerZone({ onModalToggle }: DangerZoneProps = {}) {
       </div>
 
       {/* Export Key Modal */}
-      {showModal && (
+      {showModal && createPortal(
         <div
           className="fixed inset-0 bg-black/50 dark:bg-black/70 z-[99999] flex items-center justify-center backdrop-blur-sm"
           onClick={(e) => {
@@ -352,7 +353,7 @@ export default function DangerZone({ onModalToggle }: DangerZoneProps = {}) {
             )}
           </div>
         </div>
-      )}
+      , document.body)}
 
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes modalSlideUp {
