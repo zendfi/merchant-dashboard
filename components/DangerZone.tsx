@@ -1,4 +1,4 @@
-'use client';
+ 'use client';
 
 import { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
@@ -138,7 +138,7 @@ export default function DangerZone({ onModalToggle }: DangerZoneProps = {}) {
       {/* Export Key Modal */}
       {showModal && (
         <div
-          className="fixed inset-0 bg-black/50 dark:bg-black/70 z-[50000] flex items-center justify-center backdrop-blur-sm"
+          className="fixed inset-0 bg-black/50 dark:bg-black/70 z-[99999] flex items-center justify-center backdrop-blur-sm"
           onClick={(e) => {
             if (e.target === e.currentTarget) closeModal();
           }}

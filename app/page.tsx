@@ -52,6 +52,7 @@ function DashboardContent() {
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
+    setHeaderHidden(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
