@@ -8,7 +8,11 @@ import { getPasskeySignature, PasskeySignature } from '@/lib/webauthn';
 
 type Step = 1 | 2 | 3 | 4;
 
-export default function DangerZone() {
+interface DangerZoneProps {
+  onModalToggle?: (open: boolean) => void;
+}
+
+export default function DangerZone({ onModalToggle }: DangerZoneProps = {}) {
   const { showNotification } = useNotification();
   const [showModal, setShowModal] = useState(false);
   const [currentStep, setCurrentStep] = useState<Step>(1);
@@ -21,6 +25,7 @@ export default function DangerZone() {
 
   const openModal = () => {
     setShowModal(true);
+    onModalToggle?.(true);
     setCurrentStep(1);
     setConfirmChecked(false);
     setPrivateKey('');
@@ -29,6 +34,7 @@ export default function DangerZone() {
 
   const closeModal = () => {
     setShowModal(false);
+    onModalToggle?.(false);
     setCurrentStep(1);
     setConfirmChecked(false);
     setPrivateKey('');

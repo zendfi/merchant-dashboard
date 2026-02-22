@@ -7,7 +7,11 @@ import PaymentLinkDetailModal from '../PaymentLinkDetailModal';
 import CreatePaymentLinkModal from '../CreatePaymentLinkModal';
 import { Copy, ExternalLink, CheckCircle, Plus, Link, TrendingUp, RefreshCw } from 'lucide-react';
 
-export default function PaymentLinksTab() {
+interface PaymentLinksTabProps {
+  onModalToggle?: (open: boolean) => void;
+}
+
+export default function PaymentLinksTab({ onModalToggle }: PaymentLinksTabProps = {}) {
   const { mode } = useMode();
   const [links, setLinks] = useState<PaymentLink[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -47,10 +51,12 @@ export default function PaymentLinksTab() {
   const handleRowClick = (link: PaymentLink) => {
     setSelectedLink(link);
     setIsDetailOpen(true);
+    onModalToggle?.(true);
   };
 
   const handleCreateClose = () => {
     setIsCreateOpen(false);
+    onModalToggle?.(false);
     loadLinks(); // Refresh after creation
   };
 
@@ -87,7 +93,7 @@ export default function PaymentLinksTab() {
             <RefreshCw size={16} />
           </button>
           <button
-            onClick={() => setIsCreateOpen(true)}
+            onClick={() => { setIsCreateOpen(true); onModalToggle?.(true); }}
             className="flex items-center gap-1.5 px-3 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary/90 transition-colors whitespace-nowrap"
           >
             <Plus size={15} /> New Link
@@ -324,6 +330,7 @@ export default function PaymentLinksTab() {
         onClose={() => {
           setIsDetailOpen(false);
           setSelectedLink(null);
+          onModalToggle?.(false);
         }}
       />
 

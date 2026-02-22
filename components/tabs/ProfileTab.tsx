@@ -6,9 +6,10 @@ import DangerZone from '@/components/DangerZone';
 
 interface ProfileTabProps {
   onSwitchTab: (tab: string) => void;
+  onModalToggle?: (open: boolean) => void;
 }
 
-export default function ProfileTab({ onSwitchTab }: ProfileTabProps) {
+export default function ProfileTab({ onSwitchTab, onModalToggle }: ProfileTabProps) {
   const { merchant, isLoading } = useMerchant();
   const { currency, toggleCurrency, exchangeRate, isLoadingRate } = useCurrency();
 
@@ -185,7 +186,7 @@ export default function ProfileTab({ onSwitchTab }: ProfileTabProps) {
       {/* Wallet Security */}
       <div className="space-y-4">
         <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Wallet Security</h2>
-        <DangerZone />
+        <DangerZone onModalToggle={onModalToggle} />
       </div>
 
       {/* Resources */}

@@ -79,7 +79,7 @@ function DashboardContent() {
       case 'transactions':
         return <TransactionsTab />;
       case 'payment-links':
-        return <PaymentLinksTab />;
+        return <PaymentLinksTab onModalToggle={setHeaderHidden} />;
       case 'customers':
         return <CustomersTab onModalToggle={setHeaderHidden} />;
       case 'api-keys':
@@ -89,7 +89,7 @@ function DashboardContent() {
       case 'support':
         return <SupportTab />;
       case 'profile':
-        return <ProfileTab onSwitchTab={handleTabChange} />;
+        return <ProfileTab onSwitchTab={handleTabChange} onModalToggle={setHeaderHidden} />;
       default:
         return <OverviewTab onViewAllTransactions={() => setActiveTab('transactions')} />;
     }
