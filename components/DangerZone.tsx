@@ -25,7 +25,6 @@ export default function DangerZone({ onModalToggle }: DangerZoneProps = {}) {
 
   const openModal = () => {
     setShowModal(true);
-    onModalToggle?.(true);
     setCurrentStep(1);
     setConfirmChecked(false);
     setPrivateKey('');
@@ -34,7 +33,6 @@ export default function DangerZone({ onModalToggle }: DangerZoneProps = {}) {
 
   const closeModal = () => {
     setShowModal(false);
-    onModalToggle?.(false);
     setCurrentStep(1);
     setConfirmChecked(false);
     setPrivateKey('');
