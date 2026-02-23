@@ -335,6 +335,8 @@ export default function PaymentLinksTab({ onModalToggle }: PaymentLinksTabProps 
       <CreatePaymentLinkModal
         isOpen={isCreateOpen}
         onClose={handleCreateClose}
+        mode={mode}
+        onCreated={loadLinks}
       />
     </div>
   );

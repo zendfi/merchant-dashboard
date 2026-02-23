@@ -1,710 +1,714 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useMode } from '@/lib/mode-context';
-import { apiKeys as apiKeysApi, paymentLinks, ApiKey, PaymentLink } from '@/lib/api';
+import { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { QRCodeSVG } from 'qrcode.react';
+import { paymentLinks, apiKeys as apiKeysApi } from '@/lib/api';
+import type { PaymentLink, ApiKey } from '@/lib/api';
 
-interface CreatePaymentLinkModalProps {
+interface Props {
   isOpen: boolean;
   onClose: () => void;
+  mode: 'live' | 'test';
+  onCreated?: () => void;
 }
 
-type Step = 'form' | 'success';
+type Step = 1 | 2 | 3 | 'success';
 
-export default function CreatePaymentLinkModal({ isOpen, onClose }: CreatePaymentLinkModalProps) {
-  const { mode } = useMode();
-  const [step, setStep] = useState<Step>('form');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+function Toggle({
+  checked,
+  onChange,
+}: {
+  checked: boolean;
+  onChange: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onChange}
+      className={`relative flex-shrink-0 w-11 h-6 rounded-full transition-colors ${
+        checked ? 'bg-primary' : 'bg-slate-200 dark:bg-slate-700'
+      }`}
+    >
+      <span
+        className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform shadow ${
+          checked ? 'translate-x-5' : 'translate-x-0'
+        }`}
+      />
+    </button>
+  );
+}
 
-  // API Keys state
-  const [apiKeysList, setApiKeysList] = useState<ApiKey[]>([]);
-  const [selectedKeyId, setSelectedKeyId] = useState('');
-  const [manualApiKey, setManualApiKey] = useState('');
-  const [showManualInput, setShowManualInput] = useState(false);
+const STEP_LABELS: Record<number, string> = {
+  1: 'Amount',
+  2: 'Details',
+  3: 'API Key',
+};
 
-  // Form state
+export default function CreatePaymentLinkModal({
+  isOpen,
+  onClose,
+  mode,
+  onCreated,
+}: Props) {
+  // ── Step ────────────────────────────────────────────────────────────────────
+  const [step, setStep] = useState<Step>(1);
+
+  // ── Step 1 state ─────────────────────────────────────────────────────────-
   const [amount, setAmount] = useState('');
-  const [currency, setCurrency] = useState('USD');
+  const [currency] = useState('USD');
   const [token, setToken] = useState('USDC');
-  const [description, setDescription] = useState('');
-  const [maxUses, setMaxUses] = useState('');
-  const [expiresIn, setExpiresIn] = useState('');
   const [onramp, setOnramp] = useState(false);
-  const [payerServiceCharge, setPayerServiceCharge] = useState(true);
-  const [collectCustomerInfo, setCollectCustomerInfo] = useState(false);
-
-  // Success state
-  const [createdLink, setCreatedLink] = useState<PaymentLink | null>(null);
-  const [copied, setCopied] = useState<string | null>(null);
-
-  // NGN Calculator state
   const [showCalculator, setShowCalculator] = useState(false);
   const [ngnAmount, setNgnAmount] = useState('');
   const [exchangeRate, setExchangeRate] = useState<number | null>(null);
   const [loadingRate, setLoadingRate] = useState(false);
 
-  useEffect(() => {
-    if (isOpen) {
-      loadApiKeys();
-      loadExchangeRate();
-    }
-  }, [isOpen]);
+  // ── Step 2 state ─────────────────────────────────────────────────────────-
+  const [description, setDescription] = useState('');
+  const [maxUses, setMaxUses] = useState('');
+  const [expiresIn, setExpiresIn] = useState('');
+  const [payerServiceCharge, setPayerServiceCharge] = useState(true);
+  const [collectCustomerInfo, setCollectCustomerInfo] = useState(false);
 
-  useEffect(() => {
-    if (ngnAmount && exchangeRate) {
-      const usdValue = parseFloat(ngnAmount) / exchangeRate;
-      setAmount(usdValue.toFixed(2));
-    }
-  }, [ngnAmount, exchangeRate]);
+  // ── Step 3 state ─────────────────────────────────────────────────────────-
+  const [apiKeysList, setApiKeysList] = useState<ApiKey[]>([]);
+  const [selectedKeyId, setSelectedKeyId] = useState('');
+  const [manualApiKey, setManualApiKey] = useState('');
+  const [showManualInput, setShowManualInput] = useState(false);
+  const [loadingKeys, setLoadingKeys] = useState(false);
 
-  useEffect(() => {
-    if (!isOpen) {
-      setTimeout(() => {
-        setStep('form');
-        setError('');
-        setAmount('');
-        setDescription('');
-        setMaxUses('');
-        setExpiresIn('');
-        setOnramp(false);
-        setCreatedLink(null);
-        setManualApiKey('');
-        setShowManualInput(false);
-      }, 300);
-    }
-  }, [isOpen]);
+  // ── Shared ────────────────────────────────────────────────────────────────
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [createdLink, setCreatedLink] = useState<PaymentLink | null>(null);
+  const [copied, setCopied] = useState<string | null>(null);
 
-  const loadApiKeys = async () => {
-    try {
-      const response = await apiKeysApi.list();
-      const filteredKeys = response.api_keys.filter(key => key.mode === mode && key.is_active);
-      setApiKeysList(filteredKeys);
-      if (filteredKeys.length > 0) {
-        setSelectedKeyId(filteredKeys[0].id);
-      }
-    } catch (err) {
-      console.error('Failed to load API keys:', err);
-    }
-  };
-
-  const loadExchangeRate = async () => {
+  // ── Load exchange rate ────────────────────────────────────────────────────
+  const loadExchangeRate = useCallback(async () => {
+    if (exchangeRate) return;
     setLoadingRate(true);
     try {
-      const response = await fetch('/api/v1/onramp/rates');
-      if (!response.ok) throw new Error('Failed to fetch rates');
-      const data = await response.json();
-      setExchangeRate(data.on_ramp_rate?.rate || data.onRampRate?.rate);
-    } catch (err) {
-      console.error('Failed to load exchange rate:', err);
+      const resp = await fetch('/api/v1/onramp/rates');
+      const data = await resp.json();
+      const rate =
+        data.on_ramp_rate?.rate || data.onRampRate?.rate || null;
+      if (rate) setExchangeRate(parseFloat(rate));
+    } catch {
+      // ignore
     } finally {
       setLoadingRate(false);
     }
+  }, [exchangeRate]);
+
+  // ── Load API keys ────────────────────────────────────────────────────────-
+  const loadApiKeys = useCallback(async () => {
+    setLoadingKeys(true);
+    try {
+      const response = await apiKeysApi.list();
+      const filtered = (response.api_keys ?? response).filter(
+        (k: ApiKey) => k.mode === mode && k.is_active,
+      );
+      setApiKeysList(filtered);
+      if (filtered.length > 0) setSelectedKeyId(filtered[0].id);
+    } catch {
+      setShowManualInput(true);
+    } finally {
+      setLoadingKeys(false);
+    }
+  }, [mode]);
+
+  // ── Effects ───────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (isOpen) {
+      setStep(1);
+      setAmount('');
+      setToken('USDC');
+      setOnramp(false);
+      setShowCalculator(false);
+      setNgnAmount('');
+      setDescription('');
+      setMaxUses('');
+      setExpiresIn('');
+      setPayerServiceCharge(true);
+      setCollectCustomerInfo(false);
+      setManualApiKey('');
+      setShowManualInput(false);
+      setError('');
+      setCreatedLink(null);
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (showCalculator && !exchangeRate) loadExchangeRate();
+  }, [showCalculator, exchangeRate, loadExchangeRate]);
+
+  useEffect(() => {
+    if (step === 3) loadApiKeys();
+  }, [step, loadApiKeys]);
+
+  // ── Derived ───────────────────────────────────────────────────────────────
+  const ngnUsd =
+    ngnAmount && exchangeRate
+      ? parseFloat(ngnAmount) / exchangeRate
+      : null;
+
+  const getApiKey = (): string => manualApiKey.trim();
+
+  // ── Validation per step ───────────────────────────────────────────────────
+  const canProceedStep1 = (): string => {
+    if (onramp) {
+      if (!ngnAmount) return 'Enter NGN amount for fiat onramp.';
+      if (parseFloat(ngnAmount) < 1000) return 'Minimum onramp amount is ₦1,000.';
+    } else {
+      const usd = ngnUsd ?? parseFloat(amount);
+      if (!amount && !ngnAmount) return 'Enter an amount.';
+      if (isNaN(usd) || usd <= 0) return 'Enter a valid amount.';
+    }
+    return '';
   };
 
-  const getApiKey = (): string => {
-    if (showManualInput) return manualApiKey;
-    return manualApiKey;
+  const canProceedStep3 = (): string => {
+    const key = getApiKey();
+    if (!key) return 'Provide a valid API key.';
+    return '';
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // ── Navigation ────────────────────────────────────────────────────────────
+  const goNext = () => {
     setError('');
-
-    const apiKey = getApiKey();
-    if (!apiKey) {
-      setError('Please enter your API key');
-      return;
+    if (step === 1) {
+      const err = canProceedStep1();
+      if (err) { setError(err); return; }
+      if (ngnUsd !== null && ngnUsd > 0) setAmount(ngnUsd.toFixed(2));
+      setStep(2);
+    } else if (step === 2) {
+      setStep(3);
     }
+  };
 
-    if (!amount || parseFloat(amount) <= 0) {
-      setError('Please enter a valid amount');
-      return;
-    }
+  const goBack = () => {
+    setError('');
+    if (step === 2) setStep(1);
+    else if (step === 3) setStep(2);
+  };
+
+  // ── Submit ────────────────────────────────────────────────────────────────
+  const handleSubmit = async () => {
+    const keyErr = canProceedStep3();
+    if (keyErr) { setError(keyErr); return; }
+
+    const finalAmount = parseFloat(amount);
+    const key = getApiKey();
 
     setIsLoading(true);
-
+    setError('');
     try {
-      let expiresAt: string | undefined;
-      if (expiresIn) {
-        const hours = parseInt(expiresIn);
-        if (hours > 0) {
-          const date = new Date();
-          date.setHours(date.getHours() + hours);
-          expiresAt = date.toISOString();
-        }
-      }
-
-      let amountNgn = ngnAmount && parseFloat(ngnAmount) > 0 ? parseFloat(ngnAmount) : undefined;
-
-      // For onramp, enforce minimum 1000 NGN and ensure amount_ngn is set
-      if (onramp) {
-        if (!amountNgn && exchangeRate) {
-          amountNgn = parseFloat(amount) * exchangeRate;
-        }
-
-        if (amountNgn && amountNgn < 1000) {
-          setError('Onramp payments must be at least ₦1,000');
-          setIsLoading(false);
-          return;
-        }
-
-        if (!amountNgn) {
-          setError('Unable to calculate NGN amount. Please try again.');
-          setIsLoading(false);
-          return;
-        }
-      }
-
-      const link = await paymentLinks.create(apiKey, {
-        amount: parseFloat(amount),
+      const body = {
+        amount: finalAmount,
         currency,
         token,
-        description: description || undefined,
-        max_uses: maxUses ? parseInt(maxUses) : undefined,
-        expires_at: expiresAt,
         onramp,
-        amount_ngn: amountNgn,
-        payer_service_charge: onramp ? payerServiceCharge : undefined,
-        collect_customer_info: collectCustomerInfo || undefined,
-      });
+        payer_service_charge: onramp ? payerServiceCharge : false,
+        collect_customer_info: collectCustomerInfo,
+        ...(description.trim() && { description: description.trim() }),
+        ...(maxUses && { max_uses: parseInt(maxUses, 10) }),
+        ...(expiresIn && { expires_at: new Date(Date.now() + parseInt(expiresIn, 10) * 60 * 60 * 1000).toISOString() }),
+        ...(onramp && ngnAmount && { amount_ngn: parseFloat(ngnAmount) }),
+      };
 
-      setCreatedLink(link);
+      const created = await paymentLinks.create(key, body);
+      setCreatedLink(created);
       setStep('success');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create payment link');
+      onCreated?.();
+    } catch (e: unknown) {
+      const msg =
+        e instanceof Error ? e.message : 'Failed to create payment link.';
+      setError(msg);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const copyToClipboard = (text: string, type: string) => {
+  const copyToClipboard = (text: string, key: string) => {
     navigator.clipboard.writeText(text);
-    setCopied(type);
+    setCopied(key);
     setTimeout(() => setCopied(null), 2000);
+  };
+
+  const resetAndCreateAnother = () => {
+    setStep(1);
+    setCreatedLink(null);
+    setAmount('');
+    setNgnAmount('');
+    setDescription('');
+    setMaxUses('');
+    setExpiresIn('');
+    setOnramp(false);
+    setShowCalculator(false);
+    setPayerServiceCharge(true);
+    setCollectCustomerInfo(false);
+    setManualApiKey('');
+    setError('');
   };
 
   if (!isOpen) return null;
 
-  return (
-    <>
-      {/* Backdrop */}
+  const modal = (
+    <div
+      className="fixed inset-0 z-[99999] flex items-center justify-center p-4"
+      style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
       <div
-        className="fixed inset-0 bg-black/50 dark:bg-black/70 z-[99998] transition-opacity backdrop-blur-sm"
-        onClick={onClose}
-      />
-
-      {/* Side Panel */}
-      <div
-        className="fixed right-0 top-0 h-full w-full sm:max-w-[480px] bg-white dark:bg-[#1f162b] z-[99999] shadow-2xl transform transition-transform duration-300 ease-out overflow-hidden flex flex-col"
-        style={{ transform: isOpen ? 'translateX(0)' : 'translateX(100%)' }}
+        className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+        onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-              {step === 'form' ? 'Create Payment Link' : 'Payment Link Created'}
-            </h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-              {step === 'form'
-                ? 'Generate a shareable link for customers to pay'
-                : 'Share this link with your customer'}
-            </p>
+        {/* ── Header ─────────────────────────────────────────────────────── */}
+        <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-slate-100 dark:border-slate-800">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
+              <span className="material-symbols-outlined text-[20px] text-primary">link</span>
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-slate-900 dark:text-white leading-tight">
+                {step === 'success' ? 'Link Created!' : 'New Payment Link'}
+              </h2>
+              {step !== 'success' && (
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Step {step} of 3 — {STEP_LABELS[step as number]}
+                </p>
+              )}
+            </div>
           </div>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
-          >
-            <span className="material-symbols-outlined text-[20px]">close</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+              mode === 'live'
+                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+            }`}>
+              {mode}
+            </span>
+            <button
+              onClick={onClose}
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            >
+              <span className="material-symbols-outlined text-[18px]">close</span>
+            </button>
+          </div>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
-          {step === 'form' ? (
-            <form onSubmit={handleSubmit} className="space-y-5">
-              {/* Mode indicator */}
-              <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${mode === 'live'
-                  ? 'bg-emerald-50 text-emerald-600'
-                  : 'bg-primary/10 text-primary'
-                }`}>
-                <span className={`w-2 h-2 rounded-full ${mode === 'live' ? 'bg-emerald-500' : 'bg-primary'}`} />
-                {mode === 'live' ? 'Live Mode' : 'Test Mode'}
-              </div>
+        {/* ── Step progress bar ───────────────────────────────────────────── */}
+        {step !== 'success' && (
+          <div className="px-6 pt-3 pb-1">
+            <div className="flex gap-1.5">
+              {([1, 2, 3] as const).map((s) => (
+                <div
+                  key={s}
+                  className={`h-1 flex-1 rounded-full transition-colors ${
+                    (step as number) >= s ? 'bg-primary' : 'bg-slate-100 dark:bg-slate-800'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+        )}
 
-              {/* API Key Section */}
+        {/* ── Body ───────────────────────────────────────────────────────── */}
+        <div className="overflow-y-auto flex-1 px-6 py-5 space-y-5">
+
+          {/* ════════ STEP 1 — Amount & Type ════════════════════════════════ */}
+          {step === 1 && (
+            <>
               <div className="space-y-2">
-                <label className="block text-sm font-semibold text-slate-900 dark:text-white">
-                  API Key <span className="text-rose-500">*</span>
-                </label>
-
-                {apiKeysList.length > 0 && !showManualInput ? (
-                  <div className="space-y-2">
-                    <select
-                      value={selectedKeyId}
-                      onChange={(e) => setSelectedKeyId(e.target.value)}
-                      className="w-full px-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                    >
-                      {apiKeysList.map((key) => (
-                        <option key={key.id} value={key.id}>
-                          {key.prefix}••••••••
-                        </option>
-                      ))}
-                    </select>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      For security, please{' '}
-                      <button
-                        type="button"
-                        onClick={() => setShowManualInput(true)}
-                        className="text-primary hover:underline"
-                      >
-                        enter your full API key
-                      </button>
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <input
-                      type="password"
-                      value={manualApiKey}
-                      onChange={(e) => setManualApiKey(e.target.value)}
-                      placeholder={mode === 'live' ? 'sk_live_...' : 'sk_test_...'}
-                      className="w-full px-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-mono bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                    />
-                    {apiKeysList.length > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => setShowManualInput(false)}
-                        className="text-xs text-primary hover:underline"
-                      >
-                        Select from saved keys
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Amount */}
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-slate-900 dark:text-white">
-                  Amount <span className="text-rose-500">*</span>
-                </label>
+                <label className="block text-sm font-semibold text-slate-900 dark:text-white">Amount</label>
                 <div className="flex gap-2">
                   <div className="relative flex-1">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium">$</span>
                     <input
                       type="number"
                       step="0.01"
                       min="0.01"
                       value={amount}
-                      onChange={(e) => {
-                        setAmount(e.target.value);
-                        if (ngnAmount) setNgnAmount('');
-                      }}
+                      onChange={(e) => { setAmount(e.target.value); if (ngnAmount) setNgnAmount(''); }}
                       placeholder="0.00"
                       className="w-full pl-7 pr-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     />
                   </div>
-                  <select
-                    value={currency}
-                    onChange={(e) => setCurrency(e.target.value)}
-                    className="px-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                  >
-                    <option value="USD">USD</option>
-                  </select>
-                </div>
-
-                {/* NGN Calculator Toggle */}
-                <button
-                  type="button"
-                  onClick={() => setShowCalculator(!showCalculator)}
-                  className="text-xs text-primary hover:underline flex items-center gap-1.5"
-                >
-                  <span className={`material-symbols-outlined text-[14px] transition-transform ${showCalculator ? 'rotate-180' : ''}`}>
-                    expand_more
+                  <span className="px-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 shrink-0">
+                    USD
                   </span>
-                  {showCalculator ? 'Hide' : 'Show'} NGN Calculator
-                </button>
+                </div>
+              </div>
 
-                {/* NGN Calculator */}
-                {showCalculator && (
-                  <div className="mt-3 p-4 bg-primary/5 border border-primary/20 rounded-xl space-y-3">
-                    <div className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-[18px] text-primary">calculate</span>
-                      <span className="text-xs font-semibold text-primary">NGN to USD Calculator</span>
-                    </div>
+              <button
+                type="button"
+                onClick={() => setShowCalculator(!showCalculator)}
+                className="text-xs text-primary hover:underline flex items-center gap-1.5"
+              >
+                <span className={`material-symbols-outlined text-[14px] transition-transform ${showCalculator ? 'rotate-180' : ''}`}>
+                  expand_more
+                </span>
+                {showCalculator ? 'Hide' : 'Show'} NGN Calculator
+              </button>
 
-                    {loadingRate ? (
-                      <div className="text-xs text-slate-500 dark:text-slate-400 py-2">Loading exchange rate...</div>
-                    ) : exchangeRate ? (
-                      <>
-                        <div className="text-xs text-slate-500 dark:text-slate-400">
-                          Current rate: <span className="font-semibold text-slate-900 dark:text-white">₦{exchangeRate.toFixed(2)} = $1.00</span>
-                        </div>
-
-                        <div className="relative">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">₦</span>
-                          <input
-                            type="number"
-                            step="1"
-                            min="1"
-                            value={ngnAmount}
-                            onChange={(e) => setNgnAmount(e.target.value)}
-                            placeholder="Enter NGN amount"
-                            className="w-full pl-7 pr-3 py-2.5 border border-primary/30 rounded-xl text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                          />
-                        </div>
-
-                        {ngnAmount && parseFloat(ngnAmount) > 0 && (
-                          <div className="flex items-center justify-between p-3 bg-white dark:bg-slate-800 border border-primary/20 rounded-xl">
-                            <span className="text-xs text-slate-500 dark:text-slate-400">USD Equivalent:</span>
-                            <span className="text-sm font-bold text-primary">
-                              ${(parseFloat(ngnAmount) / exchangeRate).toFixed(2)}
-                            </span>
-                          </div>
-                        )}
-
-                        <div className="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                          💡 Enter your NGN amount to automatically calculate the USD price. Rate provided by PAJ Ramp.
-                        </div>
-                      </>
-                    ) : (
-                      <div className="text-xs text-rose-600">Failed to load exchange rate</div>
-                    )}
+              {showCalculator && (
+                <div className="p-4 bg-primary/5 border border-primary/20 rounded-xl space-y-3">
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[18px] text-primary">calculate</span>
+                    <span className="text-xs font-semibold text-primary">NGN to USD Calculator</span>
                   </div>
-                )}
+                  {loadingRate ? (
+                    <div className="text-xs text-slate-500 dark:text-slate-400 py-2">Loading exchange rate…</div>
+                  ) : exchangeRate ? (
+                    <>
+                      <div className="text-xs text-slate-500 dark:text-slate-400">
+                        Current rate:{' '}
+                        <span className="font-semibold text-slate-900 dark:text-white">₦{exchangeRate.toFixed(2)} = $1.00</span>
+                      </div>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">₦</span>
+                        <input
+                          type="number"
+                          step="1"
+                          min="1"
+                          value={ngnAmount}
+                          onChange={(e) => { setNgnAmount(e.target.value); if (e.target.value) setAmount(''); }}
+                          placeholder="Enter NGN amount"
+                          className="w-full pl-7 pr-3 py-2.5 border border-primary/30 rounded-xl text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                        />
+                      </div>
+                      {ngnUsd !== null && ngnUsd > 0 && (
+                        <div className="flex items-center justify-between p-3 bg-white dark:bg-slate-800 border border-primary/20 rounded-xl">
+                          <span className="text-xs text-slate-500 dark:text-slate-400">USD Equivalent:</span>
+                          <span className="text-sm font-bold text-primary">${ngnUsd.toFixed(2)}</span>
+                        </div>
+                      )}
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                        💡 Enter your NGN amount to auto-calculate the USD price. Rate by PAJ Ramp.
+                      </p>
+                    </>
+                  ) : (
+                    <div className="text-xs text-rose-600">Failed to load exchange rate.</div>
+                  )}
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-slate-900 dark:text-white">Payment Token</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {['USDC', 'SOL'].map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setToken(t)}
+                      className={`py-2.5 rounded-xl text-sm font-semibold border transition-all ${
+                        token === t
+                          ? 'bg-primary text-white border-primary'
+                          : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-primary/40'
+                      }`}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              {/* Token */}
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-slate-900 dark:text-white">
-                  Payment Token
-                </label>
-                <select
-                  value={token}
-                  onChange={(e) => setToken(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                >
-                  <option value="USDC">USDC</option>
-                  <option value="SOL">SOL</option>
-                </select>
+              <div className="flex items-center justify-between py-2 px-4 bg-slate-50 dark:bg-slate-800 rounded-xl">
+                <div>
+                  <p className="text-sm font-medium text-slate-900 dark:text-white">Enable Fiat Onramp</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Allow customers to pay via card (PAJ Ramp)</p>
+                </div>
+                <Toggle checked={onramp} onChange={() => setOnramp(!onramp)} />
               </div>
+            </>
+          )}
 
-              {/* Description */}
+          {/* ════════ STEP 2 — Details ══════════════════════════════════════ */}
+          {step === 2 && (
+            <>
               <div className="space-y-2">
                 <label className="block text-sm font-semibold text-slate-900 dark:text-white">
-                  Description
+                  Description <span className="text-slate-400 font-normal">(optional)</span>
                 </label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="What is this payment for?"
-                  rows={2}
+                  rows={3}
                   className="w-full px-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none"
                 />
               </div>
 
-              {/* Advanced Options */}
-              <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">Advanced Options</h3>
-
-                <div className="space-y-4">
-                  {/* Max Uses */}
-                  <div className="space-y-2">
-                    <label className="block text-sm text-slate-500 dark:text-slate-400">
-                      Max Uses (leave empty for unlimited)
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      value={maxUses}
-                      onChange={(e) => setMaxUses(e.target.value)}
-                      placeholder="Unlimited"
-                      className="w-full px-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                    />
-                  </div>
-
-                  {/* Expiration */}
-                  <div className="space-y-2">
-                    <label className="block text-sm text-slate-500 dark:text-slate-400">
-                      Expires in (hours)
-                    </label>
-                    <select
-                      value={expiresIn}
-                      onChange={(e) => setExpiresIn(e.target.value)}
-                      className="w-full px-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                    >
-                      <option value="">Never expires</option>
-                      <option value="1">1 hour</option>
-                      <option value="24">24 hours</option>
-                      <option value="72">3 days</option>
-                      <option value="168">1 week</option>
-                      <option value="720">30 days</option>
-                    </select>
-                  </div>
-
-                  {/* Onramp Toggle */}
-                  <div className="flex items-center justify-between py-2">
-                    <div>
-                      <label className="block text-sm font-medium text-slate-900 dark:text-white">
-                        Enable Fiat Onramp
-                      </label>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                        Allow customers to pay with card via PAJ Ramp
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setOnramp(!onramp)}
-                      className={`relative w-11 h-6 rounded-full transition-colors ${onramp ? 'bg-primary' : 'bg-slate-200 dark:bg-slate-700'
-                        }`}
-                    >
-                      <span
-                        className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform shadow ${onramp ? 'translate-x-5' : 'translate-x-0'
-                          }`}
-                      />
-                    </button>
-                  </div>
-
-                  {/* Collect Customer Info Toggle */}
-                  <div className="flex items-center justify-between py-2">
-                    <div>
-                      <label className="block text-sm font-medium text-slate-900 dark:text-white">
-                        Collect customer details
-                      </label>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                        Ask for name, phone, company &amp; billing address at checkout
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setCollectCustomerInfo(!collectCustomerInfo)}
-                      className={`relative w-11 h-6 rounded-full transition-colors ${collectCustomerInfo ? 'bg-primary' : 'bg-slate-200 dark:bg-slate-700'}`}
-                    >
-                      <span
-                        className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform shadow ${collectCustomerInfo ? 'translate-x-5' : 'translate-x-0'}`}
-                      />
-                    </button>
-                  </div>
-
-                  {/* Payer Service Charge Toggle — only shown when onramp is enabled */}
-                  {onramp && (
-                    <div className="flex items-center justify-between py-2 pl-3 border-l-2 border-primary/30">
-                      <div>
-                        <label className="block text-sm font-medium text-slate-900 dark:text-white">
-                          Charge service fee to payer
-                        </label>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                          Turn off to cover it yourself.
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setPayerServiceCharge(!payerServiceCharge)}
-                        className={`relative w-11 h-6 rounded-full transition-colors ${payerServiceCharge ? 'bg-primary' : 'bg-slate-200 dark:bg-slate-700'
-                          }`}
-                      >
-                        <span
-                          className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform shadow ${payerServiceCharge ? 'translate-x-5' : 'translate-x-0'
-                            }`}
-                        />
-                      </button>
-                    </div>
-                  )}
-                </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-slate-900 dark:text-white">
+                  Max Uses <span className="text-slate-400 font-normal">(empty = unlimited)</span>
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  value={maxUses}
+                  onChange={(e) => setMaxUses(e.target.value)}
+                  placeholder="Unlimited"
+                  className="w-full px-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                />
               </div>
 
-              {/* Error */}
-              {error && (
-                <div className="p-4 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-xl text-rose-700 dark:text-rose-300 text-sm flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[18px]">error</span>
-                  {error}
-                </div>
-              )}
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-slate-900 dark:text-white">Expires In</label>
+                <select
+                  value={expiresIn}
+                  onChange={(e) => setExpiresIn(e.target.value)}
+                  className="w-full px-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                >
+                  <option value="">Never expires</option>
+                  <option value="1">1 hour</option>
+                  <option value="24">24 hours</option>
+                  <option value="72">3 days</option>
+                  <option value="168">1 week</option>
+                  <option value="720">30 days</option>
+                </select>
+              </div>
 
-              {/* Submit */}
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full py-3 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {isLoading ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Creating...
-                  </>
-                ) : (
-                  <>
-                    <span className="material-symbols-outlined text-[18px]">link</span>
-                    Create Payment Link
-                  </>
-                )}
-              </button>
-            </form>
-          ) : (
-            /* Success View */
-            <div className="space-y-6">
-              {/* Success Icon */}
-              <div className="text-center">
-                <div className="w-16 h-16 mx-auto bg-emerald-50 dark:bg-emerald-900/20 rounded-full flex items-center justify-center mb-4">
-                  <span className="material-symbols-outlined text-[32px] text-emerald-500">check_circle</span>
+              <div className="pt-2 space-y-2">
+                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  Checkout Options
+                </p>
+
+                <div className="flex items-center justify-between py-2.5 px-4 bg-slate-50 dark:bg-slate-800 rounded-xl">
+                  <div>
+                    <p className="text-sm font-medium text-slate-900 dark:text-white">Collect Customer Details</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Ask for name, phone, company &amp; address</p>
+                  </div>
+                  <Toggle checked={collectCustomerInfo} onChange={() => setCollectCustomerInfo(!collectCustomerInfo)} />
                 </div>
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white">Link Created!</h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                  Share this link with your customer to receive payment
+
+                {onramp && (
+                  <div className="flex items-center justify-between py-2.5 px-4 bg-primary/5 border border-primary/20 rounded-xl">
+                    <div>
+                      <p className="text-sm font-medium text-slate-900 dark:text-white">Charge Service Fee to Payer</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Turn off to cover it yourself</p>
+                    </div>
+                    <Toggle checked={payerServiceCharge} onChange={() => setPayerServiceCharge(!payerServiceCharge)} />
+                  </div>
+                )}
+              </div>
+
+              <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl space-y-2 text-sm">
+                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Summary</p>
+                <div className="flex justify-between">
+                  <span className="text-slate-500 dark:text-slate-400">Amount</span>
+                  <span className="font-semibold text-slate-900 dark:text-white">${parseFloat(amount || '0').toFixed(2)} {currency}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500 dark:text-slate-400">Token</span>
+                  <span className="font-semibold text-slate-900 dark:text-white">{token}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500 dark:text-slate-400">Onramp</span>
+                  <span className={`font-semibold ${onramp ? 'text-emerald-500' : 'text-slate-400'}`}>
+                    {onramp ? 'Enabled' : 'Disabled'}
+                  </span>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* ════════ STEP 3 — API Key ═══════════════════════════════════════ */}
+          {step === 3 && (
+            <>
+              <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl flex gap-3">
+                <span className="material-symbols-outlined text-[18px] text-amber-600 shrink-0 mt-0.5">info</span>
+                <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
+                  Your API key is sent directly to the server and never stored in the browser. Use a{' '}
+                  <strong>{mode === 'live' ? 'live' : 'test'}</strong> key with{' '}
+                  <code className="bg-amber-100 dark:bg-amber-900/50 px-1 rounded">write</code> scope.
                 </p>
               </div>
 
-              {/* Amount Display */}
-              <div className="text-center py-4 bg-slate-50 dark:bg-slate-800 rounded-xl">
-                <div className="text-3xl font-bold text-slate-900 dark:text-white">
-                  ${createdLink?.amount.toFixed(2)}
-                </div>
-                <div className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                  {createdLink?.currency} • {createdLink?.token}
-                </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-slate-900 dark:text-white">API Key</label>
+                <input
+                  type="password"
+                  value={manualApiKey}
+                  onChange={(e) => setManualApiKey(e.target.value)}
+                  placeholder={mode === 'live' ? 'sk_live_…' : 'sk_test_…'}
+                  autoComplete="off"
+                  className="w-full px-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-mono"
+                />
               </div>
 
-              {/* QR Code */}
+              {!loadingKeys && apiKeysList.length > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Your {mode} API keys (enter the full key above):
+                  </p>
+                  <div className="space-y-1">
+                    {apiKeysList.map((k) => (
+                      <div key={k.id} className="px-3 py-1.5 bg-slate-50 dark:bg-slate-800 rounded-lg text-xs font-mono text-slate-600 dark:text-slate-400">
+                        {k.prefix}••••••••
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* ════════ SUCCESS ════════════════════════════════════════════════ */}
+          {step === 'success' && createdLink && (
+            <>
+              <div className="text-center space-y-1">
+                <div className="w-14 h-14 mx-auto bg-emerald-50 dark:bg-emerald-900/20 rounded-full flex items-center justify-center">
+                  <span className="material-symbols-outlined text-[28px] text-emerald-500">check_circle</span>
+                </div>
+                <p className="text-2xl font-bold text-slate-900 dark:text-white mt-3">${createdLink.amount.toFixed(2)}</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  {createdLink.currency} · {createdLink.token}
+                  {createdLink.onramp && <span className="ml-2 text-emerald-500 font-medium">· Onramp enabled</span>}
+                </p>
+              </div>
+
               <div className="flex justify-center">
-                <div className="p-4 bg-white rounded-xl border border-slate-200 dark:border-slate-700">
-                  <QRCodeSVG
-                    value={createdLink?.hosted_page_url || ''}
-                    size={180}
-                    level="H"
-                    includeMargin={false}
-                  />
+                <div className="p-3 bg-white rounded-xl border border-slate-200 dark:border-slate-700">
+                  <QRCodeSVG value={createdLink.hosted_page_url || ''} size={160} level="H" includeMargin={false} />
                 </div>
               </div>
 
-              {/* Links */}
               <div className="space-y-3">
-                {/* Hosted Page URL */}
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    Checkout Page
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      readOnly
-                      value={createdLink?.hosted_page_url || ''}
-                      className="flex-1 px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-mono text-slate-900 dark:text-white truncate"
-                    />
-                    <button
-                      onClick={() => copyToClipboard(createdLink?.hosted_page_url || '', 'hosted')}
-                      className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors ${copied === 'hosted'
-                          ? 'bg-emerald-500 text-white'
-                          : 'bg-primary text-white hover:bg-primary/90'
+                {[
+                  { label: 'Checkout Page', value: createdLink.hosted_page_url || '', key: 'hosted' },
+                  { label: 'Direct Pay URL', value: createdLink.payment_url || '', key: 'direct' },
+                  { label: 'Link Code', value: createdLink.link_code, key: 'code' },
+                ].map(({ label, value, key }) => (
+                  <div key={key} className="space-y-1">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">{label}</p>
+                    <div className="flex items-center gap-2">
+                      <input
+                        readOnly
+                        value={value}
+                        className="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-mono text-slate-800 dark:text-white truncate"
+                      />
+                      <button
+                        onClick={() => copyToClipboard(value, key)}
+                        className={`px-3 py-2 rounded-xl text-xs font-semibold transition-colors shrink-0 ${
+                          copied === key ? 'bg-emerald-500 text-white' : 'bg-primary text-white hover:bg-primary/90'
                         }`}
-                    >
-                      {copied === 'hosted' ? 'Copied!' : 'Copy'}
-                    </button>
+                      >
+                        {copied === key ? 'Copied!' : 'Copy'}
+                      </button>
+                    </div>
                   </div>
-                </div>
-
-                {/* Direct Payment URL */}
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    Direct Pay URL
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      readOnly
-                      value={createdLink?.payment_url || ''}
-                      className="flex-1 px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-mono text-slate-900 dark:text-white truncate"
-                    />
-                    <button
-                      onClick={() => copyToClipboard(createdLink?.payment_url || '', 'direct')}
-                      className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors ${copied === 'direct'
-                          ? 'bg-emerald-500 text-white'
-                          : 'bg-primary text-white hover:bg-primary/90'
-                        }`}
-                    >
-                      {copied === 'direct' ? 'Copied!' : 'Copy'}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Link Code */}
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    Link Code
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <code className="flex-1 px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-mono text-slate-900 dark:text-white">
-                      {createdLink?.link_code}
-                    </code>
-                    <button
-                      onClick={() => copyToClipboard(createdLink?.link_code || '', 'code')}
-                      className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors ${copied === 'code'
-                          ? 'bg-emerald-500 text-white'
-                          : 'bg-primary text-white hover:bg-primary/90'
-                        }`}
-                    >
-                      {copied === 'code' ? 'Copied!' : 'Copy'}
-                    </button>
-                  </div>
-                </div>
+                ))}
               </div>
 
-              {/* Details */}
-              <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl space-y-2 text-sm">
+              <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl text-xs space-y-1.5">
                 <div className="flex justify-between">
                   <span className="text-slate-500 dark:text-slate-400">Status</span>
                   <span className="text-emerald-500 font-medium">Active</span>
                 </div>
-                {createdLink?.description && (
-                  <div className="flex justify-between">
-                    <span className="text-slate-500 dark:text-slate-400">Description</span>
-                    <span className="text-slate-900 dark:text-white">{createdLink.description}</span>
+                {createdLink.description && (
+                  <div className="flex justify-between gap-4">
+                    <span className="text-slate-500 dark:text-slate-400 shrink-0">Description</span>
+                    <span className="text-slate-900 dark:text-white text-right">{createdLink.description}</span>
                   </div>
                 )}
                 <div className="flex justify-between">
                   <span className="text-slate-500 dark:text-slate-400">Max Uses</span>
-                  <span className="text-slate-900 dark:text-white">{createdLink?.max_uses || 'Unlimited'}</span>
+                  <span className="text-slate-900 dark:text-white">{createdLink.max_uses || 'Unlimited'}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500 dark:text-slate-400">Onramp</span>
-                  <span className="text-slate-900 dark:text-white">{createdLink?.onramp ? 'Enabled' : 'Disabled'}</span>
-                </div>
-                {createdLink?.expires_at && (
+                {createdLink.expires_at && (
                   <div className="flex justify-between">
                     <span className="text-slate-500 dark:text-slate-400">Expires</span>
-                    <span className="text-slate-900 dark:text-white">
-                      {new Date(createdLink.expires_at).toLocaleDateString()}
-                    </span>
+                    <span className="text-slate-900 dark:text-white">{new Date(createdLink.expires_at).toLocaleDateString()}</span>
                   </div>
                 )}
               </div>
+            </>
+          )}
 
-              {/* Actions */}
-              <div className="flex gap-3">
+          {error && (
+            <div className="p-3 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-xl text-rose-700 dark:text-rose-300 text-sm flex items-center gap-2">
+              <span className="material-symbols-outlined text-[18px] shrink-0">error</span>
+              {error}
+            </div>
+          )}
+        </div>
+
+        {/* ── Footer ─────────────────────────────────────────────────────── */}
+        <div className="px-6 pb-6 pt-4 border-t border-slate-100 dark:border-slate-800">
+          {step === 'success' ? (
+            <div className="flex gap-3">
+              <button
+                onClick={resetAndCreateAnother}
+                className="flex-1 py-2.5 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-sm"
+              >
+                Create Another
+              </button>
+              <button
+                onClick={() => window.open(createdLink?.hosted_page_url, '_blank')}
+                className="flex-1 py-2.5 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 transition-colors text-sm flex items-center justify-center gap-1.5"
+              >
+                <span className="material-symbols-outlined text-[16px]">open_in_new</span>
+                Open Page
+              </button>
+            </div>
+          ) : (
+            <div className="flex gap-3">
+              {(step as number) > 1 ? (
                 <button
-                  onClick={() => {
-                    setStep('form');
-                    setCreatedLink(null);
-                    setAmount('');
-                    setDescription('');
-                  }}
-                  className="flex-1 py-2.5 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                  type="button"
+                  onClick={goBack}
+                  className="flex-1 py-2.5 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-sm flex items-center justify-center gap-1.5"
                 >
-                  Create Another
+                  <span className="material-symbols-outlined text-[16px]">arrow_back</span>
+                  Back
                 </button>
+              ) : (
                 <button
-                  onClick={() => window.open(createdLink?.hosted_page_url, '_blank')}
-                  className="flex-1 py-2.5 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
+                  type="button"
+                  onClick={onClose}
+                  className="flex-1 py-2.5 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-sm"
                 >
-                  <span className="material-symbols-outlined text-[18px]">open_in_new</span>
-                  Open Page
+                  Cancel
                 </button>
-              </div>
+              )}
+
+              {step === 3 ? (
+                <button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={isLoading}
+                  className="flex-1 py-2.5 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm flex items-center justify-center gap-1.5"
+                >
+                  {isLoading ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Creating…
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-[16px]">link</span>
+                      Create Link
+                    </>
+                  )}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={goNext}
+                  className="flex-1 py-2.5 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 transition-colors text-sm flex items-center justify-center gap-1.5"
+                >
+                  Next
+                  <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                </button>
+              )}
             </div>
           )}
         </div>
       </div>
-    </>
+    </div>
   );
+
+  return createPortal(modal, document.body);
 }
