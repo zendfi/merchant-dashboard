@@ -136,7 +136,11 @@ function DashboardContent() {
         </div>
       </main>
 
-      <WalletModal isOpen={showWalletModal} onClose={() => setShowWalletModal(false)} />
+      <WalletModal
+        isOpen={showWalletModal}
+        onClose={() => setShowWalletModal(false)}
+        onNavigateToEarn={() => { setShowWalletModal(false); handleTabChange('earn'); }}
+      />
     </div>
   );
 }

@@ -2,13 +2,14 @@
 
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useMode } from '@/lib/mode-context';
-import { wallet as walletApi, WalletInfo, offramp, PajBank, BankAccountDetails, OfframpOrder } from '@/lib/api';
+import { wallet as walletApi, earn as earnApi, WalletInfo, EarnPosition, offramp, PajBank, BankAccountDetails, OfframpOrder } from '@/lib/api';
 import { useNotification } from '@/lib/notifications';
 import { getPasskeySignature } from '@/lib/webauthn';
 
 interface WalletModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onNavigateToEarn?: () => void;
 }
 
 type WalletView = 'main' | 'send' | 'receive' | 'bank-withdrawal';
@@ -20,7 +21,7 @@ const TOKEN_LOGOS: Record<string, string> = {
   //   USDT: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/Es9vMFrzaCERmKfrWkRbKsY6amJC5EGWSFE7gSWiDmMb/logo.svg',
 };
 
-export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
+export default function WalletModal({ isOpen, onClose, onNavigateToEarn }: WalletModalProps) {
   const { mode } = useMode();
   const { showNotification } = useNotification();
 
@@ -32,6 +33,9 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
   const [sendAmount, setSendAmount] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [addressCopied, setAddressCopied] = useState(false);
+
+  // Earn position (live mode only)
+  const [earnPosition, setEarnPosition] = useState<EarnPosition | null>(null);
 
   // View state
   const [currentView, setCurrentView] = useState<WalletView>('main');
@@ -82,7 +86,13 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
   const loadWalletInfo = async () => {
     setIsLoading(true);
     try {
-      const data = await walletApi.getInfo(mode);
+      const [data] = await Promise.all([
+        walletApi.getInfo(mode),
+        // Silently fetch earn position in live mode — no error shown if absent
+        mode === 'live'
+          ? earnApi.getPosition().then(setEarnPosition).catch(() => setEarnPosition(null))
+          : Promise.resolve(),
+      ]);
       setWalletData(data);
     } catch (error) {
       showNotification('Error', 'Failed to load wallet information', 'error');
@@ -431,6 +441,46 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
                       </div>
                     </div>
                   </div>
+
+                  {/* Earn Position — only shown in live mode when a position exists */}
+                  {mode === 'live' && earnPosition?.has_position && (
+                    <div
+                      onClick={() => { onClose(); onNavigateToEarn?.(); }}
+                      role="button"
+                      className="bg-white dark:bg-[#281e36] rounded-xl p-3 flex items-center justify-between border border-emerald-100 dark:border-emerald-900/40 transition-all hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-sm cursor-pointer group"
+                    >
+                      <div className="flex items-center gap-3">
+                        {/* Stacked USDC + yield icon */}
+                        <div className="relative w-8 h-8 shrink-0">
+                          <img src={TOKEN_LOGOS.USDC} alt="USDC" className="w-8 h-8 rounded-full" />
+                          <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center border-2 border-white dark:border-[#281e36]">
+                            <span className="material-symbols-outlined text-white" style={{ fontSize: '9px', fontVariationSettings: "'FILL' 1" }}>trending_up</span>
+                          </div>
+                        </div>
+                        <div className="flex flex-col">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-semibold text-slate-900 dark:text-white text-sm">Earning</span>
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400 leading-none">
+                              LIVE
+                            </span>
+                          </div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400">USDC · Kamino vault</div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-semibold text-slate-900 dark:text-white text-sm">
+                          ${earnPosition.current_value_usd.toFixed(2)}
+                        </div>
+                        {(earnPosition.gross_yield_usd > 0) ? (
+                          <div className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                            +${earnPosition.net_yield_usd.toFixed(4)}
+                          </div>
+                        ) : (
+                          <div className="text-xs text-slate-400 dark:text-slate-500">accruing…</div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
