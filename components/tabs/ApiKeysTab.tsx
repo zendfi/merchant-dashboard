@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useMode } from '@/lib/mode-context';
 import { apiKeys as apiKeysApi, ApiKey, ApiUsageTimelineEntry } from '@/lib/api';
 import { useNotification } from '@/lib/notifications';
@@ -300,9 +301,9 @@ export default function ApiKeysTab() {
       )}
 
       {/* Copy Modal */}
-      {showCopyModal && (
+      {showCopyModal && createPortal(
         <div
-          className="fixed inset-0 bg-black/50 dark:bg-black/70 z-[1000] flex justify-center items-center backdrop-blur-sm"
+          className="fixed inset-0 bg-black/50 dark:bg-black/70 z-[99999] flex justify-center items-center backdrop-blur-sm"
           onClick={(e) => {
             if (e.target === e.currentTarget) closeCopyModal();
           }}
@@ -358,7 +359,8 @@ export default function ApiKeysTab() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
