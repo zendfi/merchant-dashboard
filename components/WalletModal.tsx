@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useMode } from '@/lib/mode-context';
-import { wallet as walletApi, earn as earnApi, WalletInfo, EarnPosition, offramp, PajBank, BankAccountDetails, OfframpOrder } from '@/lib/api';
+import { wallet as walletApi, earn as earnApi, transactions as txApi, WalletInfo, EarnPosition, Transaction, offramp, PajBank, BankAccountDetails, OfframpOrder } from '@/lib/api';
 import { useNotification } from '@/lib/notifications';
 import { getPasskeySignature } from '@/lib/webauthn';
 
@@ -12,8 +12,23 @@ interface WalletModalProps {
   onNavigateToEarn?: () => void;
 }
 
-type WalletView = 'main' | 'send' | 'receive' | 'bank-withdrawal';
+type WalletView = 'main' | 'send' | 'receive' | 'bank-withdrawal' | 'history';
 type BankStep = 'amount' | 'email' | 'otp' | 'bank' | 'account' | 'confirm' | 'processing' | 'manual-transfer' | 'success';
+
+function formatRelativeTime(dateStr: string): string {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return `${diffHours}h ago`;
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays === 1) return 'Yesterday';
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
 
 const TOKEN_LOGOS: Record<string, string> = {
   SOL: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png',
@@ -36,6 +51,10 @@ export default function WalletModal({ isOpen, onClose, onNavigateToEarn }: Walle
 
   // Earn position (live mode only)
   const [earnPosition, setEarnPosition] = useState<EarnPosition | null>(null);
+
+  // Activity history
+  const [activityItems, setActivityItems] = useState<Transaction[]>([]);
+  const [activityLoading, setActivityLoading] = useState(false);
 
   // View state
   const [currentView, setCurrentView] = useState<WalletView>('main');
@@ -63,6 +82,7 @@ export default function WalletModal({ isOpen, onClose, onNavigateToEarn }: Walle
   useEffect(() => {
     if (isOpen) {
       loadWalletInfo();
+      loadActivity();
     }
   }, [isOpen, mode]);
 
@@ -98,6 +118,18 @@ export default function WalletModal({ isOpen, onClose, onNavigateToEarn }: Walle
       showNotification('Error', 'Failed to load wallet information', 'error');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadActivity = async () => {
+    setActivityLoading(true);
+    try {
+      const result = await txApi.list({ mode, limit: 20, sort_by: 'created_at', sort_order: 'desc' });
+      setActivityItems(result.transactions);
+    } catch {
+      setActivityItems([]);
+    } finally {
+      setActivityLoading(false);
     }
   };
 
@@ -512,6 +544,86 @@ export default function WalletModal({ isOpen, onClose, onNavigateToEarn }: Walle
                   Withdraw to Bank (NGN)
                 </button>
               )}
+
+              {/* Recent Activity */}
+              <div className="mt-5">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.6px]">Recent Activity</div>
+                  <button
+                    onClick={() => setCurrentView('history')}
+                    className="text-[11px] font-semibold text-primary hover:text-primary/80 transition-colors flex items-center gap-0.5"
+                  >
+                    See all
+                    <span className="material-symbols-outlined text-[13px]">chevron_right</span>
+                  </button>
+                </div>
+
+                {activityLoading ? (
+                  <div className="flex flex-col gap-2">
+                    {[1, 2, 3].map(i => (
+                      <div key={i} className="bg-white dark:bg-[#281e36] rounded-xl p-3 flex items-center gap-3 border border-slate-100 dark:border-slate-800 animate-pulse">
+                        <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 shrink-0" />
+                        <div className="flex-1">
+                          <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-2/3 mb-1.5" />
+                          <div className="h-2.5 bg-slate-100 dark:bg-slate-800 rounded w-1/2" />
+                        </div>
+                        <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-10" />
+                      </div>
+                    ))}
+                  </div>
+                ) : activityItems.length === 0 ? (
+                  <div className="bg-white dark:bg-[#281e36] rounded-xl border border-slate-100 dark:border-slate-800 py-6 flex flex-col items-center gap-1.5">
+                    <span className="material-symbols-outlined text-slate-300 dark:text-slate-600 text-[32px]">receipt_long</span>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">No activity yet</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    {activityItems.slice(0, 3).map(tx => (
+                      <div
+                        key={tx.id}
+                        className="bg-white dark:bg-[#281e36] rounded-xl p-3 flex items-center gap-3 border border-slate-100 dark:border-slate-800 transition-all hover:border-primary/40 hover:shadow-sm"
+                      >
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                          tx.status === 'confirmed' ? 'bg-emerald-100 dark:bg-emerald-900/30' :
+                          tx.status === 'pending' ? 'bg-amber-100 dark:bg-amber-900/30' :
+                          'bg-red-100 dark:bg-red-900/30'
+                        }`}>
+                          <span
+                            className={`material-symbols-outlined text-[16px] ${
+                              tx.status === 'confirmed' ? 'text-emerald-600 dark:text-emerald-400' :
+                              tx.status === 'pending' ? 'text-amber-600 dark:text-amber-400' :
+                              'text-red-500'
+                            }`}
+                            style={{ fontVariationSettings: "'FILL' 1" }}
+                          >
+                            {tx.status === 'confirmed' ? 'south_west' : tx.status === 'pending' ? 'schedule' : 'close'}
+                          </span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold text-slate-900 dark:text-white text-sm truncate">
+                            Payment received
+                          </div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                            {tx.customer_wallet
+                              ? `${tx.customer_wallet.substring(0, 4)}...${tx.customer_wallet.substring(tx.customer_wallet.length - 4)}`
+                              : tx.customer_email || 'Anonymous'}
+                          </div>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <div className={`font-semibold text-sm ${
+                            tx.status === 'confirmed' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-white'
+                          }`}>
+                            +${tx.amount_usd.toFixed(2)}
+                          </div>
+                          <div className="text-[10px] text-slate-400 dark:text-slate-500">
+                            {formatRelativeTime(tx.created_at)}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -1158,6 +1270,129 @@ export default function WalletModal({ isOpen, onClose, onNavigateToEarn }: Walle
                   >
                     Back to Wallet
                   </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* ====== HISTORY VIEW ====== */}
+          <div
+            className="absolute inset-0 overflow-y-auto transition-transform duration-300 ease-in-out"
+            style={{
+              transform: currentView === 'history' ? 'translateX(0)' : 'translateX(100%)',
+              scrollbarWidth: 'none',
+            }}
+          >
+            {/* Header */}
+            <div className="bg-white dark:bg-[#1f162b] p-5 px-6 border-b border-slate-100 dark:border-slate-800 sticky top-0 z-10">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setCurrentView('main')}
+                    className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors mr-1"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+                  </button>
+                  <h2 className="text-base font-bold text-slate-900 dark:text-white m-0">Activity</h2>
+                </div>
+                <button
+                  onClick={onClose}
+                  className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                >
+                  <span className="material-symbols-outlined text-[18px]">close</span>
+                </button>
+              </div>
+            </div>
+
+            {/* History Body */}
+            <div className="p-6">
+              {activityLoading ? (
+                <div className="flex flex-col gap-2">
+                  {[1, 2, 3, 4, 5].map(i => (
+                    <div key={i} className="bg-white dark:bg-[#281e36] rounded-xl p-3 flex items-center gap-3 border border-slate-100 dark:border-slate-800 animate-pulse">
+                      <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 shrink-0" />
+                      <div className="flex-1">
+                        <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-2/3 mb-1.5" />
+                        <div className="h-2.5 bg-slate-100 dark:bg-slate-800 rounded w-1/2" />
+                      </div>
+                      <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-10" />
+                    </div>
+                  ))}
+                </div>
+              ) : activityItems.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 gap-3">
+                  <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-slate-400 dark:text-slate-500 text-[32px]">receipt_long</span>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white mb-1">No activity yet</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Transactions will appear here once you start receiving payments.</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {activityItems.map((tx, idx) => {
+                    const prevTx = activityItems[idx - 1];
+                    const txDate = new Date(tx.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                    const prevDate = prevTx ? new Date(prevTx.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : null;
+                    const showDateDivider = txDate !== prevDate;
+                    return (
+                      <div key={tx.id}>
+                        {showDateDivider && (
+                          <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.5px] mb-2 mt-2 first:mt-0">
+                            {txDate}
+                          </div>
+                        )}
+                        <div className="bg-white dark:bg-[#281e36] rounded-xl p-3 flex items-center gap-3 border border-slate-100 dark:border-slate-800 transition-all hover:border-primary/40 hover:shadow-sm">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                            tx.status === 'confirmed' ? 'bg-emerald-100 dark:bg-emerald-900/30' :
+                            tx.status === 'pending' ? 'bg-amber-100 dark:bg-amber-900/30' :
+                            'bg-red-100 dark:bg-red-900/30'
+                          }`}>
+                            <span
+                              className={`material-symbols-outlined text-[16px] ${
+                                tx.status === 'confirmed' ? 'text-emerald-600 dark:text-emerald-400' :
+                                tx.status === 'pending' ? 'text-amber-600 dark:text-amber-400' :
+                                'text-red-500'
+                              }`}
+                              style={{ fontVariationSettings: "'FILL' 1" }}
+                            >
+                              {tx.status === 'confirmed' ? 'south_west' : tx.status === 'pending' ? 'schedule' : 'close'}
+                            </span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-semibold text-slate-900 dark:text-white text-sm truncate">
+                              Payment received
+                            </div>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none ${
+                                tx.status === 'confirmed' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400' :
+                                tx.status === 'pending' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400' :
+                                'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400'
+                              }`}>
+                                {tx.status.toUpperCase()}
+                              </span>
+                              <span className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                                {tx.customer_wallet
+                                  ? `${tx.customer_wallet.substring(0, 4)}...${tx.customer_wallet.substring(tx.customer_wallet.length - 4)}`
+                                  : tx.customer_email || 'Anonymous'}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <div className={`font-semibold text-sm ${
+                              tx.status === 'confirmed' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-white'
+                            }`}>
+                              +${tx.amount_usd.toFixed(2)}
+                            </div>
+                            <div className="text-[10px] text-slate-400 dark:text-slate-500">
+                              {formatRelativeTime(tx.created_at)}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
