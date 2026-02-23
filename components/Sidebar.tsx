@@ -17,11 +17,13 @@ interface NavItem {
   label: string;
   icon: string;
   action?: string;
+  badge?: string;
 }
 
 const mainNavItems: NavItem[] = [
   { id: 'overview', label: 'Overview', icon: 'dashboard' },
   { id: 'transactions', label: 'Transactions', icon: 'payments' },
+  { id: 'earn', label: 'Earn', icon: 'savings', badge: 'New' },
   { id: 'payment-links', label: 'Payment Links', icon: 'link' },
   { id: 'customers', label: 'Customers', icon: 'group' },
   { id: 'api-keys', label: 'API Keys', icon: 'vpn_key' },
@@ -109,9 +111,14 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }: Sid
               >
                 {item.icon}
               </span>
-              <span className={`text-[14px] ${activeTab === item.id ? 'font-semibold' : 'font-medium'}`}>
+              <span className={`text-[14px] flex-1 ${activeTab === item.id ? 'font-semibold' : 'font-medium'}`}>
                 {item.label}
               </span>
+              {item.badge && activeTab !== item.id && (
+                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400 leading-none">
+                  {item.badge}
+                </span>
+              )}
             </button>
           ))}
         </nav>

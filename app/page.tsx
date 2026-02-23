@@ -18,6 +18,7 @@ import WebhooksTab from '@/components/tabs/WebhooksTab';
 import CustomersTab from '@/components/tabs/CustomersTab';
 import ProfileTab from '@/components/tabs/ProfileTab';
 import SupportTab from '@/components/tabs/SupportTab';
+import EarnTab from '@/components/tabs/EarnTab';
 
 function DashboardContent() {
   const router = useRouter();
@@ -79,6 +80,8 @@ function DashboardContent() {
         return <OverviewTab onViewAllTransactions={() => setActiveTab('transactions')} />;
       case 'transactions':
         return <TransactionsTab />;
+      case 'earn':
+        return <EarnTab />;
       case 'payment-links':
         return <PaymentLinksTab onModalToggle={setHeaderHidden} />;
       case 'customers':

@@ -831,6 +831,95 @@ export const customers = {
   },
 };
 
+// ─── Earn (Kamino KVault) ─────────────────────────────────────────────────────
+
+export interface EarnMetrics {
+  vault_address: string;
+  /** APY as a percentage value — e.g. 8.2 means 8.2% */
+  apy: number;
+  apy_7d: number;
+  apy_30d: number;
+  tvl_usd: number;
+  total_holders: number;
+}
+
+export interface EarnPosition {
+  has_position: boolean;
+  vault_address: string;
+  total_shares: number;
+  principal_usd: number;
+  current_value_usd: number;
+  gross_yield_usd: number;
+  gross_yield_token: number;
+  fee_bps: number;
+  net_yield_usd: number;
+  fee_usd: number;
+}
+
+export interface EarnPreviewWithdraw {
+  vault_address: string;
+  gross_yield_usd: number;
+  gross_yield_token: number;
+  principal_usd: number;
+  total_gross_usd: number;
+  performance_fee_bps: number;
+  performance_fee_usd: number;
+  performance_fee_token: number;
+  net_yield_usd: number;
+  merchant_receives_usd: number;
+  merchant_receives_token: number;
+}
+
+export interface EarnDepositResponse {
+  success: boolean;
+  transaction_signature: string;
+  amount_deposited: number;
+  vault_address: string;
+  explorer_url: string;
+}
+
+export interface EarnWithdrawResponse {
+  success: boolean;
+  transaction_signature: string;
+  gross_yield_usd: number;
+  principal_returned_usd: number;
+  performance_fee_usd: number;
+  merchant_received_usd: number;
+  explorer_url: string;
+}
+
+export const earn = {
+  /** Get live vault APY, TVL, and holder count. */
+  getMetrics: async (): Promise<EarnMetrics> => {
+    return apiCall('/api/v1/merchants/me/earn/metrics');
+  },
+
+  /** Get the merchant's current KVault position and PnL. */
+  getPosition: async (): Promise<EarnPosition> => {
+    return apiCall('/api/v1/merchants/me/earn/position');
+  },
+
+  /** Get a breakdown of what the merchant will receive on full withdrawal. */
+  previewWithdraw: async (): Promise<EarnPreviewWithdraw> => {
+    return apiCall('/api/v1/merchants/me/earn/preview-withdraw');
+  },
+
+  /** Deposit USDC into the Kamino vault. */
+  deposit: async (amountUsdc: number): Promise<EarnDepositResponse> => {
+    return apiCall('/api/v1/merchants/me/earn/deposit', {
+      method: 'POST',
+      body: JSON.stringify({ amount_usdc: amountUsdc }),
+    });
+  },
+
+  /** Withdraw all from the Kamino vault (atomically deducts performance fee). */
+  withdraw: async (): Promise<EarnWithdrawResponse> => {
+    return apiCall('/api/v1/merchants/me/earn/withdraw', {
+      method: 'POST',
+    });
+  },
+};
+
 export default {
   auth,
   merchant,
@@ -842,4 +931,5 @@ export default {
   webauthn,
   paymentLinks,
   customers,
+  earn,
 };
