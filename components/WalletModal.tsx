@@ -545,85 +545,14 @@ export default function WalletModal({ isOpen, onClose, onNavigateToEarn }: Walle
                 </button>
               )}
 
-              {/* Recent Activity */}
-              <div className="mt-5">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.6px]">Recent Activity</div>
-                  <button
-                    onClick={() => setCurrentView('history')}
-                    className="text-[11px] font-semibold text-primary hover:text-primary/80 transition-colors flex items-center gap-0.5"
-                  >
-                    See all
-                    <span className="material-symbols-outlined text-[13px]">chevron_right</span>
-                  </button>
-                </div>
-
-                {activityLoading ? (
-                  <div className="flex flex-col gap-2">
-                    {[1, 2, 3].map(i => (
-                      <div key={i} className="bg-white dark:bg-[#281e36] rounded-xl p-3 flex items-center gap-3 border border-slate-100 dark:border-slate-800 animate-pulse">
-                        <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 shrink-0" />
-                        <div className="flex-1">
-                          <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-2/3 mb-1.5" />
-                          <div className="h-2.5 bg-slate-100 dark:bg-slate-800 rounded w-1/2" />
-                        </div>
-                        <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-10" />
-                      </div>
-                    ))}
-                  </div>
-                ) : activityItems.length === 0 ? (
-                  <div className="bg-white dark:bg-[#281e36] rounded-xl border border-slate-100 dark:border-slate-800 py-6 flex flex-col items-center gap-1.5">
-                    <span className="material-symbols-outlined text-slate-300 dark:text-slate-600 text-[32px]">receipt_long</span>
-                    <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">No activity yet</p>
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-2">
-                    {activityItems.slice(0, 3).map(tx => (
-                      <div
-                        key={tx.id}
-                        className="bg-white dark:bg-[#281e36] rounded-xl p-3 flex items-center gap-3 border border-slate-100 dark:border-slate-800 transition-all hover:border-primary/40 hover:shadow-sm"
-                      >
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
-                          tx.status === 'confirmed' ? 'bg-emerald-100 dark:bg-emerald-900/30' :
-                          tx.status === 'pending' ? 'bg-amber-100 dark:bg-amber-900/30' :
-                          'bg-red-100 dark:bg-red-900/30'
-                        }`}>
-                          <span
-                            className={`material-symbols-outlined text-[16px] ${
-                              tx.status === 'confirmed' ? 'text-emerald-600 dark:text-emerald-400' :
-                              tx.status === 'pending' ? 'text-amber-600 dark:text-amber-400' :
-                              'text-red-500'
-                            }`}
-                            style={{ fontVariationSettings: "'FILL' 1" }}
-                          >
-                            {tx.status === 'confirmed' ? 'south_west' : tx.status === 'pending' ? 'schedule' : 'close'}
-                          </span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="font-semibold text-slate-900 dark:text-white text-sm truncate">
-                            Payment received
-                          </div>
-                          <div className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                            {tx.customer_wallet
-                              ? `${tx.customer_wallet.substring(0, 4)}...${tx.customer_wallet.substring(tx.customer_wallet.length - 4)}`
-                              : tx.customer_email || 'Anonymous'}
-                          </div>
-                        </div>
-                        <div className="text-right shrink-0">
-                          <div className={`font-semibold text-sm ${
-                            tx.status === 'confirmed' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-white'
-                          }`}>
-                            +${tx.amount_usd.toFixed(2)}
-                          </div>
-                          <div className="text-[10px] text-slate-400 dark:text-slate-500">
-                            {formatRelativeTime(tx.created_at)}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+              {/* Activity Button */}
+              <button
+                onClick={() => setCurrentView('history')}
+                className="w-full mt-3 p-2.5 rounded-xl font-semibold text-[13px] cursor-pointer transition-all flex items-center justify-center gap-1.5 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-primary/40"
+              >
+                <span className="material-symbols-outlined text-[18px]">receipt_long</span>
+                Transaction History
+              </button>
             </div>
           </div>
 
