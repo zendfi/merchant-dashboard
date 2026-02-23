@@ -428,7 +428,17 @@ export const transactions = {
 };
 
 // Webhook APIs
+export interface WebhookConfig {
+  webhook_url: string | null;
+  webhook_secret: string;
+}
+
 export const webhooks = {
+  // Get webhook config (URL + signing secret)
+  getConfig: async (): Promise<WebhookConfig> => {
+    return apiCall('/api/v1/merchants/me/webhook');
+  },
+
   // Get webhook stats
   getStats: async (): Promise<WebhookStats> => {
     return apiCall('/api/v1/merchants/me/webhook/stats');

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { webhooks, WebhookStats } from '@/lib/api';
+import { webhooks, WebhookStats, WebhookConfig } from '@/lib/api';
 import { useMerchant } from '@/lib/merchant-context';
 import { useNotification } from '@/lib/notifications';
 import WebhookModal from '@/components/WebhookModal';
@@ -14,6 +14,10 @@ export default function WebhooksTab() {
   const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
+  const [config, setConfig] = useState<WebhookConfig | null>(null);
+  const [isLoadingConfig, setIsLoadingConfig] = useState(false);
+  const [secretRevealed, setSecretRevealed] = useState(false);
+  const [copiedField, setCopiedField] = useState<'url' | 'secret' | null>(null);
 
   const isConfigured = !!(merchant?.webhook_url);
 
@@ -30,6 +34,30 @@ export default function WebhooksTab() {
       console.error('Failed to load webhook stats:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadConfig = async () => {
+    setIsLoadingConfig(true);
+    setSecretRevealed(false);
+    try {
+      const data = await webhooks.getConfig();
+      setConfig(data);
+    } catch (error) {
+      showNotification('Error', 'Failed to load webhook configuration', 'error');
+      console.error('Failed to load webhook config:', error);
+    } finally {
+      setIsLoadingConfig(false);
+    }
+  };
+
+  const copyToClipboard = async (text: string, field: 'url' | 'secret') => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedField(field);
+      setTimeout(() => setCopiedField(null), 2000);
+    } catch {
+      showNotification('Error', 'Failed to copy to clipboard', 'error');
     }
   };
 
@@ -147,6 +175,96 @@ export default function WebhooksTab() {
         </div>
       )}
 
+      {/* Webhook Credentials Card */}
+      <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800">
+        <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+          <div>
+            <h3 className="text-base font-bold text-slate-900 dark:text-white">Webhook Credentials</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Use the signing secret to verify incoming webhook payloads</p>
+          </div>
+          {!config && (
+            <button
+              onClick={loadConfig}
+              disabled={isLoadingConfig}
+              className="px-4 py-2 bg-primary text-white rounded-xl font-semibold text-sm cursor-pointer transition-all hover:bg-primary/90 disabled:opacity-50 flex items-center gap-2"
+            >
+              <span className="material-symbols-outlined text-[18px]">key</span>
+              {isLoadingConfig ? 'Loading...' : 'Reveal Credentials'}
+            </button>
+          )}
+        </div>
+
+        {config ? (
+          <div className="p-5 space-y-4">
+            {/* Webhook URL */}
+            <div>
+              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Webhook URL</label>
+              <div className="mt-1.5 flex items-center gap-2">
+                <div className="flex-1 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm font-mono text-slate-700 dark:text-slate-300 truncate">
+                  {config.webhook_url || <span className="text-slate-400 italic">Not configured</span>}
+                </div>
+                {config.webhook_url && (
+                  <button
+                    onClick={() => copyToClipboard(config.webhook_url!, 'url')}
+                    className="flex-shrink-0 w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
+                    title="Copy URL"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">
+                      {copiedField === 'url' ? 'check' : 'content_copy'}
+                    </span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Signing Secret */}
+            <div>
+              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Signing Secret</label>
+              <div className="mt-1.5 flex items-center gap-2">
+                <div className="flex-1 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm font-mono text-slate-700 dark:text-slate-300 truncate">
+                  {secretRevealed ? config.webhook_secret : '•'.repeat(40)}
+                </div>
+                <button
+                  onClick={() => setSecretRevealed((v) => !v)}
+                  className="flex-shrink-0 w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
+                  title={secretRevealed ? 'Hide secret' : 'Reveal secret'}
+                >
+                  <span className="material-symbols-outlined text-[18px]">
+                    {secretRevealed ? 'visibility_off' : 'visibility'}
+                  </span>
+                </button>
+                <button
+                  onClick={() => copyToClipboard(config.webhook_secret, 'secret')}
+                  className="flex-shrink-0 w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
+                  title="Copy secret"
+                >
+                  <span className="material-symbols-outlined text-[18px]">
+                    {copiedField === 'secret' ? 'check' : 'content_copy'}
+                  </span>
+                </button>
+              </div>
+              <p className="mt-1.5 text-xs text-slate-400 dark:text-slate-500">
+                Passed as <code className="bg-slate-100 dark:bg-slate-800 px-1 rounded">X-ZendFi-Signature</code> on every webhook request. Keep this private.
+              </p>
+            </div>
+
+            <div className="pt-1">
+              <button
+                onClick={() => { setConfig(null); setSecretRevealed(false); }}
+                className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+              >
+                Hide credentials
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="p-5 flex items-center gap-3 text-slate-400 dark:text-slate-500">
+            <span className="material-symbols-outlined text-2xl">lock</span>
+            <span className="text-sm">Click &quot;Reveal Credentials&quot; to view your webhook URL and signing secret.</span>
+          </div>
+        )}
+      </div>
+
       {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {statCards.map((card) => {
@@ -243,12 +361,11 @@ export default function WebhooksTab() {
         onClose={() => setShowModal(false)}
         currentUrl={merchant?.webhook_url || null}
         onSaved={async () => {
-          console.log('WebhooksTab onSaved called');
-          console.log('Current merchant before refresh:', merchant);
-          await refreshMerchant(); // Refresh merchant profile to get updated webhook_url
-          console.log('Merchant refreshed, new merchant:', merchant);
-          await loadStats(); // Refresh webhook stats
-          console.log('Stats reloaded');
+          await refreshMerchant();
+          await loadStats();
+          // Reset credential card so URL shown there is in sync
+          setConfig(null);
+          setSecretRevealed(false);
         }}
       />
     </div>
