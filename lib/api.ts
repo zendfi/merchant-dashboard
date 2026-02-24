@@ -886,6 +886,9 @@ export interface EarnDepositResponse {
   amount_deposited: number;
   vault_address: string;
   explorer_url: string;
+  /** Non-zero only on the first deposit (one-time activation fee). */
+  setup_fee_usdc?: number;
+  is_first_deposit?: boolean;
 }
 
 export interface EarnWithdrawResponse {

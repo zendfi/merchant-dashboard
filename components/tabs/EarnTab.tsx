@@ -211,6 +211,10 @@ export default function EarnTab() {
       showNotification('Invalid Amount', 'Please enter a valid deposit amount.', 'error');
       return;
     }
+    if (amount < 5) {
+      showNotification('Below Minimum', 'Minimum deposit is $5.00 USDC.', 'error');
+      return;
+    }
     if (amount > usdcBalance) {
       showNotification('Insufficient Balance', `You only have ${fmt(usdcBalance, 2)} USDC available.`, 'error');
       return;
@@ -369,8 +373,16 @@ export default function EarnTab() {
             </p>
           </div>
           <div className="bg-slate-50 dark:bg-white/5 rounded-lg p-4 text-left space-y-2">
+            {depositResult.is_first_deposit && (
+              <div className="flex justify-between text-sm pb-2 border-b border-slate-200 dark:border-slate-700">
+                <span className="text-slate-500 dark:text-slate-400">Activation fee (one-time)</span>
+                <span className="font-semibold text-amber-600 dark:text-amber-400">
+                  -{fmtUsd(depositResult.setup_fee_usdc ?? 1)} USDC
+                </span>
+              </div>
+            )}
             <div className="flex justify-between text-sm">
-              <span className="text-slate-500 dark:text-slate-400">Deposited</span>
+              <span className="text-slate-500 dark:text-slate-400">Deposited to vault</span>
               <span className="font-semibold text-slate-900 dark:text-white">
                 {fmtUsd(depositResult.amount_deposited)} USDC
               </span>
@@ -506,7 +518,7 @@ export default function EarnTab() {
                 </div>
                 <input
                   type="number"
-                  min="0.01"
+                  min="5"
                   step="0.01"
                   max={usdcBalance}
                   value={depositAmount}
@@ -555,6 +567,19 @@ export default function EarnTab() {
                     </p>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* Activation fee notice — first deposit only */}
+            {!position?.has_position && (
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800/30 text-xs text-amber-700 dark:text-amber-400">
+                <span className="material-symbols-outlined text-[14px] mt-0.5 shrink-0">info</span>
+                <span>
+                  <span className="font-semibold">$1.00 one-time activation fee</span> will be
+                  deducted from your first deposit.{depositAmountNum >= 5 ? (
+                    <> ${fmtUsd(depositAmountNum - 1)} will be deposited into the vault.</>
+                  ) : null}
+                </span>
               </div>
             )}
 
