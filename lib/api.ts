@@ -964,6 +964,8 @@ export interface ShopProduct {
   media_urls: string[];
   display_order: number;
   is_active: boolean;
+  onramp: boolean;
+  collect_customer_info: boolean;
   created_at: string;
 }
 
@@ -989,6 +991,8 @@ export interface CreateProductRequest {
   quantity_available?: number;
   media_urls?: string[];
   display_order?: number;
+  onramp?: boolean;
+  collect_customer_info?: boolean;
 }
 
 export interface UpdateProductRequest {
@@ -1001,6 +1005,8 @@ export interface UpdateProductRequest {
   media_urls?: string[];
   display_order?: number;
   is_active?: boolean;
+  onramp?: boolean;
+  collect_customer_info?: boolean;
 }
 
 export interface ShopDetailResponse {

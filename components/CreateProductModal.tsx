@@ -11,7 +11,7 @@ interface CreateProductModalProps {
 
 const TOKENS = ['USDC', 'USDT', 'SOL'];
 
-type Step = 1 | 2 | 3;
+type Step = 1 | 2 | 3 | 4;
 
 export default function CreateProductModal({ shopId, onClose, onCreated }: CreateProductModalProps) {
   const [step, setStep] = useState<Step>(1);
@@ -22,6 +22,8 @@ export default function CreateProductModal({ shopId, onClose, onCreated }: Creat
   const [quantityType, setQuantityType] = useState<'unlimited' | 'limited'>('unlimited');
   const [quantityAvailable, setQuantityAvailable] = useState('');
   const [mediaUrls, setMediaUrls] = useState<string[]>([]);
+  const [onramp, setOnramp] = useState(false);
+  const [collectCustomerInfo, setCollectCustomerInfo] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -63,6 +65,8 @@ export default function CreateProductModal({ shopId, onClose, onCreated }: Creat
         quantity_type: quantityType,
         quantity_available: quantityType === 'limited' ? parseInt(quantityAvailable) : undefined,
         media_urls: mediaUrls,
+        onramp,
+        collect_customer_info: collectCustomerInfo,
       };
       const product = await shopsApi.createProduct(shopId, req);
       onCreated(product);
@@ -83,7 +87,7 @@ export default function CreateProductModal({ shopId, onClose, onCreated }: Creat
         <div className="flex items-center justify-between px-6 pt-6 pb-4">
           <div>
             <h2 className="text-lg font-bold text-slate-900 dark:text-white">Add Product</h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Step {step} of 3</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Step {step} of 4</p>
           </div>
           <button
             onClick={onClose}
@@ -95,7 +99,7 @@ export default function CreateProductModal({ shopId, onClose, onCreated }: Creat
 
         {/* Step Indicator */}
         <div className="flex gap-1 px-6 mb-5">
-          {([1, 2, 3] as Step[]).map((s) => (
+          {([1, 2, 3, 4] as Step[]).map((s) => (
             <div
               key={s}
               className={`h-1 flex-1 rounded-full transition-colors ${
@@ -295,6 +299,80 @@ export default function CreateProductModal({ shopId, onClose, onCreated }: Creat
               <div className="flex gap-2">
                 <button
                   onClick={() => setStep(2)}
+                  className="flex-1 py-3.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-semibold text-sm transition hover:bg-slate-50 dark:hover:bg-slate-800"
+                >
+                  ← Back
+                </button>
+                <button
+                  onClick={() => setStep(4)}
+                  className="flex-[2] py-3.5 rounded-xl bg-primary text-white font-semibold text-sm transition hover:bg-primary/90 active:scale-[0.98]"
+                >
+                  Next →
+                </button>
+              </div>
+            </>
+          )}
+
+          {/* Step 4: Payment Settings */}
+          {step === 4 && (
+            <>
+              <p className="text-xs text-slate-500 dark:text-slate-400 -mt-1 mb-1">
+                Configure how customers pay for this product.
+              </p>
+
+              {/* Onramp toggle */}
+              <button
+                type="button"
+                onClick={() => setOnramp((v) => !v)}
+                className={`w-full flex items-start gap-3 p-4 rounded-xl border-2 text-left transition ${
+                  onramp
+                    ? 'border-primary bg-primary/5'
+                    : 'border-slate-200 dark:border-slate-700 hover:border-primary/30'
+                }`}
+              >
+                <div className={`mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                  onramp ? 'border-primary bg-primary' : 'border-slate-300 dark:border-slate-600'
+                }`}>
+                  {onramp && <span className="material-symbols-outlined text-white" style={{ fontSize: 12 }}>check</span>}
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-slate-900 dark:text-white">Enable Fiat Payments</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Let customers pay with a bank transfer via the PAJ Ramp onramp flow.
+                  </p>
+                </div>
+              </button>
+
+              {/* Collect customer info toggle */}
+              <button
+                type="button"
+                onClick={() => setCollectCustomerInfo((v) => !v)}
+                className={`w-full flex items-start gap-3 p-4 rounded-xl border-2 text-left transition ${
+                  collectCustomerInfo
+                    ? 'border-primary bg-primary/5'
+                    : 'border-slate-200 dark:border-slate-700 hover:border-primary/30'
+                }`}
+              >
+                <div className={`mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                  collectCustomerInfo ? 'border-primary bg-primary' : 'border-slate-300 dark:border-slate-600'
+                }`}>
+                  {collectCustomerInfo && <span className="material-symbols-outlined text-white" style={{ fontSize: 12 }}>check</span>}
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-slate-900 dark:text-white">Collect Customer Details</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Show a form at checkout to collect the customer's name and email.
+                  </p>
+                </div>
+              </button>
+
+              {error && (
+                <p className="text-xs text-red-500 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg">{error}</p>
+              )}
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setStep(3)}
                   className="flex-1 py-3.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-semibold text-sm transition hover:bg-slate-50 dark:hover:bg-slate-800"
                 >
                   ← Back
