@@ -24,6 +24,7 @@ const mainNavItems: NavItem[] = [
   { id: 'overview', label: 'Overview', icon: 'dashboard' },
   { id: 'transactions', label: 'Transactions', icon: 'payments' },
   { id: 'earn', label: 'Earn', icon: 'savings', badge: 'New' },
+  { id: 'shop', label: 'Shop', icon: 'storefront', badge: 'New' },
   { id: 'payment-links', label: 'Payment Links', icon: 'link' },
   { id: 'customers', label: 'Customers', icon: 'group' },
   { id: 'api-keys', label: 'API Keys', icon: 'vpn_key' },

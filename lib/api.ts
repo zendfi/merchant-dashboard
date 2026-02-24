@@ -933,6 +933,157 @@ export const earn = {
   },
 };
 
+// ─── Shop Types ────────────────────────────────────────────────────────────────
+
+export interface Shop {
+  id: string;
+  merchant_id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  theme_color: string;
+  is_live: boolean;
+  created_at: string;
+  updated_at: string;
+  product_count?: number;
+}
+
+export interface ShopProduct {
+  id: string;
+  shop_id: string;
+  merchant_id: string;
+  name: string;
+  description: string | null;
+  price_usd: number;
+  token: string;
+  payment_link_id: string | null;
+  payment_link_code: string | null;
+  quantity_type: 'unlimited' | 'limited';
+  quantity_available: number | null;
+  quantity_sold: number;
+  media_urls: string[];
+  display_order: number;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface CreateShopRequest {
+  name: string;
+  description?: string;
+  theme_color?: string;
+}
+
+export interface UpdateShopRequest {
+  name?: string;
+  description?: string;
+  theme_color?: string;
+  is_live?: boolean;
+}
+
+export interface CreateProductRequest {
+  name: string;
+  description?: string;
+  price_usd: number;
+  token?: string;
+  quantity_type: 'unlimited' | 'limited';
+  quantity_available?: number;
+  media_urls?: string[];
+  display_order?: number;
+}
+
+export interface UpdateProductRequest {
+  name?: string;
+  description?: string;
+  price_usd?: number;
+  token?: string;
+  quantity_type?: 'unlimited' | 'limited';
+  quantity_available?: number;
+  media_urls?: string[];
+  display_order?: number;
+  is_active?: boolean;
+}
+
+export interface ShopDetailResponse {
+  shop: Shop;
+  products: ShopProduct[];
+}
+
+export interface MediaUploadUrlResponse {
+  upload_url: string;
+  public_url: string;
+  storage_key: string;
+  expires_at: string;
+}
+
+// ─── Shop API ──────────────────────────────────────────────────────────────────
+
+export const shops = {
+  list: async (): Promise<Shop[]> => {
+    return apiCall('/api/v1/merchants/me/shops');
+  },
+
+  create: async (req: CreateShopRequest): Promise<Shop> => {
+    return apiCall('/api/v1/merchants/me/shops', {
+      method: 'POST',
+      body: JSON.stringify(req),
+    });
+  },
+
+  get: async (id: string): Promise<ShopDetailResponse> => {
+    return apiCall(`/api/v1/merchants/me/shops/${id}`);
+  },
+
+  update: async (id: string, req: UpdateShopRequest): Promise<Shop> => {
+    return apiCall(`/api/v1/merchants/me/shops/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(req),
+    });
+  },
+
+  delete: async (id: string): Promise<{ success: boolean }> => {
+    return apiCall(`/api/v1/merchants/me/shops/${id}`, { method: 'DELETE' });
+  },
+
+  duplicate: async (id: string): Promise<Shop> => {
+    return apiCall(`/api/v1/merchants/me/shops/${id}/duplicate`, { method: 'POST' });
+  },
+
+  listProducts: async (shopId: string): Promise<ShopProduct[]> => {
+    return apiCall(`/api/v1/merchants/me/shops/${shopId}/products`);
+  },
+
+  createProduct: async (shopId: string, req: CreateProductRequest): Promise<ShopProduct> => {
+    return apiCall(`/api/v1/merchants/me/shops/${shopId}/products`, {
+      method: 'POST',
+      body: JSON.stringify(req),
+    });
+  },
+
+  updateProduct: async (shopId: string, productId: string, req: UpdateProductRequest): Promise<ShopProduct> => {
+    return apiCall(`/api/v1/merchants/me/shops/${shopId}/products/${productId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(req),
+    });
+  },
+
+  deleteProduct: async (shopId: string, productId: string): Promise<{ success: boolean }> => {
+    return apiCall(`/api/v1/merchants/me/shops/${shopId}/products/${productId}`, { method: 'DELETE' });
+  },
+
+  getUploadUrl: async (params: {
+    shop_id: string;
+    product_id?: string;
+    filename: string;
+    mime_type: string;
+    file_size: number;
+  }): Promise<MediaUploadUrlResponse> => {
+    return apiCall('/api/v1/merchants/me/media/upload-url', {
+      method: 'POST',
+      body: JSON.stringify(params),
+    });
+  },
+};
+
 export default {
   auth,
   merchant,
@@ -945,4 +1096,5 @@ export default {
   paymentLinks,
   customers,
   earn,
+  shops,
 };
