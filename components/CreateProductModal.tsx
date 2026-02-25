@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { shops as shopsApi, CreateProductRequest, ShopProduct } from '@/lib/api';
 
 interface CreateProductModalProps {
@@ -11,23 +11,76 @@ interface CreateProductModalProps {
 
 const TOKENS = ['USDC', 'USDT', 'SOL'];
 
-type Step = 1 | 2 | 3 | 4;
+type Step = 1 | 2 | 3;
+
+function Toggle({ checked, onChange }: { checked: boolean; onChange: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onChange}
+      className={`relative flex-shrink-0 w-11 h-6 rounded-full transition-colors ${checked ? 'bg-primary' : 'bg-slate-200 dark:bg-slate-700'
+        }`}
+    >
+      <span
+        className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform shadow ${checked ? 'translate-x-5' : 'translate-x-0'
+          }`}
+      />
+    </button>
+  );
+}
 
 export default function CreateProductModal({ shopId, onClose, onCreated }: CreateProductModalProps) {
   const [step, setStep] = useState<Step>(1);
+
+  // Step 1
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+
+  // Step 2 — price & payment
+  const [onramp, setOnramp] = useState(false);
   const [priceUsd, setPriceUsd] = useState('');
+  const [priceNgn, setPriceNgn] = useState('');
   const [token, setToken] = useState('USDC');
   const [quantityType, setQuantityType] = useState<'unlimited' | 'limited'>('unlimited');
   const [quantityAvailable, setQuantityAvailable] = useState('');
-  const [mediaUrls, setMediaUrls] = useState<string[]>([]);
-  const [onramp, setOnramp] = useState(false);
+  const [payerServiceCharge, setPayerServiceCharge] = useState(true);
   const [collectCustomerInfo, setCollectCustomerInfo] = useState(false);
+
+  // Exchange rate
+  const [exchangeRate, setExchangeRate] = useState<number | null>(null);
+  const [loadingRate, setLoadingRate] = useState(false);
+
+  // Step 3 — media
+  const [mediaUrls, setMediaUrls] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
+
+  // Shared
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Fetch NGN→USD exchange rate
+  const loadExchangeRate = useCallback(async () => {
+    if (exchangeRate) return;
+    setLoadingRate(true);
+    try {
+      const resp = await fetch('/api/v1/onramp/rates');
+      const data = await resp.json();
+      const rate = data.on_ramp_rate?.rate || data.onRampRate?.rate || null;
+      if (rate) setExchangeRate(parseFloat(rate));
+    } catch {
+      // ignore
+    } finally {
+      setLoadingRate(false);
+    }
+  }, [exchangeRate]);
+
+  useEffect(() => {
+    if (onramp) loadExchangeRate();
+  }, [onramp, loadExchangeRate]);
+
+  // Derived NGN → USD
+  const ngnUsd = priceNgn && exchangeRate ? parseFloat(priceNgn) / exchangeRate : null;
 
   const handleMediaUpload = async (file: File) => {
     setUploading(true);
@@ -57,16 +110,27 @@ export default function CreateProductModal({ shopId, onClose, onCreated }: Creat
     setLoading(true);
     setError(null);
     try {
+      // Resolve final USD price
+      let finalPriceUsd: number;
+      if (onramp) {
+        if (!priceNgn || !exchangeRate) throw new Error('NGN amount required');
+        finalPriceUsd = parseFloat(priceNgn) / exchangeRate;
+      } else {
+        finalPriceUsd = parseFloat(priceUsd);
+      }
+
       const req: CreateProductRequest = {
         name: name.trim(),
         description: description.trim() || undefined,
-        price_usd: parseFloat(priceUsd),
+        price_usd: finalPriceUsd,
         token,
         quantity_type: quantityType,
         quantity_available: quantityType === 'limited' ? parseInt(quantityAvailable) : undefined,
         media_urls: mediaUrls,
         onramp,
         collect_customer_info: collectCustomerInfo,
+        payer_service_charge: onramp ? payerServiceCharge : false,
+        amount_ngn: onramp && priceNgn ? parseFloat(priceNgn) : undefined,
       };
       const product = await shopsApi.createProduct(shopId, req);
       onCreated(product);
@@ -78,7 +142,15 @@ export default function CreateProductModal({ shopId, onClose, onCreated }: Creat
   };
 
   const canProceedStep1 = name.trim().length > 0;
-  const canProceedStep2 = parseFloat(priceUsd) > 0 && (quantityType === 'unlimited' || parseInt(quantityAvailable) > 0);
+  const canProceedStep2 = (() => {
+    if (onramp) {
+      if (!priceNgn || parseFloat(priceNgn) < 1000) return false;
+    } else {
+      if (!priceUsd || parseFloat(priceUsd) <= 0) return false;
+    }
+    if (quantityType === 'limited' && (!quantityAvailable || parseInt(quantityAvailable) <= 0)) return false;
+    return true;
+  })();
 
   return (
     <div className="fixed inset-0 z-[300] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-4">
@@ -87,7 +159,7 @@ export default function CreateProductModal({ shopId, onClose, onCreated }: Creat
         <div className="flex items-center justify-between px-6 pt-6 pb-4">
           <div>
             <h2 className="text-lg font-bold text-slate-900 dark:text-white">Add Product</h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Step {step} of 4</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Step {step} of 3</p>
           </div>
           <button
             onClick={onClose}
@@ -99,12 +171,11 @@ export default function CreateProductModal({ shopId, onClose, onCreated }: Creat
 
         {/* Step Indicator */}
         <div className="flex gap-1 px-6 mb-5">
-          {([1, 2, 3, 4] as Step[]).map((s) => (
+          {([1, 2, 3] as Step[]).map((s) => (
             <div
               key={s}
-              className={`h-1 flex-1 rounded-full transition-colors ${
-                s <= step ? 'bg-primary' : 'bg-slate-200 dark:bg-slate-700'
-              }`}
+              className={`h-1 flex-1 rounded-full transition-colors ${s <= step ? 'bg-primary' : 'bg-slate-200 dark:bg-slate-700'
+                }`}
             />
           ))}
         </div>
@@ -151,43 +222,104 @@ export default function CreateProductModal({ shopId, onClose, onCreated }: Creat
             </>
           )}
 
-          {/* Step 2: Price & Quantity */}
+          {/* Step 2: Price, Payment & Options */}
           {step === 2 && (
             <>
-              <div className="flex gap-3">
-                <div className="flex-1">
-                  <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">
-                    Price (USD)
-                  </label>
-                  <input
-                    type="number"
-                    value={priceUsd}
-                    onChange={(e) => setPriceUsd(e.target.value)}
-                    placeholder="0.00"
-                    min="0.01"
-                    step="0.01"
-                    required
-                    autoFocus
-                    className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 transition"
-                  />
+              {/* Enable Fiat toggle */}
+              <div className="flex items-center justify-between py-2.5 px-4 bg-slate-50 dark:bg-slate-800 rounded-xl">
+                <div>
+                  <p className="text-sm font-medium text-slate-900 dark:text-white">Enable Fiat Payments</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Let customers pay via bank transfer (PAJ Ramp)</p>
                 </div>
-                <div className="w-28">
-                  <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">
-                    Token
-                  </label>
-                  <select
-                    value={token}
-                    onChange={(e) => setToken(e.target.value)}
-                    className="w-full px-3 py-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/30 transition"
-                  >
-                    {TOKENS.map((t) => (
-                      <option key={t} value={t}>{t}</option>
-                    ))}
-                  </select>
-                </div>
+                <Toggle checked={onramp} onChange={() => setOnramp((v) => !v)} />
               </div>
 
-              {/* Quantity */}
+              {/* Price input */}
+              {onramp ? (
+                /* NGN input */
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">
+                    Price (NGN)
+                  </label>
+                  {loadingRate ? (
+                    <div className="text-xs text-slate-400 py-2">Loading exchange rate…</div>
+                  ) : exchangeRate ? (
+                    <>
+                      <div className="relative">
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm">₦</span>
+                        <input
+                          type="number"
+                          value={priceNgn}
+                          onChange={(e) => setPriceNgn(e.target.value)}
+                          placeholder="e.g. 5000"
+                          min="1000"
+                          step="1"
+                          autoFocus
+                          className="w-full pl-8 pr-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 transition"
+                        />
+                      </div>
+                      <div className="flex items-center justify-between mt-2 px-1">
+                        <p className="text-[11px] text-slate-400">Rate: ₦{exchangeRate.toFixed(2)} = $1.00 (PAJ Ramp)</p>
+                        {ngnUsd !== null && ngnUsd > 0 && (
+                          <p className="text-[11px] font-semibold text-primary">≈ ${ngnUsd.toFixed(2)} USD</p>
+                        )}
+                      </div>
+                      {priceNgn && parseFloat(priceNgn) < 1000 && (
+                        <p className="text-[11px] text-red-500 mt-1">Minimum onramp amount is ₦1,000</p>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-xs text-red-500">Failed to load exchange rate. Try toggling fiat off and on.</p>
+                  )}
+                </div>
+              ) : (
+                /* USD + Token */
+                <div className="flex gap-3">
+                  <div className="flex-1">
+                    <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">
+                      Price (USD)
+                    </label>
+                    <input
+                      type="number"
+                      value={priceUsd}
+                      onChange={(e) => setPriceUsd(e.target.value)}
+                      placeholder="0.00"
+                      min="0.01"
+                      step="0.01"
+                      required
+                      autoFocus
+                      className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 transition"
+                    />
+                  </div>
+                  <div className="w-28">
+                    <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1.5">
+                      Token
+                    </label>
+                    <select
+                      value={token}
+                      onChange={(e) => setToken(e.target.value)}
+                      className="w-full px-3 py-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/30 transition"
+                    >
+                      {TOKENS.map((t) => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              {/* Service charge — only when fiat enabled */}
+              {onramp && (
+                <div className="flex items-center justify-between py-2.5 px-4 bg-primary/5 border border-primary/20 rounded-xl">
+                  <div>
+                    <p className="text-sm font-medium text-slate-900 dark:text-white">Charge Service Fee to Customer</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Turn off to absorb the fee yourself</p>
+                  </div>
+                  <Toggle checked={payerServiceCharge} onChange={() => setPayerServiceCharge((v) => !v)} />
+                </div>
+              )}
+
+              {/* Quantity / Stock */}
               <div>
                 <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
                   Stock
@@ -198,11 +330,10 @@ export default function CreateProductModal({ shopId, onClose, onCreated }: Creat
                       key={qt}
                       type="button"
                       onClick={() => setQuantityType(qt)}
-                      className={`py-2.5 rounded-xl text-sm font-medium transition border ${
-                        quantityType === qt
+                      className={`py-2.5 rounded-xl text-sm font-medium transition border ${quantityType === qt
                           ? 'bg-primary text-white border-primary'
                           : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-primary/30'
-                      }`}
+                        }`}
                     >
                       {qt.charAt(0).toUpperCase() + qt.slice(1)}
                     </button>
@@ -219,6 +350,15 @@ export default function CreateProductModal({ shopId, onClose, onCreated }: Creat
                     className="w-full mt-2 px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 transition"
                   />
                 )}
+              </div>
+
+              {/* Collect customer info */}
+              <div className="flex items-center justify-between py-2.5 px-4 bg-slate-50 dark:bg-slate-800 rounded-xl">
+                <div>
+                  <p className="text-sm font-medium text-slate-900 dark:text-white">Collect Customer Details</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Ask for name, phone & address at checkout</p>
+                </div>
+                <Toggle checked={collectCustomerInfo} onChange={() => setCollectCustomerInfo((v) => !v)} />
               </div>
 
               <div className="flex gap-2">
@@ -299,80 +439,6 @@ export default function CreateProductModal({ shopId, onClose, onCreated }: Creat
               <div className="flex gap-2">
                 <button
                   onClick={() => setStep(2)}
-                  className="flex-1 py-3.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-semibold text-sm transition hover:bg-slate-50 dark:hover:bg-slate-800"
-                >
-                  ← Back
-                </button>
-                <button
-                  onClick={() => setStep(4)}
-                  className="flex-[2] py-3.5 rounded-xl bg-primary text-white font-semibold text-sm transition hover:bg-primary/90 active:scale-[0.98]"
-                >
-                  Next →
-                </button>
-              </div>
-            </>
-          )}
-
-          {/* Step 4: Payment Settings */}
-          {step === 4 && (
-            <>
-              <p className="text-xs text-slate-500 dark:text-slate-400 -mt-1 mb-1">
-                Configure how customers pay for this product.
-              </p>
-
-              {/* Onramp toggle */}
-              <button
-                type="button"
-                onClick={() => setOnramp((v) => !v)}
-                className={`w-full flex items-start gap-3 p-4 rounded-xl border-2 text-left transition ${
-                  onramp
-                    ? 'border-primary bg-primary/5'
-                    : 'border-slate-200 dark:border-slate-700 hover:border-primary/30'
-                }`}
-              >
-                <div className={`mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                  onramp ? 'border-primary bg-primary' : 'border-slate-300 dark:border-slate-600'
-                }`}>
-                  {onramp && <span className="material-symbols-outlined text-white" style={{ fontSize: 12 }}>check</span>}
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-slate-900 dark:text-white">Enable Fiat Payments</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    Let customers pay with a bank transfer via the PAJ Ramp onramp flow.
-                  </p>
-                </div>
-              </button>
-
-              {/* Collect customer info toggle */}
-              <button
-                type="button"
-                onClick={() => setCollectCustomerInfo((v) => !v)}
-                className={`w-full flex items-start gap-3 p-4 rounded-xl border-2 text-left transition ${
-                  collectCustomerInfo
-                    ? 'border-primary bg-primary/5'
-                    : 'border-slate-200 dark:border-slate-700 hover:border-primary/30'
-                }`}
-              >
-                <div className={`mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                  collectCustomerInfo ? 'border-primary bg-primary' : 'border-slate-300 dark:border-slate-600'
-                }`}>
-                  {collectCustomerInfo && <span className="material-symbols-outlined text-white" style={{ fontSize: 12 }}>check</span>}
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-slate-900 dark:text-white">Collect Customer Details</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    Show a form at checkout to collect the customer's name and email.
-                  </p>
-                </div>
-              </button>
-
-              {error && (
-                <p className="text-xs text-red-500 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg">{error}</p>
-              )}
-
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setStep(3)}
                   className="flex-1 py-3.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-semibold text-sm transition hover:bg-slate-50 dark:hover:bg-slate-800"
                 >
                   ← Back

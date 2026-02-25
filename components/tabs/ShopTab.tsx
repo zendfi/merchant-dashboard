@@ -63,7 +63,7 @@ function ProductCard({
           </div>
         )}
         {/* Top-right actions */}
-        <div className="absolute top-2 right-2">
+        <div className="absolute top-2 right-2 z-10">
           <div className="relative">
             <button
               onClick={() => setMenuOpen((o) => !o)}
@@ -137,6 +137,15 @@ function ShopDetail({
   const [showCreateProduct, setShowCreateProduct] = useState(false);
   const [togglingLive, setTogglingLive] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showCustomise, setShowCustomise] = useState(false);
+  const [savingCustomise, setSavingCustomise] = useState(false);
+  // Customise form state (initialised from shop)
+  const [welcomeMsg, setWelcomeMsg] = useState(initialShop.welcome_message || '');
+  const [about, setAbout] = useState(initialShop.about || '');
+  const [contactEmail, setContactEmail] = useState(initialShop.contact_email || '');
+  const [twitterUrl, setTwitterUrl] = useState(initialShop.twitter_url || '');
+  const [facebookUrl, setFacebookUrl] = useState(initialShop.facebook_url || '');
+  const [instagramUrl, setInstagramUrl] = useState(initialShop.instagram_url || '');
 
   const loadProducts = useCallback(async () => {
     try {
@@ -160,6 +169,27 @@ function ShopDetail({
       showNotification('Failed to update shop status', undefined, 'error');
     } finally {
       setTogglingLive(false);
+    }
+  };
+
+  const handleSaveCustomise = async () => {
+    setSavingCustomise(true);
+    try {
+      const updated = await shopsApi.update(shop.id, {
+        welcome_message: welcomeMsg.trim() || undefined,
+        about: about.trim() || undefined,
+        contact_email: contactEmail.trim() || undefined,
+        twitter_url: twitterUrl.trim() || undefined,
+        facebook_url: facebookUrl.trim() || undefined,
+        instagram_url: instagramUrl.trim() || undefined,
+      });
+      setShop(updated);
+      onShopUpdated(updated);
+      showNotification('Shop customisation saved!', undefined, 'success');
+    } catch {
+      showNotification('Failed to save', undefined, 'error');
+    } finally {
+      setSavingCustomise(false);
     }
   };
 
@@ -225,11 +255,10 @@ function ShopDetail({
         <button
           onClick={handleToggleLive}
           disabled={togglingLive}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition ${
-            shop.is_live
-              ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
-              : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700'
-          }`}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition ${shop.is_live
+            ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
+            : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700'
+            }`}
         >
           <span
             className={`w-1.5 h-1.5 rounded-full ${shop.is_live ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`}
@@ -239,7 +268,7 @@ function ShopDetail({
       </div>
 
       {/* Shop URL bar */}
-      <div className="flex items-center gap-2 mb-6 p-3 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-200/70 dark:border-slate-700/50">
+      <div className="flex items-center gap-2 mb-4 p-3 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-200/70 dark:border-slate-700/50">
         <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: shop.theme_color + '20', color: shop.theme_color }}>
           <span className="material-symbols-outlined" style={{ fontSize: 14 }}>storefront</span>
         </div>
@@ -252,6 +281,105 @@ function ShopDetail({
         >
           {copied ? 'Copied!' : 'Copy'}
         </button>
+      </div>
+
+      {/* ── Customise Section ── */}
+      <div className="mb-5 rounded-2xl border border-slate-200/70 dark:border-slate-700/50 overflow-hidden">
+        <button
+          onClick={() => setShowCustomise((v) => !v)}
+          className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 dark:bg-slate-800/40 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+        >
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-slate-500" style={{ fontSize: 18 }}>tune</span>
+            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Customise</span>
+          </div>
+          <span
+            className="material-symbols-outlined text-slate-400 transition-transform duration-200"
+            style={{ fontSize: 18, transform: showCustomise ? 'rotate(180deg)' : 'rotate(0deg)' }}
+          >
+            expand_more
+          </span>
+        </button>
+
+        {showCustomise && (
+          <div className="px-4 py-4 space-y-4 bg-white dark:bg-slate-900/40">
+            {/* Welcome message */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">
+                Welcome Message
+              </label>
+              <input
+                type="text"
+                value={welcomeMsg}
+                onChange={(e) => setWelcomeMsg(e.target.value)}
+                placeholder="e.g. Welcome to our store!"
+                maxLength={120}
+                className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 transition"
+              />
+            </div>
+
+            {/* About */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">
+                About Your Shop
+              </label>
+              <textarea
+                value={about}
+                onChange={(e) => setAbout(e.target.value)}
+                placeholder="Tell customers about your business…"
+                rows={4}
+                maxLength={1000}
+                className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 transition resize-none"
+              />
+            </div>
+
+            {/* Contact email */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">
+                Contact Email
+              </label>
+              <input
+                type="email"
+                value={contactEmail}
+                onChange={(e) => setContactEmail(e.target.value)}
+                placeholder="hello@yourbrand.com"
+                className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 transition"
+              />
+            </div>
+
+            {/* Social links */}
+            <div className="space-y-2">
+              <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                Social Links
+              </label>
+              {[
+                { label: 'Twitter / X', icon: 'open_in_new', value: twitterUrl, set: setTwitterUrl, placeholder: 'https://twitter.com/yourhandle' },
+                { label: 'Facebook', icon: 'open_in_new', value: facebookUrl, set: setFacebookUrl, placeholder: 'https://facebook.com/yourpage' },
+                { label: 'Instagram', icon: 'open_in_new', value: instagramUrl, set: setInstagramUrl, placeholder: 'https://instagram.com/yourhandle' },
+              ].map(({ label, value, set, placeholder }) => (
+                <div key={label} className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-medium select-none">{label}</span>
+                  <input
+                    type="url"
+                    value={value}
+                    onChange={(e) => set(e.target.value)}
+                    placeholder={placeholder}
+                    className="w-full pl-[7.5rem] pr-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 transition"
+                  />
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={handleSaveCustomise}
+              disabled={savingCustomise}
+              className="w-full py-2.5 rounded-xl text-sm font-semibold text-white transition disabled:opacity-60"
+              style={{ backgroundColor: shop.theme_color }}
+            >
+              {savingCustomise ? 'Saving…' : 'Save Customisations'}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Products Grid */}

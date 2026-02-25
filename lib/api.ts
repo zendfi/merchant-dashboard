@@ -943,6 +943,12 @@ export interface Shop {
   description: string | null;
   theme_color: string;
   is_live: boolean;
+  welcome_message?: string | null;
+  about?: string | null;
+  contact_email?: string | null;
+  twitter_url?: string | null;
+  facebook_url?: string | null;
+  instagram_url?: string | null;
   created_at: string;
   updated_at: string;
   product_count?: number;
@@ -966,6 +972,7 @@ export interface ShopProduct {
   is_active: boolean;
   onramp: boolean;
   collect_customer_info: boolean;
+  amount_ngn?: number | null;
   created_at: string;
 }
 
@@ -980,6 +987,12 @@ export interface UpdateShopRequest {
   description?: string;
   theme_color?: string;
   is_live?: boolean;
+  welcome_message?: string;
+  about?: string;
+  contact_email?: string;
+  twitter_url?: string;
+  facebook_url?: string;
+  instagram_url?: string;
 }
 
 export interface CreateProductRequest {
@@ -993,6 +1006,8 @@ export interface CreateProductRequest {
   display_order?: number;
   onramp?: boolean;
   collect_customer_info?: boolean;
+  payer_service_charge?: boolean;
+  amount_ngn?: number;
 }
 
 export interface UpdateProductRequest {
@@ -1007,6 +1022,8 @@ export interface UpdateProductRequest {
   is_active?: boolean;
   onramp?: boolean;
   collect_customer_info?: boolean;
+  payer_service_charge?: boolean;
+  amount_ngn?: number;
 }
 
 export interface ShopDetailResponse {
