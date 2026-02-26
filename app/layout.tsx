@@ -8,8 +8,11 @@ export const metadata: Metadata = {
   },
   description: 'Merchant Dashboard for ZendFi — Accept Solana payments with ease.',
   icons: {
-    icon: '/favicon.ico',
-    apple: '/favicon.svg',
+    icon: [
+      { url: '/favicon.ico', sizes: '32x32' },
+      { url: '/favicon.ico', sizes: '16x16' },
+    ],
+    apple: '/favicon.ico',
   },
   robots: {
     index: false,
