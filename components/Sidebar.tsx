@@ -164,7 +164,7 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }: Sid
             </div>
             <div className="flex flex-col">
               <span className="text-[12px] font-bold text-slate-900 dark:text-white">{merchant?.name || 'Merchant'}</span>
-              <span className="text-[11px] text-slate-500 dark:text-slate-400">Admin</span>
+              <span className="text-[11px] text-slate-500 dark:text-slate-400">Merchant</span>
             </div>
           </div>
         </div>
