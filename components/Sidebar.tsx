@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { useMerchant } from '@/lib/merchant-context';
+import { useDeveloperOptions } from '@/lib/developer-options-context';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -39,6 +40,7 @@ const settingsNavItems: NavItem[] = [
 
 export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }: SidebarProps) {
   const { merchant } = useMerchant();
+  const { showDeveloperOptions } = useDeveloperOptions();
 
   // Close sidebar on escape key
   useEffect(() => {
@@ -94,34 +96,39 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }: Sid
 
         {/* Navigation */}
         <nav className="flex-1 px-4 flex flex-col gap-1 overflow-y-auto py-4">
-          {mainNavItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => {
-                onTabChange(item.id);
-                onClose();
-              }}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg w-full text-left transition-all duration-250 group ${activeTab === item.id
-                ? 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-purple-300 shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
-                }`}
-            >
-              <span
-                className="material-symbols-outlined group-hover:scale-110 transition-transform text-[22px]"
-                style={activeTab === item.id ? { fontVariationSettings: "'FILL' 1" } : {}}
+          {mainNavItems.map((item) => {
+            if ((item.id === 'api-keys' || item.id === 'webhooks') && !showDeveloperOptions) {
+              return null;
+            }
+            return (
+              <button
+                key={item.id}
+                onClick={() => {
+                  onTabChange(item.id);
+                  onClose();
+                }}
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg w-full text-left transition-all duration-250 group ${activeTab === item.id
+                  ? 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-purple-300 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
+                  }`}
               >
-                {item.icon}
-              </span>
-              <span className={`text-[14px] flex-1 ${activeTab === item.id ? 'font-semibold' : 'font-medium'}`}>
-                {item.label}
-              </span>
-              {item.badge && activeTab !== item.id && (
-                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400 leading-none">
-                  {item.badge}
+                <span
+                  className="material-symbols-outlined group-hover:scale-110 transition-transform text-[22px]"
+                  style={activeTab === item.id ? { fontVariationSettings: "'FILL' 1" } : {}}
+                >
+                  {item.icon}
                 </span>
-              )}
-            </button>
-          ))}
+                <span className={`text-[14px] flex-1 ${activeTab === item.id ? 'font-semibold' : 'font-medium'}`}>
+                  {item.label}
+                </span>
+                {item.badge && activeTab !== item.id && (
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400 leading-none">
+                    {item.badge}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </nav>
 
         {/* Bottom Section */}

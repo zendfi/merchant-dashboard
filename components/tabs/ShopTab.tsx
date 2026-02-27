@@ -47,48 +47,53 @@ function ProductCard({
   };
 
   return (
-    <div className="group relative bg-slate-50 dark:bg-slate-800/40 border border-slate-200/70 dark:border-slate-700/50 rounded-2xl overflow-hidden transition hover:shadow-md">
+    <div className="group relative bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800/50 rounded-[20px] overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/5 dark:hover:shadow-white/5 flex flex-col h-full">
       {/* Product Image */}
-      <div className="aspect-square bg-slate-100 dark:bg-slate-800 relative overflow-hidden">
+      <div className="aspect-[4/3] bg-slate-50 dark:bg-slate-800/50 relative overflow-hidden shrink-0">
         {hasImage ? (
           /* eslint-disable-next-line @next/next/no-img-element */
           <img
             src={product.media_urls[0]}
             alt={product.name}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <span className="material-symbols-outlined text-slate-300 dark:text-slate-600" style={{ fontSize: 40 }}>image</span>
+          <div className="w-full h-full flex items-center justify-center bg-slate-100 dark:bg-slate-800/80">
+            <span className="material-symbols-outlined text-slate-300 dark:text-slate-600 drop-shadow-sm" style={{ fontSize: 48 }}>image</span>
           </div>
         )}
+
+        {/* Subtle gradient overlay at top for icons */}
+        <div className="absolute top-0 inset-x-0 h-16 bg-gradient-to-b from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-0" />
+
         {/* Top-right actions */}
-        <div className="absolute top-2 right-2 z-10">
+        <div className="absolute top-2.5 right-2.5 z-10">
           <div className="relative">
             <button
               onClick={() => setMenuOpen((o) => !o)}
-              className="w-7 h-7 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-full flex items-center justify-center shadow hover:bg-white dark:hover:bg-slate-900 transition"
+              className="w-8 h-8 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-sm hover:shadow-md hover:scale-105 transition-all duration-200 border border-black/5 dark:border-white/5"
             >
-              <span className="material-symbols-outlined text-slate-600 dark:text-slate-300" style={{ fontSize: 16 }}>more_horiz</span>
+              <span className="material-symbols-outlined text-slate-700 dark:text-slate-300" style={{ fontSize: 18 }}>more_horiz</span>
             </button>
             {menuOpen && (
-              <div className="absolute right-0 top-8 w-36 bg-white dark:bg-[#2a1f3d] border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl overflow-hidden z-20">
+              <div className="absolute right-0 top-10 w-40 bg-white/95 dark:bg-[#2a1f3d]/95 backdrop-blur-xl border border-slate-200/80 dark:border-slate-700/80 rounded-xl shadow-2xl overflow-hidden z-20 origin-top-right animate-in fade-in zoom-in-95 duration-200">
                 <button
                   onClick={() => { onToggleActive(); setMenuOpen(false); }}
-                  className="w-full px-3 py-2 text-left text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2"
+                  className="w-full px-3 py-2.5 text-left text-[13px] font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100/80 dark:hover:bg-slate-800/80 flex items-center gap-2.5 transition-colors"
                 >
-                  <span className="material-symbols-outlined" style={{ fontSize: 14 }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: 16 }}>
                     {product.is_active ? 'visibility_off' : 'visibility'}
                   </span>
-                  {product.is_active ? 'Hide' : 'Show'}
+                  {product.is_active ? 'Hide Product' : 'Show Product'}
                 </button>
+                <div className="h-px w-full bg-slate-100 dark:bg-slate-800 mx-auto max-w-[90%]" />
                 <button
                   onClick={() => { handleDelete(); setMenuOpen(false); }}
                   disabled={deleting}
-                  className="w-full px-3 py-2 text-left text-xs font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
+                  className="w-full px-3 py-2.5 text-left text-[13px] font-semibold text-rose-600 dark:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 flex items-center gap-2.5 transition-colors disabled:opacity-50"
                 >
-                  <span className="material-symbols-outlined" style={{ fontSize: 14 }}>delete</span>
-                  Delete
+                  <span className="material-symbols-outlined" style={{ fontSize: 16 }}>delete</span>
+                  {deleting ? 'Deleting...' : 'Delete'}
                 </button>
               </div>
             )}
@@ -96,23 +101,36 @@ function ProductCard({
         </div>
         {/* Inactive badge */}
         {!product.is_active && (
-          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-            <span className="text-white text-xs font-semibold bg-black/40 px-2 py-1 rounded-lg">Hidden</span>
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px] flex items-center justify-center transition-all duration-300 z-0">
+            <span className="flex items-center gap-1.5 text-white text-[11px] font-bold tracking-wider uppercase bg-black/60 px-3 py-1.5 rounded-full shadow-lg border border-white/10">
+              <span className="material-symbols-outlined text-[14px]">visibility_off</span>
+              Hidden
+            </span>
           </div>
         )}
       </div>
 
       {/* Product Info */}
-      <div className="p-3">
-        <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{product.name}</p>
-        <p className="text-xs font-bold mt-0.5" style={{ color: themeColor }}>
-          {formatPrice(product.price_usd, product.token)}
-        </p>
-        {product.quantity_type === 'limited' && (
-          <p className="text-[10px] text-slate-400 mt-0.5">
-            {(product.quantity_available ?? 0) - product.quantity_sold} left
+      <div className="p-4 flex flex-col flex-1 pb-5">
+        <h4 className="text-[15px] leading-tight font-bold text-slate-900 dark:text-white line-clamp-2 hover:text-primary transition-colors cursor-default mb-1">
+          {product.name}
+        </h4>
+
+        <div className="mt-auto pt-3 flex items-end justify-between gap-2">
+          <p className="text-[16px] font-extrabold tracking-tight drop-shadow-sm" style={{ color: themeColor }}>
+            {formatPrice(product.price_usd, product.token)}
           </p>
-        )}
+
+          {product.quantity_type === 'limited' ? (
+            <span className="shrink-0 inline-flex items-center justify-center px-2 py-1 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200/50 dark:border-slate-700/50 text-[10px] font-bold text-slate-600 dark:text-slate-400">
+              {Math.max(0, (product.quantity_available ?? 0) - product.quantity_sold)} left
+            </span>
+          ) : (
+            <span className="shrink-0 inline-flex items-center justify-center px-2 py-1 rounded-md bg-emerald-50 dark:bg-emerald-900/20 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 border border-emerald-100/50 dark:border-emerald-800/50">
+              Unlimited
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -146,6 +164,11 @@ function ShopDetail({
   const [twitterUrl, setTwitterUrl] = useState(initialShop.twitter_url || '');
   const [facebookUrl, setFacebookUrl] = useState(initialShop.facebook_url || '');
   const [instagramUrl, setInstagramUrl] = useState(initialShop.instagram_url || '');
+  const [location, setLocation] = useState(initialShop.shop_location || '');
+  const [nationwideDelivery, setNationwideDelivery] = useState(initialShop.can_deliver_nationwide || false);
+  const [is24Hours, setIs24Hours] = useState(initialShop.is_24_hours || false);
+  const [openTime, setOpenTime] = useState(initialShop.open_time || '');
+  const [closeTime, setCloseTime] = useState(initialShop.close_time || '');
 
   const loadProducts = useCallback(async () => {
     try {
@@ -182,6 +205,11 @@ function ShopDetail({
         twitter_url: twitterUrl.trim() || undefined,
         facebook_url: facebookUrl.trim() || undefined,
         instagram_url: instagramUrl.trim() || undefined,
+        shop_location: location.trim() || undefined,
+        can_deliver_nationwide: nationwideDelivery,
+        is_24_hours: is24Hours,
+        open_time: is24Hours ? null : (openTime || null),
+        close_time: is24Hours ? null : (closeTime || null),
       });
       setShop(updated);
       onShopUpdated(updated);
@@ -369,6 +397,77 @@ function ShopDetail({
                 </div>
               ))}
             </div>
+
+            {/* Shop Location */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">
+                Shop Location
+              </label>
+              <input
+                type="text"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                placeholder="e.g. 123 Main St, Lagos, Nigeria"
+                className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 transition"
+              />
+            </div>
+
+            {/* Delivery & 24/7 Toggles */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-slate-500" style={{ fontSize: 18 }}>local_shipping</span>
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Nationwide Delivery</span>
+                </div>
+                <button
+                  onClick={() => setNationwideDelivery(!nationwideDelivery)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${nationwideDelivery ? 'bg-primary' : 'bg-slate-300 dark:bg-slate-600'}`}
+                >
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${nationwideDelivery ? 'translate-x-6' : 'translate-x-1'}`} />
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-slate-500" style={{ fontSize: 18 }}>schedule</span>
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Open 24/7</span>
+                </div>
+                <button
+                  onClick={() => setIs24Hours(!is24Hours)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${is24Hours ? 'bg-primary' : 'bg-slate-300 dark:bg-slate-600'}`}
+                >
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${is24Hours ? 'translate-x-6' : 'translate-x-1'}`} />
+                </button>
+              </div>
+            </div>
+
+            {/* Opening Hours (if not 24/7) */}
+            {!is24Hours && (
+              <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">
+                    Opening Time
+                  </label>
+                  <input
+                    type="time"
+                    value={openTime}
+                    onChange={(e) => setOpenTime(e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 transition"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">
+                    Closing Time
+                  </label>
+                  <input
+                    type="time"
+                    value={closeTime}
+                    onChange={(e) => setCloseTime(e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 transition"
+                  />
+                </div>
+              </div>
+            )}
 
             <button
               onClick={handleSaveCustomise}

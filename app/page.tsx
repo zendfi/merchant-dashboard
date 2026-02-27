@@ -6,6 +6,7 @@ import { ModeProvider } from '@/lib/mode-context';
 import { MerchantProvider, useMerchant } from '@/lib/merchant-context';
 import { NotificationProvider } from '@/lib/notifications';
 import { CurrencyProvider } from '@/lib/currency-context';
+import { DeveloperOptionsProvider } from '@/lib/developer-options-context';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
 import WalletModal from '@/components/WalletModal';
@@ -154,7 +155,9 @@ export default function DashboardPage() {
       <ModeProvider>
         <CurrencyProvider>
           <MerchantProvider>
-            <DashboardContent />
+            <DeveloperOptionsProvider>
+              <DashboardContent />
+            </DeveloperOptionsProvider>
           </MerchantProvider>
         </CurrencyProvider>
       </ModeProvider>

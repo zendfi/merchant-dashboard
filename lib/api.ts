@@ -949,6 +949,22 @@ export interface Shop {
   twitter_url?: string | null;
   facebook_url?: string | null;
   instagram_url?: string | null;
+
+  /** Physical location of the shop (e.g. for delivery/pickup reference) */
+  shop_location?: string | null;
+
+  /** Whether the merchant offers nationwide delivery coverage */
+  can_deliver_nationwide: boolean;
+
+  /** If true, shop operates 24/7. Opening/Closing times should be ignored/null. */
+  is_24_hours: boolean;
+
+  /** Local opening time (HH:mm format). Null if 24/7. */
+  open_time?: string | null;
+
+  /** Local closing time (HH:mm format). Null if 24/7. */
+  close_time?: string | null;
+
   created_at: string;
   updated_at: string;
   product_count?: number;
@@ -993,6 +1009,21 @@ export interface UpdateShopRequest {
   twitter_url?: string;
   facebook_url?: string;
   instagram_url?: string;
+
+  /** Physical location of the shop */
+  shop_location?: string;
+
+  /** Toggle nationwide delivery support */
+  can_deliver_nationwide?: boolean;
+
+  /** Toggle 24/7 operation */
+  is_24_hours?: boolean;
+
+  /** Update opening time (HH:mm). Set to null if switching to 24/7. */
+  open_time?: string | null;
+
+  /** Update closing time (HH:mm). Set to null if switching to 24/7. */
+  close_time?: string | null;
 }
 
 export interface CreateProductRequest {

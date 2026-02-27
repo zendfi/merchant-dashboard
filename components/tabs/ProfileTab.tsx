@@ -2,6 +2,7 @@
 
 import { useMerchant } from '@/lib/merchant-context';
 import { useCurrency } from '@/lib/currency-context';
+import { useDeveloperOptions } from '@/lib/developer-options-context';
 import DangerZone from '@/components/DangerZone';
 
 interface ProfileTabProps {
@@ -12,6 +13,7 @@ interface ProfileTabProps {
 export default function ProfileTab({ onSwitchTab, onModalToggle }: ProfileTabProps) {
   const { merchant, isLoading } = useMerchant();
   const { currency, toggleCurrency, exchangeRate, isLoadingRate } = useCurrency();
+  const { showDeveloperOptions, toggleDeveloperOptions } = useDeveloperOptions();
 
   if (isLoading) {
     return (
@@ -62,10 +64,10 @@ export default function ProfileTab({ onSwitchTab, onModalToggle }: ProfileTabPro
             <p className="text-slate-900 dark:text-white mt-1">
               {merchant?.created_at
                 ? new Date(merchant.created_at).toLocaleDateString('en-US', {
-                    month: 'long',
-                    day: 'numeric',
-                    year: 'numeric',
-                  })
+                  month: 'long',
+                  day: 'numeric',
+                  year: 'numeric',
+                })
                 : 'N/A'}
             </p>
           </div>
@@ -90,47 +92,49 @@ export default function ProfileTab({ onSwitchTab, onModalToggle }: ProfileTabPro
       </div>
 
       {/* Security & Access */}
-      <div className="space-y-4">
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Security & Access</h2>
+      {showDeveloperOptions && (
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Security & Access</h2>
 
-        <div className="space-y-3">
-          <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-[20px] text-primary">key</span>
-                <strong className="text-slate-900 dark:text-white">API Keys</strong>
+          <div className="space-y-3">
+            <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[20px] text-primary">key</span>
+                  <strong className="text-slate-900 dark:text-white">API Keys</strong>
+                </div>
+                <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+                  Manage your API keys for integration
+                </p>
               </div>
-              <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-                Manage your API keys for integration
-              </p>
+              <button
+                onClick={() => onSwitchTab('api-keys')}
+                className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-primary text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+              >
+                View Keys
+              </button>
             </div>
-            <button
-              onClick={() => onSwitchTab('api-keys')}
-              className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-primary text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
-            >
-              View Keys
-            </button>
-          </div>
 
-          <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-[20px] text-primary">webhook</span>
-                <strong className="text-slate-900 dark:text-white">Webhooks</strong>
+            <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[20px] text-primary">webhook</span>
+                  <strong className="text-slate-900 dark:text-white">Webhooks</strong>
+                </div>
+                <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+                  Configure real-time event notifications
+                </p>
               </div>
-              <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-                Configure real-time event notifications
-              </p>
+              <button
+                onClick={() => onSwitchTab('webhooks')}
+                className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-primary text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+              >
+                Configure
+              </button>
             </div>
-            <button
-              onClick={() => onSwitchTab('webhooks')}
-              className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-primary text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
-            >
-              Configure
-            </button>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Display Preferences */}
       <div className="space-y-4">
@@ -166,19 +170,42 @@ export default function ProfileTab({ onSwitchTab, onModalToggle }: ProfileTabPro
             <button
               type="button"
               onClick={toggleCurrency}
-              className={`relative w-11 h-6 rounded-full transition-colors ${
-                currency === 'NGN' ? 'bg-primary' : 'bg-slate-200 dark:bg-slate-700'
-              }`}
+              className={`relative w-11 h-6 rounded-full transition-colors ${currency === 'NGN' ? 'bg-primary' : 'bg-slate-200 dark:bg-slate-700'
+                }`}
             >
               <span
-                className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform shadow ${
-                  currency === 'NGN' ? 'translate-x-5' : 'translate-x-0'
-                }`}
+                className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform shadow ${currency === 'NGN' ? 'translate-x-5' : 'translate-x-0'
+                  }`}
               />
             </button>
             <span className={`text-sm font-medium ${currency === 'NGN' ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}>
               NGN
             </span>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-[20px] text-primary">terminal</span>
+              <strong className="text-slate-900 dark:text-white">Developer Options</strong>
+            </div>
+            <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+              Enable advanced features like API Keys and Webhooks
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={toggleDeveloperOptions}
+              className={`relative w-11 h-6 rounded-full transition-colors ${showDeveloperOptions ? 'bg-primary' : 'bg-slate-200 dark:bg-slate-700'
+                }`}
+            >
+              <span
+                className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform shadow ${showDeveloperOptions ? 'translate-x-5' : 'translate-x-0'
+                  }`}
+              />
+            </button>
           </div>
         </div>
       </div>
