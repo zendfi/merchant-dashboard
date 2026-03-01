@@ -100,40 +100,40 @@ export default function PaymentLinksTab({ onModalToggle }: PaymentLinksTabProps 
       </div>
 
       {/* Stats strip */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 p-4">
-          <div className="flex items-center gap-2 mb-1">
-            <Link size={15} className="text-primary" />
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Active</span>
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+        <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 p-3 sm:p-4">
+          <div className="flex items-center gap-1.5 mb-1">
+            <Link size={13} className="text-primary shrink-0" />
+            <span className="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400">Active</span>
           </div>
-          <p className="text-xl font-bold text-slate-900 dark:text-white">{totalActive}</p>
-          <p className="text-xs text-slate-400 mt-0.5">of {links.length} total</p>
+          <p className="text-base sm:text-xl font-bold text-slate-900 dark:text-white">{totalActive}</p>
+          <p className="text-[10px] sm:text-xs text-slate-400 mt-0.5 hidden sm:block">of {links.length} total</p>
         </div>
-        <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 p-4">
-          <div className="flex items-center gap-2 mb-1">
-            <TrendingUp size={15} className="text-emerald-500" />
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Total Uses</span>
+        <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 p-3 sm:p-4">
+          <div className="flex items-center gap-1.5 mb-1">
+            <TrendingUp size={13} className="text-emerald-500 shrink-0" />
+            <span className="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400">Uses</span>
           </div>
-          <p className="text-xl font-bold text-slate-900 dark:text-white">{totalUses.toLocaleString()}</p>
-          <p className="text-xs text-slate-400 mt-0.5">all time</p>
+          <p className="text-base sm:text-xl font-bold text-slate-900 dark:text-white">{totalUses.toLocaleString()}</p>
+          <p className="text-[10px] sm:text-xs text-slate-400 mt-0.5 hidden sm:block">all time</p>
         </div>
-        <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 p-4">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-base leading-none">🏦</span>
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Bank Pay</span>
+        <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 p-3 sm:p-4">
+          <div className="flex items-center gap-1.5 mb-1">
+            <span className="text-sm leading-none shrink-0">🏦</span>
+            <span className="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400">Bank</span>
           </div>
-          <p className="text-xl font-bold text-slate-900 dark:text-white">{onrampCount}</p>
-          <p className="text-xs text-slate-400 mt-0.5">onramp enabled</p>
+          <p className="text-base sm:text-xl font-bold text-slate-900 dark:text-white">{onrampCount}</p>
+          <p className="text-[10px] sm:text-xs text-slate-400 mt-0.5 hidden sm:block">onramp enabled</p>
         </div>
       </div>
 
-      {/* Filter pills */}
-      <div className="flex items-center gap-2">
+      {/* Filter pills — horizontally scrollable on mobile */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
         {(['all', 'active', 'inactive'] as const).map(f => (
           <button
             key={f}
             onClick={() => setFilterActive(f)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+            className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
               filterActive === f
                 ? 'bg-primary text-white'
                 : 'bg-white dark:bg-[#1f162b] border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5'
@@ -146,7 +146,95 @@ export default function PaymentLinksTab({ onModalToggle }: PaymentLinksTabProps 
 
       {/* Table */}
       <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 overflow-hidden">
-        <div className="overflow-x-auto">
+
+        {/* ── Mobile card list (< sm) ── */}
+        <div className="sm:hidden">
+          {isLoading ? (
+            <div className="divide-y divide-slate-50 dark:divide-slate-800/50">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="p-3.5 space-y-2">
+                  <div className="flex justify-between">
+                    <div className="h-3 w-20 bg-slate-100 dark:bg-slate-800 rounded animate-pulse" />
+                    <div className="h-4 w-14 bg-slate-100 dark:bg-slate-800 rounded animate-pulse" />
+                  </div>
+                  <div className="flex justify-between">
+                    <div className="h-5 w-16 bg-slate-100 dark:bg-slate-800 rounded-full animate-pulse" />
+                    <div className="h-3 w-12 bg-slate-100 dark:bg-slate-800 rounded animate-pulse" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : filteredLinks.length === 0 ? (
+            <p className="py-16 text-center text-slate-400 dark:text-slate-500 text-sm">
+              {links.length === 0 ? 'No payment links yet. Create one to start accepting payments!' : 'No links match the current filter.'}
+            </p>
+          ) : (
+            <div className="divide-y divide-slate-50 dark:divide-slate-800/50">
+              {filteredLinks.map(link => {
+                const isExpired = link.expires_at && new Date(link.expires_at) < now;
+                const isActive = link.is_active && !isExpired;
+                return (
+                  <div
+                    key={link.link_code}
+                    onClick={() => handleRowClick(link)}
+                    className="p-3.5 cursor-pointer active:bg-slate-50 dark:active:bg-white/[0.03] transition-colors"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-mono text-xs font-semibold text-primary dark:text-purple-300">{link.link_code}</p>
+                        {link.description && (
+                          <p className="text-xs text-slate-400 mt-0.5 truncate">{link.description}</p>
+                        )}
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="font-bold text-slate-900 dark:text-white text-sm">${link.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+                        <p className="text-[11px] text-slate-400">{link.token}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between mt-2">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                        isActive
+                          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                          : isExpired
+                            ? 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+                            : 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400'
+                      }`}>
+                        {isActive ? 'Active' : isExpired ? 'Expired' : 'Inactive'}
+                      </span>
+                      <div className="flex items-center gap-2 text-[11px] text-slate-400">
+                        <span>{link.uses_count} uses</span>
+                        <div
+                          className="flex items-center gap-1"
+                          onClick={e => e.stopPropagation()}
+                        >
+                          <button
+                            onClick={() => copyToClipboard(link.hosted_page_url, link.link_code)}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+                          >
+                            {copiedCode === link.link_code
+                              ? <CheckCircle size={14} className="text-emerald-500" />
+                              : <Copy size={14} />}
+                          </button>
+                          <a
+                            href={link.hosted_page_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+                          >
+                            <ExternalLink size={14} />
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* ── Desktop table (sm+) ── */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-100 dark:border-slate-800">

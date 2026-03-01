@@ -251,37 +251,87 @@ export default function CustomersTab({ onModalToggle }: CustomersTabProps = {}) 
       </div>
 
       {/* Quick stats */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 p-4">
-          <div className="flex items-center gap-2 mb-1">
-            <Users size={15} className="text-primary" />
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Returning</span>
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+        <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 p-3 sm:p-4">
+          <div className="flex items-center gap-1.5 mb-1">
+            <Users size={13} className="text-primary shrink-0" />
+            <span className="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400">Returning</span>
           </div>
-          <p className="text-xl font-bold text-slate-900 dark:text-white">{returningCount}</p>
-          <p className="text-xs text-slate-400 mt-0.5">of {customerList.length} shown</p>
+          <p className="text-base sm:text-xl font-bold text-slate-900 dark:text-white">{returningCount}</p>
+          <p className="text-[10px] sm:text-xs text-slate-400 mt-0.5 hidden sm:block">of {customerList.length} shown</p>
         </div>
-        <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 p-4">
-          <div className="flex items-center gap-2 mb-1">
-            <TrendingUp size={15} className="text-green-600" />
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Page LTV</span>
+        <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 p-3 sm:p-4">
+          <div className="flex items-center gap-1.5 mb-1">
+            <TrendingUp size={13} className="text-green-600 shrink-0" />
+            <span className="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400">LTV</span>
           </div>
-          <p className="text-xl font-bold text-slate-900 dark:text-white">{fmt(totalLtv, currency, exchangeRate)}</p>
-          <p className="text-xs text-slate-400 mt-0.5">confirmed only</p>
+          <p className="text-base sm:text-xl font-bold text-slate-900 dark:text-white">{fmt(totalLtv, currency, exchangeRate)}</p>
+          <p className="text-[10px] sm:text-xs text-slate-400 mt-0.5 hidden sm:block">confirmed only</p>
         </div>
-        <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 p-4">
-          <div className="flex items-center gap-2 mb-1">
-            <AlertTriangle size={15} className="text-orange-500" />
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">At Risk</span>
+        <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 p-3 sm:p-4">
+          <div className="flex items-center gap-1.5 mb-1">
+            <AlertTriangle size={13} className="text-orange-500 shrink-0" />
+            <span className="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400">At Risk</span>
           </div>
-          <p className="text-xl font-bold text-slate-900 dark:text-white">{atRiskCount}</p>
-          <p className="text-xs text-slate-400 mt-0.5">churn signal</p>
+          <p className="text-base sm:text-xl font-bold text-slate-900 dark:text-white">{atRiskCount}</p>
+          <p className="text-[10px] sm:text-xs text-slate-400 mt-0.5 hidden sm:block">churn signal</p>
         </div>
       </div>
 
       {/* Table */}
       <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 overflow-hidden">
+
+        {/* ── Mobile card list (< sm) ── */}
+        <div className="sm:hidden">
+          {isLoading ? (
+            <div className="divide-y divide-slate-50 dark:divide-slate-800/50">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="p-3.5 flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 animate-pulse shrink-0" />
+                  <div className="flex-1 space-y-1.5">
+                    <div className="h-3 w-32 bg-slate-100 dark:bg-slate-800 rounded animate-pulse" />
+                    <div className="h-2.5 w-24 bg-slate-100 dark:bg-slate-800 rounded animate-pulse" />
+                  </div>
+                  <div className="h-4 w-12 bg-slate-100 dark:bg-slate-800 rounded animate-pulse" />
+                </div>
+              ))}
+            </div>
+          ) : customerList.length === 0 ? (
+            <p className="py-16 text-center text-slate-400 dark:text-slate-500 text-sm">
+              {search ? 'No customers match your search.' : 'No customers yet.'}
+            </p>
+          ) : (
+            <div className="divide-y divide-slate-50 dark:divide-slate-800/50">
+              {customerList.map(c => (
+                <div
+                  key={c.email}
+                  onClick={() => openDetail(c)}
+                  className="p-3.5 flex items-center gap-3 cursor-pointer active:bg-slate-50 dark:active:bg-white/[0.03] transition-colors"
+                >
+                  <div className="w-9 h-9 rounded-full bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary text-xs font-bold shrink-0">
+                    {initials(c)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{c.name || c.email}</p>
+                      {c.churn_risk && <AlertTriangle size={12} className="text-orange-500 shrink-0" />}
+                    </div>
+                    {c.name && <p className="text-xs text-slate-400 truncate">{c.email}</p>}
+                    <p className="text-xs text-slate-400">{relativeTime(c.last_seen)}</p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-sm font-bold text-slate-900 dark:text-white">{fmt(c.total_spent, currency, exchangeRate)}</p>
+                    <p className="text-[10px] text-slate-400">{c.confirmed_payments} paid</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* ── Desktop table (sm+) ── */}
         {/* Table header */}
-        <div className="overflow-x-auto">
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-100 dark:border-slate-800">

@@ -9,6 +9,7 @@ import { CurrencyProvider } from '@/lib/currency-context';
 import { DeveloperOptionsProvider } from '@/lib/developer-options-context';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
+import MobileBottomNav from '@/components/MobileBottomNav';
 import WalletModal from '@/components/WalletModal';
 import LoadingScreen from '@/components/LoadingScreen';
 import OverviewTab from '@/components/tabs/OverviewTab';
@@ -121,8 +122,8 @@ function DashboardContent() {
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />
-      <main className="flex-1 flex flex-col h-screen overflow-hidden p-2 lg:p-3 transition-all duration-300">
-        <div className="flex-1 bg-white dark:bg-[#1f162b] rounded-[24px] shadow-sm border border-slate-200/50 dark:border-white/5 flex flex-col overflow-hidden relative">
+      <main className="flex-1 flex flex-col h-screen overflow-hidden p-0 lg:p-3 transition-all duration-300">
+        <div className="flex-1 bg-white dark:bg-[#1f162b] rounded-none lg:rounded-[24px] shadow-sm border-0 lg:border border-slate-200/50 dark:border-white/5 flex flex-col overflow-hidden relative">
           {!headerHidden && (
             <Header
               onOpenWallet={() => setShowWalletModal(true)}
@@ -132,13 +133,23 @@ function DashboardContent() {
             />
           )}
 
-          <div className="flex-1 overflow-y-auto px-4 py-4 lg:px-8 lg:py-6 pb-20 scrollbar-hide">
+          <div className="flex-1 overflow-y-auto px-4 py-4 lg:px-8 lg:py-6 pb-24 lg:pb-6 scrollbar-hide">
             <div className="max-w-7xl mx-auto">
               {renderTab()}
             </div>
           </div>
         </div>
       </main>
+
+      {/* Mobile bottom navigation */}
+      <MobileBottomNav
+        activeTab={activeTab}
+        onTabChange={(tab) => {
+          handleTabChange(tab);
+          setSidebarOpen(false);
+        }}
+        onOpenMore={() => setSidebarOpen(true)}
+      />
 
       <WalletModal
         isOpen={showWalletModal}

@@ -124,7 +124,7 @@ export default function OverviewTab({ onViewAllTransactions }: OverviewTabProps)
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
         {/* Total Volume */}
         <div className="bg-white dark:bg-[#1f162b] p-4 rounded-xl border border-slate-100 dark:border-slate-800 hover:border-primary/30 hover:-translate-y-0.5 transition-all duration-250 group">
           <div className="mb-3">
@@ -193,8 +193,9 @@ export default function OverviewTab({ onViewAllTransactions }: OverviewTabProps)
             <button className="px-3 py-1 text-xs font-bold rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">24H</button>
           </div> */}
         </div>
-        {/* Chart with axes */}
-        <div className="flex">
+        {/* Chart with axes — horizontally scrollable on very small screens */}
+        <div className="overflow-x-auto -mx-1">
+          <div className="flex min-w-[340px] px-1">
           {/* Y-Axis */}
           <div className="flex flex-col justify-between items-end pr-2.5 pb-6 h-56 shrink-0">
             {[...yTicks].reverse().map((tick, i) => (
@@ -278,8 +279,7 @@ export default function OverviewTab({ onViewAllTransactions }: OverviewTabProps)
           </div>
         </div>
       </div>
-
-      {/* Additional Charts Grid */}
+      </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Transaction Status Chart */}
         <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800 transition-all duration-250">

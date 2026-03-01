@@ -944,7 +944,7 @@ export default function EarnTab() {
           </div>
 
           {/* Position stat cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
             <StatCard
               label="Principal Deposited"
               value={fmtUsd(position.principal_usd)}

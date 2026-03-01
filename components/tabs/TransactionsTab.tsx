@@ -220,41 +220,41 @@ export default function TransactionsTab({ limit = 25, showViewAll = true }: Tran
       </div>
 
       {/* Stats strip */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 p-4">
-          <div className="flex items-center gap-2 mb-1">
-            <TrendingUp size={15} className="text-primary" />
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Volume (30d)</span>
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+        <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 p-3 sm:p-4">
+          <div className="flex items-center gap-1.5 mb-1">
+            <TrendingUp size={13} className="text-primary shrink-0" />
+            <span className="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 truncate">Volume</span>
           </div>
-          <p className="text-xl font-bold text-slate-900 dark:text-white">{formatAmountFull(stats?.total_volume || 0)}</p>
-          <p className="text-xs text-slate-400 mt-0.5">confirmed only</p>
+          <p className="text-base sm:text-xl font-bold text-slate-900 dark:text-white truncate">{formatAmountFull(stats?.total_volume || 0)}</p>
+          <p className="text-[10px] sm:text-xs text-slate-400 mt-0.5 hidden sm:block">confirmed only</p>
         </div>
-        <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 p-4">
-          <div className="flex items-center gap-2 mb-1">
-            <CheckCircle size={15} className="text-emerald-500" />
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Success Rate</span>
+        <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 p-3 sm:p-4">
+          <div className="flex items-center gap-1.5 mb-1">
+            <CheckCircle size={13} className="text-emerald-500 shrink-0" />
+            <span className="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 truncate">Success</span>
           </div>
-          <p className="text-xl font-bold text-slate-900 dark:text-white">{calculateSuccessRate()}%</p>
-          <p className="text-xs text-slate-400 mt-0.5">{stats?.confirmed_payments ?? 0} confirmed</p>
+          <p className="text-base sm:text-xl font-bold text-slate-900 dark:text-white">{calculateSuccessRate()}%</p>
+          <p className="text-[10px] sm:text-xs text-slate-400 mt-0.5 hidden sm:block">{stats?.confirmed_payments ?? 0} confirmed</p>
         </div>
-        <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 p-4">
-          <div className="flex items-center gap-2 mb-1">
-            <Clock size={15} className="text-amber-500" />
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Pending</span>
+        <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 p-3 sm:p-4">
+          <div className="flex items-center gap-1.5 mb-1">
+            <Clock size={13} className="text-amber-500 shrink-0" />
+            <span className="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 truncate">Pending</span>
           </div>
-          <p className="text-xl font-bold text-slate-900 dark:text-white">{stats?.pending_payments ?? 0}</p>
-          <p className="text-xs text-slate-400 mt-0.5">awaiting payment</p>
+          <p className="text-base sm:text-xl font-bold text-slate-900 dark:text-white">{stats?.pending_payments ?? 0}</p>
+          <p className="text-[10px] sm:text-xs text-slate-400 mt-0.5 hidden sm:block">awaiting payment</p>
         </div>
       </div>
 
-      {/* Filters row */}
-      <div className="flex flex-wrap items-center gap-2">
+      {/* Filters row — horizontally scrollable on mobile */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
         {/* Status pills */}
         {(['all', 'confirmed', 'pending', 'failed', 'expired'] as const).map(s => (
           <button
             key={s}
             onClick={() => { setStatusFilter(s); setCurrentPage(1); }}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+            className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
               statusFilter === s
                 ? 'bg-primary text-white'
                 : 'bg-white dark:bg-[#1f162b] border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5'
@@ -268,7 +268,7 @@ export default function TransactionsTab({ limit = 25, showViewAll = true }: Tran
         <select
           value={reconciledFilter}
           onChange={e => { setReconciledFilter(e.target.value); setCurrentPage(1); }}
-          className="px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1f162b] text-slate-600 dark:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30"
+          className="shrink-0 px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1f162b] text-slate-600 dark:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30"
         >
           <option value="all">Reconciled: All</option>
           <option value="true">Reconciled</option>
@@ -279,28 +279,89 @@ export default function TransactionsTab({ limit = 25, showViewAll = true }: Tran
           type="date"
           value={startDate}
           onChange={e => { setStartDate(e.target.value); setCurrentPage(1); }}
-          className="px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1f162b] text-slate-600 dark:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30"
+          className="shrink-0 px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1f162b] text-slate-600 dark:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30"
         />
-        <span className="text-xs text-slate-400">–</span>
+        <span className="text-xs text-slate-400 shrink-0">–</span>
         <input
           type="date"
           value={endDate}
           onChange={e => { setEndDate(e.target.value); setCurrentPage(1); }}
-          className="px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1f162b] text-slate-600 dark:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30"
+          className="shrink-0 px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1f162b] text-slate-600 dark:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30"
         />
         {activeFilters > 0 && (
           <button
             onClick={() => { setStatusFilter('all'); setReconciledFilter('all'); setStartDate(''); setEndDate(''); setCurrentPage(1); }}
-            className="flex items-center gap-1 px-2.5 py-1.5 text-xs text-rose-500 hover:text-rose-700 transition-colors"
+            className="flex items-center gap-1 px-2.5 py-1.5 text-xs text-rose-500 hover:text-rose-700 transition-colors whitespace-nowrap shrink-0"
           >
-            <X size={12} /> Clear filters
+            <X size={12} /> Clear
           </button>
         )}
       </div>
 
       {/* Table */}
       <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 overflow-hidden">
-        <div className="overflow-x-auto">
+
+        {/* ── Mobile card list (< sm) ── */}
+        <div className="sm:hidden">
+          {isLoading ? (
+            <div className="divide-y divide-slate-50 dark:divide-slate-800/50">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="p-3.5 space-y-2">
+                  <div className="flex justify-between">
+                    <div className="space-y-1.5 flex-1">
+                      <div className="h-3 w-28 bg-slate-100 dark:bg-slate-800 rounded animate-pulse" />
+                      <div className="h-2.5 w-20 bg-slate-100 dark:bg-slate-800 rounded animate-pulse" />
+                    </div>
+                    <div className="h-4 w-14 bg-slate-100 dark:bg-slate-800 rounded animate-pulse" />
+                  </div>
+                  <div className="flex justify-between">
+                    <div className="h-5 w-20 bg-slate-100 dark:bg-slate-800 rounded-full animate-pulse" />
+                    <div className="h-3 w-16 bg-slate-100 dark:bg-slate-800 rounded animate-pulse" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : transactions.length === 0 ? (
+            <p className="py-16 text-center text-slate-400 dark:text-slate-500 text-sm">
+              {searchQuery || activeFilters > 0 ? 'No transactions match your filters.' : 'No transactions yet.'}
+            </p>
+          ) : (
+            <div className="divide-y divide-slate-50 dark:divide-slate-800/50">
+              {transactions.map(tx => (
+                <div
+                  key={tx.id}
+                  onClick={() => handleRowClick(tx)}
+                  className="p-3.5 cursor-pointer active:bg-slate-50 dark:active:bg-white/[0.03] transition-colors"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                        {tx.customer_name || tx.customer_email || (tx.customer_wallet ? `${tx.customer_wallet.slice(0,6)}…${tx.customer_wallet.slice(-4)}` : 'Anonymous')}
+                      </p>
+                      {tx.customer_email && tx.customer_name && (
+                        <p className="text-xs text-slate-400 truncate">{tx.customer_email}</p>
+                      )}
+                      <p className="font-mono text-[11px] text-amber-500 dark:text-amber-400 mt-0.5">{tx.id.slice(0, 8)}</p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="font-bold text-slate-900 dark:text-white text-sm">{formatAmount(tx.amount_usd)}</p>
+                      <p className="text-[11px] text-slate-400">{tx.token || 'USDC'}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between mt-2">
+                    {getStatusBadge(tx.status || 'pending')}
+                    <span className="text-[11px] text-slate-400">
+                      {new Date(tx.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' })}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* ── Desktop table (sm+) ── */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-100 dark:border-slate-800">

@@ -52,38 +52,38 @@ export default function Header({ onOpenWallet, onToggleSidebar, sidebarOpen, act
   };
 
   return (
-    <header className="h-16 shrink-0 px-6 lg:px-8 flex items-center justify-between border-b border-slate-100 dark:border-white/5 transition-all duration-250 relative z-10">
-      {/* Mobile Menu Button */}
+    <header className="h-14 lg:h-16 shrink-0 px-3 lg:px-8 flex items-center justify-between border-b border-slate-100 dark:border-white/5 transition-all duration-250 relative z-10">
+      {/* Mobile Menu Button — visible on tablet/small screens, hidden on mobile since bottom nav has "More" */}
       <button
         onClick={onToggleSidebar}
-        className="lg:hidden p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors mr-3"
+        className="sm:block lg:hidden p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors mr-2"
         aria-label="Toggle menu"
       >
         {sidebarOpen ? (
-          <span className="material-symbols-outlined">close</span>
+          <span className="material-symbols-outlined text-[20px]">close</span>
         ) : (
-          <span className="material-symbols-outlined">menu</span>
+          <span className="material-symbols-outlined text-[20px]">menu</span>
         )}
       </button>
 
-      <div className="flex flex-col">
+      <div className="flex flex-col min-w-0 flex-1">
         {activeTab === 'overview' ? (
           <>
-            <h2 className="text-lg lg:text-xl font-bold text-slate-900 dark:text-white tracking-tight">Overview</h2>
-            <p className="text-[11px] lg:text-xs text-slate-500 dark:text-slate-400 hidden sm:block">
+            <h2 className="text-base lg:text-xl font-bold text-slate-900 dark:text-white tracking-tight truncate">Overview</h2>
+            <p className="text-[10px] lg:text-xs text-slate-500 dark:text-slate-400 hidden sm:block">
               Welcome back, here&apos;s what&apos;s happening today.
             </p>
           </>
         ) : (
-          <div className="flex items-center gap-2 text-xs">
-            <span className="text-slate-400 dark:text-slate-500 font-semibold">ZendFi</span>
-            <span className="material-symbols-outlined text-slate-300 dark:text-slate-600 text-[16px]">chevron_right</span>
-            <span className="text-slate-900 dark:text-white font-bold text-sm lg:text-base">{TAB_LABELS[activeTab] || activeTab}</span>
+          <div className="flex items-center gap-1.5 text-xs min-w-0">
+            <span className="text-slate-400 dark:text-slate-500 font-semibold hidden sm:block">ZendFi</span>
+            <span className="material-symbols-outlined text-slate-300 dark:text-slate-600 text-[14px] hidden sm:block">chevron_right</span>
+            <span className="text-slate-900 dark:text-white font-bold text-sm lg:text-base truncate">{TAB_LABELS[activeTab] || activeTab}</span>
           </div>
         )}
       </div>
 
-      <div className="flex items-center gap-2 lg:gap-4">
+      <div className="flex items-center gap-1 lg:gap-4 shrink-0 ml-2">
         {/* Docs Link */}
         <a
           href="https://zendfi.tech/docs"
@@ -95,7 +95,16 @@ export default function Header({ onOpenWallet, onToggleSidebar, sidebarOpen, act
           <span>Docs</span>
         </a>
 
-        {/* Mode Toggle */}
+        {/* Mode Toggle — compact pill on mobile, full toggle on desktop */}
+        <button
+          onClick={() => handleModeChange(mode === 'live' ? 'test' : 'live')}
+          className="lg:hidden flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-bold border transition-all duration-250 bg-white dark:bg-white/5 border-slate-200 dark:border-white/10"
+        >
+          <span className={`size-1.5 rounded-full ${mode === 'live' ? 'bg-emerald-500' : 'bg-amber-400'}`} />
+          <span className={mode === 'live' ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400'}>
+            {mode === 'live' ? 'Live' : 'Test'}
+          </span>
+        </button>
         <div className="hidden lg:flex bg-slate-100 dark:bg-white/5 p-1 rounded-lg">
           <button
             onClick={() => handleModeChange('live')}

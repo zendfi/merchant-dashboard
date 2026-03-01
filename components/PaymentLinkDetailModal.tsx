@@ -103,7 +103,7 @@ export default function PaymentLinkDetailModal({ link, isOpen, onClose }: Paymen
       {/* Modal */}
       <div className="relative bg-white dark:bg-[#1f162b] rounded-2xl shadow-2xl border border-slate-200/50 dark:border-white/10 w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex items-start justify-between px-6 py-5 border-b border-slate-100 dark:border-slate-800">
+        <div className="flex items-start justify-between px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-3 min-w-0">
             <div className="size-10 rounded-xl bg-primary/10 dark:bg-primary/20 flex items-center justify-center shrink-0">
               <Link size={18} className="text-primary dark:text-purple-300" />
@@ -145,7 +145,7 @@ export default function PaymentLinkDetailModal({ link, isOpen, onClose }: Paymen
         {/* Scrollable body */}
         <div className="flex-1 overflow-y-auto">
           {/* Amount + stats */}
-          <div className="px-6 py-5 grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="px-4 sm:px-6 py-4 sm:py-5 grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="bg-slate-50 dark:bg-white/[0.03] rounded-xl p-3.5">
               <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Amount</p>
               <p className="text-lg font-bold text-slate-900 dark:text-white">
