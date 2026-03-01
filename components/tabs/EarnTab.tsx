@@ -577,7 +577,7 @@ export default function EarnTab() {
                 <span>
                   <span className="font-semibold">$1.00 one-time activation fee</span> will be
                   deducted from your first deposit.{depositAmountNum >= 5 ? (
-                    <> ${fmtUsd(depositAmountNum - 1)} will be deposited into the vault.</>
+                    <> {fmtUsd(depositAmountNum - 1)} will be deposited into the vault.</>
                   ) : null}
                 </span>
               </div>
