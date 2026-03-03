@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useMode } from '@/lib/mode-context';
 import { useMerchant } from '@/lib/merchant-context';
 import { useNotification } from '@/lib/notifications';
+import { useTheme } from '@/lib/theme-context';
 import { auth } from '@/lib/api';
 
 interface HeaderProps {
@@ -30,6 +31,7 @@ export default function Header({ onOpenWallet, onToggleSidebar, sidebarOpen, act
   const { mode, toggleMode } = useMode();
   const { merchant } = useMerchant();
   const { showNotification } = useNotification();
+  const { theme, toggleTheme } = useTheme();
 
   const handleModeChange = (newMode: 'live' | 'test') => {
     if (mode !== newMode) {
@@ -126,6 +128,17 @@ export default function Header({ onOpenWallet, onToggleSidebar, sidebarOpen, act
           </button>
         </div>
 
+        {/* Dark Mode Toggle */}
+        <button
+          onClick={toggleTheme}
+          className="p-1.5 text-slate-500 hover:text-primary hover:bg-slate-50 dark:hover:bg-white/5 rounded-lg transition-all duration-250"
+          title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          <span className="material-symbols-outlined text-[20px]">
+            {theme === 'dark' ? 'light_mode' : 'dark_mode'}
+          </span>
+        </button>
+
         {/* Wallet Button */}
         <button
           onClick={onOpenWallet}
@@ -133,7 +146,7 @@ export default function Header({ onOpenWallet, onToggleSidebar, sidebarOpen, act
           title="Open Wallet"
         >
           <span className="material-symbols-outlined text-[20px]">account_balance_wallet</span>
-          <span className="absolute top-1 right-1 size-2 bg-emerald-500 border-2 border-white dark:border-[#1f162b] rounded-full"></span>
+          <span className="absolute top-1 right-1 size-2 bg-emerald-500 border-2 border-white dark:border-[#13131f] rounded-full"></span>
         </button>
 
         {/* Logout Button */}

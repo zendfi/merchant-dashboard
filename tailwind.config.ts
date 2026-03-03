@@ -27,7 +27,7 @@ const config: Config = {
         },
         background: {
           light: '#ffffff',
-          dark: '#191022',
+          dark: '#0d0d14',
         },
         success: {
           50: '#ECFDF5',

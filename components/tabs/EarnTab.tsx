@@ -63,7 +63,7 @@ function StatCard({
 
   return (
     <div
-      className={`bg-white dark:bg-[#1f162b] p-4 rounded-xl border border-slate-100 dark:border-slate-800 ${hoverMap[accent]} hover:-translate-y-0.5 transition-all duration-250`}
+      className={`bg-white dark:bg-[#13131f] p-4 rounded-xl border border-slate-100 dark:border-slate-800 ${hoverMap[accent]} hover:-translate-y-0.5 transition-all duration-250`}
     >
       <div className="mb-3">
         <div className={`p-1.5 ${accentMap[accent]} rounded-lg inline-block`}>
@@ -360,7 +360,7 @@ export default function EarnTab() {
   if (view === 'deposit-success' && depositResult) {
     return (
       <div className="space-y-6 max-w-xl mx-auto">
-        <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 p-8 text-center space-y-4">
+        <div className="bg-white dark:bg-[#13131f] rounded-xl border border-slate-100 dark:border-slate-800 p-8 text-center space-y-4">
           <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto">
             <span className="material-symbols-outlined text-[32px] text-emerald-600 dark:text-emerald-400">
               check_circle
@@ -421,7 +421,7 @@ export default function EarnTab() {
   if (view === 'withdraw-success' && withdrawResult) {
     return (
       <div className="space-y-6 max-w-xl mx-auto">
-        <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 p-8 text-center space-y-4">
+        <div className="bg-white dark:bg-[#13131f] rounded-xl border border-slate-100 dark:border-slate-800 p-8 text-center space-y-4">
           <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto">
             <span className="material-symbols-outlined text-[32px] text-emerald-600 dark:text-emerald-400">
               check_circle
@@ -497,7 +497,7 @@ export default function EarnTab() {
         </div>
 
         {/* Deposit form card */}
-        <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 p-5 space-y-5">
+        <div className="bg-white dark:bg-[#13131f] rounded-xl border border-slate-100 dark:border-slate-800 p-5 space-y-5">
           <form onSubmit={handleDeposit} className="space-y-4">
             {/* Amount input */}
             <div className="space-y-1.5">
@@ -614,7 +614,7 @@ export default function EarnTab() {
 
         {/* Vault info */}
         {metrics && (
-          <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 p-4">
+          <div className="bg-white dark:bg-[#13131f] rounded-xl border border-slate-100 dark:border-slate-800 p-4">
             <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-3">
               KAMINO USDC VAULT
             </p>
@@ -670,7 +670,7 @@ export default function EarnTab() {
         </div>
 
         {/* Breakdown card */}
-        <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 p-5">
+        <div className="bg-white dark:bg-[#13131f] rounded-xl border border-slate-100 dark:border-slate-800 p-5">
           <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">WITHDRAWAL BREAKDOWN</p>
           <p className="text-xs text-slate-400 dark:text-slate-500 mb-4">
             This transaction will execute atomically — all or nothing.
@@ -843,7 +843,7 @@ export default function EarnTab() {
             ].map((item) => (
               <div
                 key={item.step}
-                className="bg-white dark:bg-[#1f162b] p-4 rounded-xl border border-slate-100 dark:border-slate-800 hover:-translate-y-0.5 transition-all duration-250"
+                className="bg-white dark:bg-[#13131f] p-4 rounded-xl border border-slate-100 dark:border-slate-800 hover:-translate-y-0.5 transition-all duration-250"
               >
                 <div className="flex items-start gap-3">
                   <div className={`p-1.5 ${item.accent} rounded-lg shrink-0`}>
@@ -865,7 +865,7 @@ export default function EarnTab() {
 
           {/* Vault stats footer */}
           {metrics && (
-            <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 p-4">
+            <div className="bg-white dark:bg-[#13131f] rounded-xl border border-slate-100 dark:border-slate-800 p-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
@@ -979,7 +979,7 @@ export default function EarnTab() {
 
           {/* Yield breakdown card */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 p-5">
+            <div className="bg-white dark:bg-[#13131f] rounded-xl border border-slate-100 dark:border-slate-800 p-5">
               <SectionDivider label="Yield Breakdown" />
               <div className="divide-y divide-slate-100 dark:divide-slate-800">
                 <BreakdownRow
@@ -1005,7 +1005,7 @@ export default function EarnTab() {
 
             {/* Vault info */}
             {metrics && (
-              <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 p-5">
+              <div className="bg-white dark:bg-[#13131f] rounded-xl border border-slate-100 dark:border-slate-800 p-5">
                 <SectionDivider
                   label="Vault Info"
                   right={

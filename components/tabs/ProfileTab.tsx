@@ -36,28 +36,28 @@ export default function ProfileTab({ onSwitchTab, onModalToggle }: ProfileTabPro
         <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Account Information</h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800">
+          <div className="bg-white dark:bg-[#13131f] p-5 rounded-xl border border-slate-100 dark:border-slate-800">
             <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               Business Name
             </span>
             <p className="text-slate-900 dark:text-white mt-1 font-semibold">{merchant?.name}</p>
           </div>
 
-          <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800">
+          <div className="bg-white dark:bg-[#13131f] p-5 rounded-xl border border-slate-100 dark:border-slate-800">
             <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               Email Address
             </span>
             <p className="text-slate-900 dark:text-white mt-1 break-all">{merchant?.email}</p>
           </div>
 
-          <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800">
+          <div className="bg-white dark:bg-[#13131f] p-5 rounded-xl border border-slate-100 dark:border-slate-800">
             <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               Account ID
             </span>
             <p className="text-slate-900 dark:text-white mt-1 font-mono text-sm break-all">{merchant?.id}</p>
           </div>
 
-          <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800">
+          <div className="bg-white dark:bg-[#13131f] p-5 rounded-xl border border-slate-100 dark:border-slate-800">
             <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               Member Since
             </span>
@@ -78,7 +78,7 @@ export default function ProfileTab({ onSwitchTab, onModalToggle }: ProfileTabPro
       <div className="space-y-4">
         <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Wallet Configuration</h2>
 
-        <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800">
+        <div className="bg-white dark:bg-[#13131f] p-5 rounded-xl border border-slate-100 dark:border-slate-800">
           <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
             Settlement Wallet Address
           </span>
@@ -97,7 +97,7 @@ export default function ProfileTab({ onSwitchTab, onModalToggle }: ProfileTabPro
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Security & Access</h2>
 
           <div className="space-y-3">
-            <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+            <div className="bg-white dark:bg-[#13131f] p-5 rounded-xl border border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
               <div>
                 <div className="flex items-center gap-2">
                   <span className="material-symbols-outlined text-[20px] text-primary">key</span>
@@ -115,7 +115,7 @@ export default function ProfileTab({ onSwitchTab, onModalToggle }: ProfileTabPro
               </button>
             </div>
 
-            <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+            <div className="bg-white dark:bg-[#13131f] p-5 rounded-xl border border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
               <div>
                 <div className="flex items-center gap-2">
                   <span className="material-symbols-outlined text-[20px] text-primary">webhook</span>
@@ -140,7 +140,7 @@ export default function ProfileTab({ onSwitchTab, onModalToggle }: ProfileTabPro
       <div className="space-y-4">
         <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Display Preferences</h2>
 
-        <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <div className="bg-white dark:bg-[#13131f] p-5 rounded-xl border border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div className="flex-1">
             <div className="flex items-center gap-2">
               <span className="material-symbols-outlined text-[20px] text-primary">currency_exchange</span>
@@ -184,7 +184,7 @@ export default function ProfileTab({ onSwitchTab, onModalToggle }: ProfileTabPro
           </div>
         </div>
 
-        <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <div className="bg-white dark:bg-[#13131f] p-5 rounded-xl border border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div className="flex-1">
             <div className="flex items-center gap-2">
               <span className="material-symbols-outlined text-[20px] text-primary">terminal</span>
@@ -225,7 +225,7 @@ export default function ProfileTab({ onSwitchTab, onModalToggle }: ProfileTabPro
             href="https://zendfi.tech/docs"
             target="_blank"
             rel="noopener noreferrer"
-            className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800 flex justify-between items-center no-underline hover:border-primary/30 transition-colors"
+            className="bg-white dark:bg-[#13131f] p-5 rounded-xl border border-slate-100 dark:border-slate-800 flex justify-between items-center no-underline hover:border-primary/30 transition-colors"
           >
             <div>
               <div className="flex items-center gap-2">
@@ -243,7 +243,7 @@ export default function ProfileTab({ onSwitchTab, onModalToggle }: ProfileTabPro
             href="https://github.com/zendfi"
             target="_blank"
             rel="noopener noreferrer"
-            className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800 flex justify-between items-center no-underline hover:border-primary/30 transition-colors"
+            className="bg-white dark:bg-[#13131f] p-5 rounded-xl border border-slate-100 dark:border-slate-800 flex justify-between items-center no-underline hover:border-primary/30 transition-colors"
           >
             <div>
               <div className="flex items-center gap-2">

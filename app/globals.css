@@ -26,6 +26,11 @@ body {
   font-size: 13px;
 }
 
+html.dark body {
+  background: #0d0d14;
+  color: #f1f5f9;
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
@@ -43,6 +48,14 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #9ca3af;
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background: #2a2a40;
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: #3a3a58;
 }
 
 .hide-scrollbar::-webkit-scrollbar {

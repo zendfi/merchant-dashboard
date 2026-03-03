@@ -123,7 +123,7 @@ function DashboardContent() {
         onClose={() => setSidebarOpen(false)}
       />
       <main className="flex-1 flex flex-col h-screen overflow-hidden p-0 lg:p-3 transition-all duration-300">
-        <div className="flex-1 bg-white dark:bg-[#1f162b] rounded-none lg:rounded-[24px] shadow-sm border-0 lg:border border-slate-200/50 dark:border-white/5 flex flex-col overflow-hidden relative">
+        <div className="flex-1 bg-white dark:bg-[#13131f] rounded-none lg:rounded-[24px] shadow-sm border-0 lg:border border-slate-200/50 dark:border-white/5 flex flex-col overflow-hidden relative">
           {!headerHidden && (
             <Header
               onOpenWallet={() => setShowWalletModal(true)}

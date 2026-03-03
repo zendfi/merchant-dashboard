@@ -81,15 +81,15 @@ export default function SupportTab() {
     return (
         <div className="h-[calc(100vh-140px)] flex flex-col lg:flex-row gap-6">
             {/* Chat Section */}
-            <div className="flex-1 flex flex-col bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
+            <div className="flex-1 flex flex-col bg-white dark:bg-[#13131f] rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
                 {/* Chat Header */}
-                <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-[#1f162b]">
+                <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-[#13131f]">
                     <div className="flex items-center gap-3">
                         <div className="relative">
                             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                                 <span className="material-symbols-outlined text-primary">support_agent</span>
                             </div>
-                            <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white dark:border-[#1f162b] rounded-full"></span>
+                            <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white dark:border-[#13131f] rounded-full"></span>
                         </div>
                         <div>
                             <h3 className="font-bold text-slate-900 dark:text-white">Live Support</h3>
@@ -99,7 +99,7 @@ export default function SupportTab() {
                 </div>
 
                 {/* Messages */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/50 dark:bg-[#1a1225]">
+                <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/50 dark:bg-[#0f0f1a]">
                     {messages.map((msg) => (
                         <div
                             key={msg.id}
@@ -134,7 +134,7 @@ export default function SupportTab() {
                 </div>
 
                 {/* Input Area */}
-                <div className="p-4 bg-white dark:bg-[#1f162b] border-t border-slate-100 dark:border-slate-800">
+                <div className="p-4 bg-white dark:bg-[#13131f] border-t border-slate-100 dark:border-slate-800">
                     <form onSubmit={handleSendMessage} className="flex gap-2">
                         <input
                             type="text"
@@ -160,7 +160,7 @@ export default function SupportTab() {
             {/* Sidebar Info */}
             <div className="w-full lg:w-80 space-y-4">
                 {/* Video Chat Card */}
-                <div className="bg-white dark:bg-[#1f162b] rounded-xl p-5 border border-slate-100 dark:border-slate-800 shadow-sm">
+                <div className="bg-white dark:bg-[#13131f] rounded-xl p-5 border border-slate-100 dark:border-slate-800 shadow-sm">
                     <div className="w-10 h-10 rounded-full bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center mb-4">
                         <span className="material-symbols-outlined text-indigo-600 dark:text-indigo-400">videocam</span>
                     </div>

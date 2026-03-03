@@ -101,7 +101,7 @@ export default function PaymentLinkDetailModal({ link, isOpen, onClose }: Paymen
       />
 
       {/* Modal */}
-      <div className="relative bg-white dark:bg-[#1f162b] rounded-2xl shadow-2xl border border-slate-200/50 dark:border-white/10 w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
+      <div className="relative bg-white dark:bg-[#13131f] rounded-2xl shadow-2xl border border-slate-200/50 dark:border-white/10 w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
         {/* Header */}
         <div className="flex items-start justify-between px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-3 min-w-0">
@@ -218,7 +218,7 @@ export default function PaymentLinkDetailModal({ link, isOpen, onClose }: Paymen
 
           {/* Chart */}
           <div className="px-6 pb-5">
-            <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 p-4">
+            <div className="bg-white dark:bg-[#13131f] rounded-xl border border-slate-100 dark:border-slate-800 p-4">
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">Usage (last 90 days)</h3>
               {isLoading ? (
                 <div className="h-40 flex items-center justify-center">
@@ -273,7 +273,7 @@ export default function PaymentLinkDetailModal({ link, isOpen, onClose }: Paymen
 
           {/* Payments list */}
           <div className="px-6 pb-6">
-            <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 overflow-hidden">
+            <div className="bg-white dark:bg-[#13131f] rounded-xl border border-slate-100 dark:border-slate-800 overflow-hidden">
               <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
                   Payment IDs

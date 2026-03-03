@@ -143,7 +143,7 @@ export default function DangerZone({ onModalToggle }: DangerZoneProps = {}) {
           }}
         >
           <div
-            className="bg-white dark:bg-[#1f162b] rounded-2xl shadow-2xl w-[90%] max-w-[500px] animate-[modalSlideUp_0.3s_ease-out] overflow-hidden"
+            className="bg-white dark:bg-[#13131f] rounded-2xl shadow-2xl w-[90%] max-w-[500px] animate-[modalSlideUp_0.3s_ease-out] overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Step 1: Warning */}

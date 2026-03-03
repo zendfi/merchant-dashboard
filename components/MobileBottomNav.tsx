@@ -21,7 +21,7 @@ export default function MobileBottomNav({ activeTab, onTabChange, onOpenMore }: 
 
   return (
     <nav
-      className="lg:hidden fixed bottom-0 left-0 right-0 z-[190] bg-white dark:bg-[#191022] border-t border-slate-200 dark:border-slate-800 flex items-stretch"
+      className="lg:hidden fixed bottom-0 left-0 right-0 z-[190] bg-white dark:bg-[#0d0d14] border-t border-slate-200 dark:border-slate-800 flex items-stretch"
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
       {PRIMARY_NAV.map(item => {

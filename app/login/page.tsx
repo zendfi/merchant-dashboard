@@ -315,7 +315,7 @@ export default function LoginPage() {
           className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[100] p-4"
           onClick={(e) => { if (e.target === e.currentTarget) setShowResetModal(false); }}
         >
-          <div className="bg-white dark:bg-[#1f162b] rounded-2xl p-6 max-w-[400px] w-full shadow-2xl border border-slate-200 dark:border-slate-800">
+          <div className="bg-white dark:bg-[#13131f] rounded-2xl p-6 max-w-[400px] w-full shadow-2xl border border-slate-200 dark:border-slate-800">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold text-slate-900 dark:text-white">Reset credentials</h2>
               <button

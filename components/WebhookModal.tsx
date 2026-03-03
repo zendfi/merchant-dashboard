@@ -67,7 +67,7 @@ export default function WebhookModal({ isOpen, onClose, currentUrl, onSaved }: W
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="bg-white dark:bg-[#1f162b] rounded-2xl max-w-[500px] w-[90%] max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div className="bg-white dark:bg-[#13131f] rounded-2xl max-w-[500px] w-[90%] max-h-[90vh] overflow-y-auto shadow-2xl">
         {/* Header */}
         <div className="p-5 px-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
           <h3 className="text-lg font-bold text-slate-900 dark:text-white">Update Webhook URL</h3>

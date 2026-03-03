@@ -76,7 +76,7 @@ function ProductCard({
               <span className="material-symbols-outlined text-slate-700 dark:text-slate-300" style={{ fontSize: 18 }}>more_horiz</span>
             </button>
             {menuOpen && (
-              <div className="absolute right-0 top-10 w-40 bg-white/95 dark:bg-[#2a1f3d]/95 backdrop-blur-xl border border-slate-200/80 dark:border-slate-700/80 rounded-xl shadow-2xl overflow-hidden z-20 origin-top-right animate-in fade-in zoom-in-95 duration-200">
+              <div className="absolute right-0 top-10 w-40 bg-white/95 dark:bg-[#1e1e30]/95 backdrop-blur-xl border border-slate-200/80 dark:border-slate-700/80 rounded-xl shadow-2xl overflow-hidden z-20 origin-top-right animate-in fade-in zoom-in-95 duration-200">
                 <button
                   onClick={() => { onToggleActive(); setMenuOpen(false); }}
                   className="w-full px-3 py-2.5 text-left text-[13px] font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100/80 dark:hover:bg-slate-800/80 flex items-center gap-2.5 transition-colors"
@@ -569,7 +569,7 @@ function ShopCard({
 
   return (
     <div
-      className="relative bg-white dark:bg-[#1f162b] border border-slate-200/70 dark:border-slate-700/50 rounded-2xl p-4 cursor-pointer hover:shadow-md transition group"
+      className="relative bg-white dark:bg-[#13131f] border border-slate-200/70 dark:border-slate-700/50 rounded-2xl p-4 cursor-pointer hover:shadow-md transition group"
       onClick={onClick}
     >
       {/* Color dot + name */}
@@ -605,7 +605,7 @@ function ShopCard({
             <span className="material-symbols-outlined text-slate-500 dark:text-slate-400" style={{ fontSize: 16 }}>more_horiz</span>
           </button>
           {menuOpen && (
-            <div className="absolute right-0 top-8 w-36 bg-white dark:bg-[#2a1f3d] border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl overflow-hidden z-20">
+            <div className="absolute right-0 top-8 w-36 bg-white dark:bg-[#1e1e30] border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl overflow-hidden z-20">
               <button
                 onClick={(e) => { e.stopPropagation(); handleCopy(e); setMenuOpen(false); }}
                 className="w-full px-3 py-2 text-left text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2"

@@ -75,19 +75,19 @@ export default function SessionKeysTab() {
       {/* Stats */}
       {stats && stats.total > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800">
+          <div className="bg-white dark:bg-[#13131f] p-5 rounded-xl border border-slate-100 dark:border-slate-800">
             <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               Total Keys
             </span>
             <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{stats.total}</p>
           </div>
-          <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800">
+          <div className="bg-white dark:bg-[#13131f] p-5 rounded-xl border border-slate-100 dark:border-slate-800">
             <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               Active
             </span>
             <p className="text-2xl font-bold text-emerald-500 mt-1">{stats.active}</p>
           </div>
-          <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800">
+          <div className="bg-white dark:bg-[#13131f] p-5 rounded-xl border border-slate-100 dark:border-slate-800">
             <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               Total Limit
             </span>
@@ -95,7 +95,7 @@ export default function SessionKeysTab() {
               ${stats.total_limit_usdc.toFixed(2)}
             </p>
           </div>
-          <div className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800">
+          <div className="bg-white dark:bg-[#13131f] p-5 rounded-xl border border-slate-100 dark:border-slate-800">
             <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               Remaining
             </span>
@@ -115,7 +115,7 @@ export default function SessionKeysTab() {
       </div>
 
       {sessionKeys.length === 0 ? (
-        <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 p-12 text-center">
+        <div className="bg-white dark:bg-[#13131f] rounded-xl border border-slate-100 dark:border-slate-800 p-12 text-center">
           <span className="material-symbols-outlined text-[48px] text-slate-300 mb-4">passkey</span>
           <p className="text-slate-500 dark:text-slate-400 font-medium mb-2">No session keys found</p>
           <p className="text-slate-400 text-sm">
@@ -127,7 +127,7 @@ export default function SessionKeysTab() {
           {sessionKeys.map((key) => (
             <div
               key={key.id}
-              className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800"
+              className="bg-white dark:bg-[#13131f] p-5 rounded-xl border border-slate-100 dark:border-slate-800"
             >
               {/* Header */}
               <div className="flex justify-between items-start mb-4">

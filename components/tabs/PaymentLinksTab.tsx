@@ -101,7 +101,7 @@ export default function PaymentLinksTab({ onModalToggle }: PaymentLinksTabProps 
 
       {/* Stats strip */}
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
-        <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 p-3 sm:p-4">
+        <div className="bg-white dark:bg-[#13131f] rounded-xl border border-slate-100 dark:border-slate-800 p-3 sm:p-4">
           <div className="flex items-center gap-1.5 mb-1">
             <Link size={13} className="text-primary shrink-0" />
             <span className="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400">Active</span>
@@ -109,7 +109,7 @@ export default function PaymentLinksTab({ onModalToggle }: PaymentLinksTabProps 
           <p className="text-base sm:text-xl font-bold text-slate-900 dark:text-white">{totalActive}</p>
           <p className="text-[10px] sm:text-xs text-slate-400 mt-0.5 hidden sm:block">of {links.length} total</p>
         </div>
-        <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 p-3 sm:p-4">
+        <div className="bg-white dark:bg-[#13131f] rounded-xl border border-slate-100 dark:border-slate-800 p-3 sm:p-4">
           <div className="flex items-center gap-1.5 mb-1">
             <TrendingUp size={13} className="text-emerald-500 shrink-0" />
             <span className="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400">Uses</span>
@@ -117,7 +117,7 @@ export default function PaymentLinksTab({ onModalToggle }: PaymentLinksTabProps 
           <p className="text-base sm:text-xl font-bold text-slate-900 dark:text-white">{totalUses.toLocaleString()}</p>
           <p className="text-[10px] sm:text-xs text-slate-400 mt-0.5 hidden sm:block">all time</p>
         </div>
-        <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 p-3 sm:p-4">
+        <div className="bg-white dark:bg-[#13131f] rounded-xl border border-slate-100 dark:border-slate-800 p-3 sm:p-4">
           <div className="flex items-center gap-1.5 mb-1">
             <span className="text-sm leading-none shrink-0">🏦</span>
             <span className="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400">Bank</span>
@@ -136,7 +136,7 @@ export default function PaymentLinksTab({ onModalToggle }: PaymentLinksTabProps 
             className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
               filterActive === f
                 ? 'bg-primary text-white'
-                : 'bg-white dark:bg-[#1f162b] border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5'
+                : 'bg-white dark:bg-[#13131f] border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5'
             }`}
           >
             {f.charAt(0).toUpperCase() + f.slice(1)}
@@ -145,7 +145,7 @@ export default function PaymentLinksTab({ onModalToggle }: PaymentLinksTabProps 
       </div>
 
       {/* Table */}
-      <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 overflow-hidden">
+      <div className="bg-white dark:bg-[#13131f] rounded-xl border border-slate-100 dark:border-slate-800 overflow-hidden">
 
         {/* ── Mobile card list (< sm) ── */}
         <div className="sm:hidden">

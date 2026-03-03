@@ -240,7 +240,7 @@ export default function CustomersTab({ onModalToggle }: CustomersTabProps = {}) 
             placeholder="Search by name, email, company…"
             value={searchInput}
             onChange={e => setSearchInput(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-[#1a1128] text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30"
+            className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-[#0f0f1a] text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
           {searchInput && (
             <button onClick={() => setSearchInput('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
@@ -252,7 +252,7 @@ export default function CustomersTab({ onModalToggle }: CustomersTabProps = {}) 
 
       {/* Quick stats */}
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
-        <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 p-3 sm:p-4">
+        <div className="bg-white dark:bg-[#13131f] rounded-xl border border-slate-100 dark:border-slate-800 p-3 sm:p-4">
           <div className="flex items-center gap-1.5 mb-1">
             <Users size={13} className="text-primary shrink-0" />
             <span className="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400">Returning</span>
@@ -260,7 +260,7 @@ export default function CustomersTab({ onModalToggle }: CustomersTabProps = {}) 
           <p className="text-base sm:text-xl font-bold text-slate-900 dark:text-white">{returningCount}</p>
           <p className="text-[10px] sm:text-xs text-slate-400 mt-0.5 hidden sm:block">of {customerList.length} shown</p>
         </div>
-        <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 p-3 sm:p-4">
+        <div className="bg-white dark:bg-[#13131f] rounded-xl border border-slate-100 dark:border-slate-800 p-3 sm:p-4">
           <div className="flex items-center gap-1.5 mb-1">
             <TrendingUp size={13} className="text-green-600 shrink-0" />
             <span className="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400">LTV</span>
@@ -268,7 +268,7 @@ export default function CustomersTab({ onModalToggle }: CustomersTabProps = {}) 
           <p className="text-base sm:text-xl font-bold text-slate-900 dark:text-white">{fmt(totalLtv, currency, exchangeRate)}</p>
           <p className="text-[10px] sm:text-xs text-slate-400 mt-0.5 hidden sm:block">confirmed only</p>
         </div>
-        <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 p-3 sm:p-4">
+        <div className="bg-white dark:bg-[#13131f] rounded-xl border border-slate-100 dark:border-slate-800 p-3 sm:p-4">
           <div className="flex items-center gap-1.5 mb-1">
             <AlertTriangle size={13} className="text-orange-500 shrink-0" />
             <span className="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400">At Risk</span>
@@ -279,7 +279,7 @@ export default function CustomersTab({ onModalToggle }: CustomersTabProps = {}) 
       </div>
 
       {/* Table */}
-      <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 overflow-hidden">
+      <div className="bg-white dark:bg-[#13131f] rounded-xl border border-slate-100 dark:border-slate-800 overflow-hidden">
 
         {/* ── Mobile card list (< sm) ── */}
         <div className="sm:hidden">
@@ -544,9 +544,9 @@ function CustomerDetailPanel({
 
       {/* Modal */}
       <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6">
-        <div className="relative bg-white dark:bg-[#1a1128] w-full max-w-2xl rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+        <div className="relative bg-white dark:bg-[#0f0f1a] w-full max-w-2xl rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
         {/* Modal header */}
-        <div className="shrink-0 bg-white dark:bg-[#1a1128] border-b border-slate-100 dark:border-slate-800 px-6 py-4 flex items-center justify-between">
+        <div className="shrink-0 bg-white dark:bg-[#0f0f1a] border-b border-slate-100 dark:border-slate-800 px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary font-bold text-sm">
               {initials(customer)}

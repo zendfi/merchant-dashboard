@@ -124,7 +124,7 @@ export default function ApiKeysTab() {
       </div>
 
       {/* API Usage Chart */}
-      <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 p-6">
+      <div className="bg-white dark:bg-[#13131f] rounded-xl border border-slate-100 dark:border-slate-800 p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-lg font-bold text-slate-900 dark:text-white">API Usage</h2>
@@ -219,7 +219,7 @@ export default function ApiKeysTab() {
       </div>
 
       {filteredKeys.length === 0 ? (
-        <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 p-12 text-center">
+        <div className="bg-white dark:bg-[#13131f] rounded-xl border border-slate-100 dark:border-slate-800 p-12 text-center">
           <span className="material-symbols-outlined text-[48px] text-slate-300 mb-4">key</span>
           <p className="text-slate-500 dark:text-slate-400 mb-2">No API keys found for {mode} mode.</p>
           <p className="text-sm text-slate-400">Create one via the API:</p>
@@ -230,7 +230,7 @@ export default function ApiKeysTab() {
           {filteredKeys.map((key) => (
             <div
               key={key.id}
-              className="bg-white dark:bg-[#1f162b] p-5 rounded-xl border border-slate-100 dark:border-slate-800"
+              className="bg-white dark:bg-[#13131f] p-5 rounded-xl border border-slate-100 dark:border-slate-800"
             >
               {/* Header */}
               <div className="flex justify-between items-center mb-4">
@@ -308,7 +308,7 @@ export default function ApiKeysTab() {
             if (e.target === e.currentTarget) closeCopyModal();
           }}
         >
-          <div className="bg-white dark:bg-[#1f162b] rounded-2xl max-w-[500px] w-[90%] shadow-2xl">
+          <div className="bg-white dark:bg-[#13131f] rounded-2xl max-w-[500px] w-[90%] shadow-2xl">
             <div className="p-5 px-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
               <h3 className="text-lg font-bold text-slate-900 dark:text-white">API Key Generated</h3>
               <button

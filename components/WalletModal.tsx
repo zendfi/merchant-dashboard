@@ -359,7 +359,7 @@ export default function WalletModal({ isOpen, onClose, onNavigateToEarn }: Walle
       }}
     >
       <div
-        className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-[#1f162b] rounded-2xl w-[90%] max-w-[440px] h-[85vh] max-h-[600px] overflow-hidden shadow-2xl transition-transform ${isOpen ? 'scale-100' : 'scale-95'
+        className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-[#13131f] rounded-2xl w-[90%] max-w-[440px] h-[85vh] max-h-[600px] overflow-hidden shadow-2xl transition-transform ${isOpen ? 'scale-100' : 'scale-95'
           }`}
       >
         {/* Navigation container */}
@@ -374,7 +374,7 @@ export default function WalletModal({ isOpen, onClose, onNavigateToEarn }: Walle
             }}
           >
             {/* Header */}
-            <div className="bg-white dark:bg-[#1f162b] p-5 px-6 border-b border-slate-100 dark:border-slate-800 sticky top-0 z-10">
+            <div className="bg-white dark:bg-[#13131f] p-5 px-6 border-b border-slate-100 dark:border-slate-800 sticky top-0 z-10">
               <div className="flex justify-between items-start mb-3">
                 <div className="flex items-center gap-2">
                   <h2 className="text-base font-bold text-slate-900 dark:text-white m-0">Your Wallet</h2>
@@ -437,7 +437,7 @@ export default function WalletModal({ isOpen, onClose, onNavigateToEarn }: Walle
                 </div>
                 <div className="flex flex-col gap-2">
                   {/* SOL Token */}
-                  <div className="bg-white dark:bg-[#281e36] rounded-xl p-3 flex items-center justify-between border border-slate-100 dark:border-slate-800 transition-all hover:border-primary/40 hover:shadow-sm">
+                  <div className="bg-white dark:bg-[#1a1a2c] rounded-xl p-3 flex items-center justify-between border border-slate-100 dark:border-slate-800 transition-all hover:border-primary/40 hover:shadow-sm">
                     <div className="flex items-center gap-3">
                       <img src={TOKEN_LOGOS.SOL} alt="SOL" className="w-8 h-8 rounded-full" />
                       <div className="flex flex-col">
@@ -456,7 +456,7 @@ export default function WalletModal({ isOpen, onClose, onNavigateToEarn }: Walle
                   </div>
 
                   {/* USDC Token */}
-                  <div className="bg-white dark:bg-[#281e36] rounded-xl p-3 flex items-center justify-between border border-slate-100 dark:border-slate-800 transition-all hover:border-primary/40 hover:shadow-sm">
+                  <div className="bg-white dark:bg-[#1a1a2c] rounded-xl p-3 flex items-center justify-between border border-slate-100 dark:border-slate-800 transition-all hover:border-primary/40 hover:shadow-sm">
                     <div className="flex items-center gap-3">
                       <img src={TOKEN_LOGOS.USDC} alt="USDC" className="w-8 h-8 rounded-full" />
                       <div className="flex flex-col">
@@ -479,13 +479,13 @@ export default function WalletModal({ isOpen, onClose, onNavigateToEarn }: Walle
                     <div
                       onClick={() => { onClose(); onNavigateToEarn?.(); }}
                       role="button"
-                      className="bg-white dark:bg-[#281e36] rounded-xl p-3 flex items-center justify-between border border-emerald-100 dark:border-emerald-900/40 transition-all hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-sm cursor-pointer group"
+                      className="bg-white dark:bg-[#1a1a2c] rounded-xl p-3 flex items-center justify-between border border-emerald-100 dark:border-emerald-900/40 transition-all hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-sm cursor-pointer group"
                     >
                       <div className="flex items-center gap-3">
                         {/* Stacked USDC + yield icon */}
                         <div className="relative w-8 h-8 shrink-0">
                           <img src={TOKEN_LOGOS.USDC} alt="USDC" className="w-8 h-8 rounded-full" />
-                          <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center border-2 border-white dark:border-[#281e36]">
+                          <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center border-2 border-white dark:border-[#1a1a2c]">
                             <span className="material-symbols-outlined text-white" style={{ fontSize: '9px', fontVariationSettings: "'FILL' 1" }}>trending_up</span>
                           </div>
                         </div>
@@ -565,7 +565,7 @@ export default function WalletModal({ isOpen, onClose, onNavigateToEarn }: Walle
             }}
           >
             {/* Header */}
-            <div className="bg-white dark:bg-[#1f162b] p-5 px-6 border-b border-slate-100 dark:border-slate-800 sticky top-0 z-10">
+            <div className="bg-white dark:bg-[#13131f] p-5 px-6 border-b border-slate-100 dark:border-slate-800 sticky top-0 z-10">
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
                   <button
@@ -603,7 +603,7 @@ export default function WalletModal({ isOpen, onClose, onNavigateToEarn }: Walle
                         onClick={() => setSelectedToken(token.id)}
                         className={`flex-1 p-3 rounded-xl border-2 text-center transition-all cursor-pointer flex flex-col items-center ${selectedToken === token.id
                             ? 'border-primary bg-primary/5 dark:bg-primary/10'
-                            : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-[#281e36] hover:border-primary/40'
+                            : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1a1a2c] hover:border-primary/40'
                           }`}
                       >
                         <img src={token.logo} alt={token.name} className="w-7 h-7 rounded-full mb-1" />
@@ -626,7 +626,7 @@ export default function WalletModal({ isOpen, onClose, onNavigateToEarn }: Walle
                       step="0.000001"
                       min="0.000001"
                       required
-                      className="w-full p-3.5 pr-16 border border-slate-200 dark:border-slate-700 rounded-xl text-lg font-semibold bg-white dark:bg-[#281e36] text-slate-900 dark:text-white transition-all focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-slate-300 dark:placeholder:text-slate-600"
+                      className="w-full p-3.5 pr-16 border border-slate-200 dark:border-slate-700 rounded-xl text-lg font-semibold bg-white dark:bg-[#1a1a2c] text-slate-900 dark:text-white transition-all focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-slate-300 dark:placeholder:text-slate-600"
                     />
                     <button
                       type="button"
@@ -655,13 +655,13 @@ export default function WalletModal({ isOpen, onClose, onNavigateToEarn }: Walle
                     onChange={(e) => setRecipientAddress(e.target.value)}
                     placeholder="Enter Solana wallet address"
                     required
-                    className="w-full p-3.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-mono bg-white dark:bg-[#281e36] text-slate-900 dark:text-white transition-all focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-slate-400"
+                    className="w-full p-3.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-mono bg-white dark:bg-[#1a1a2c] text-slate-900 dark:text-white transition-all focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-slate-400"
                   />
                 </div>
 
                 {/* Summary */}
                 {sendAmount && recipientAddress && (
-                  <div className="bg-slate-50 dark:bg-[#281e36] rounded-xl p-4 border border-slate-100 dark:border-slate-800 mb-5">
+                  <div className="bg-slate-50 dark:bg-[#1a1a2c] rounded-xl p-4 border border-slate-100 dark:border-slate-800 mb-5">
                     <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-[0.5px] mb-3">Summary</div>
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
@@ -714,7 +714,7 @@ export default function WalletModal({ isOpen, onClose, onNavigateToEarn }: Walle
             }}
           >
             {/* Header */}
-            <div className="bg-white dark:bg-[#1f162b] p-5 px-6 border-b border-slate-100 dark:border-slate-800 sticky top-0 z-10">
+            <div className="bg-white dark:bg-[#13131f] p-5 px-6 border-b border-slate-100 dark:border-slate-800 sticky top-0 z-10">
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
                   <button
@@ -765,7 +765,7 @@ export default function WalletModal({ isOpen, onClose, onNavigateToEarn }: Walle
               <p className="text-xs text-slate-500 dark:text-slate-400 text-center mb-4">Scan the QR code or copy the address below to receive tokens</p>
 
               {/* Address */}
-              <div className="w-full bg-slate-50 dark:bg-[#281e36] rounded-xl p-4 border border-slate-100 dark:border-slate-800 mb-4">
+              <div className="w-full bg-slate-50 dark:bg-[#1a1a2c] rounded-xl p-4 border border-slate-100 dark:border-slate-800 mb-4">
                 <div className="font-mono text-xs text-slate-900 dark:text-white text-center break-all leading-relaxed select-all">
                   {walletData?.wallet_address || 'Loading...'}
                 </div>
@@ -794,7 +794,7 @@ export default function WalletModal({ isOpen, onClose, onNavigateToEarn }: Walle
                     { name: 'USDC', logo: TOKEN_LOGOS.USDC },
                     { name: 'USDT', logo: TOKEN_LOGOS.USDT },
                   ].map((token) => (
-                    <div key={token.name} className="bg-white dark:bg-[#1f162b] border border-slate-200 dark:border-slate-700 px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-900 dark:text-white flex items-center gap-1.5">
+                    <div key={token.name} className="bg-white dark:bg-[#13131f] border border-slate-200 dark:border-slate-700 px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-900 dark:text-white flex items-center gap-1.5">
                       <img src={token.logo} alt={token.name} className="w-4 h-4 rounded-full" />
                       {token.name}
                     </div>
@@ -821,7 +821,7 @@ export default function WalletModal({ isOpen, onClose, onNavigateToEarn }: Walle
             }}
           >
             {/* Header */}
-            <div className="bg-white dark:bg-[#1f162b] p-5 px-6 border-b border-slate-100 dark:border-slate-800 sticky top-0 z-10">
+            <div className="bg-white dark:bg-[#13131f] p-5 px-6 border-b border-slate-100 dark:border-slate-800 sticky top-0 z-10">
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
                   {bankStep !== 'processing' && bankStep !== 'success' && (
@@ -875,7 +875,7 @@ export default function WalletModal({ isOpen, onClose, onNavigateToEarn }: Walle
                       placeholder="0.00"
                       step="0.01"
                       min="0.5"
-                      className="w-full p-3 border border-slate-200 dark:border-slate-700 rounded-xl text-lg font-semibold text-center bg-white dark:bg-[#1f162b] text-slate-900 dark:text-white transition-all focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-slate-400"
+                      className="w-full p-3 border border-slate-200 dark:border-slate-700 rounded-xl text-lg font-semibold text-center bg-white dark:bg-[#13131f] text-slate-900 dark:text-white transition-all focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-slate-400"
                     />
                     <div className="flex justify-between mt-2 text-xs text-slate-500 dark:text-slate-400">
                       <span>Available: {(walletData?.usdc_balance || 0).toFixed(2)} USDC</span>
@@ -889,7 +889,7 @@ export default function WalletModal({ isOpen, onClose, onNavigateToEarn }: Walle
                     </div>
                   </div>
                   {exchangeRate > 0 && parseFloat(bankAmount) > 0 && (
-                    <div className="bg-slate-50 dark:bg-[#281e36] rounded-xl p-3 border border-slate-100 dark:border-slate-800">
+                    <div className="bg-slate-50 dark:bg-[#1a1a2c] rounded-xl p-3 border border-slate-100 dark:border-slate-800">
                       <div className="flex justify-between text-sm">
                         <span className="text-slate-500 dark:text-slate-400">You&apos;ll receive (approx)</span>
                         <span className="font-semibold text-slate-900 dark:text-white">
@@ -918,7 +918,7 @@ export default function WalletModal({ isOpen, onClose, onNavigateToEarn }: Walle
                       value={bankEmail}
                       onChange={(e) => setBankEmail(e.target.value)}
                       placeholder="Enter your email"
-                      className="w-full p-3 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-white dark:bg-[#1f162b] text-slate-900 dark:text-white transition-all focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-slate-400"
+                      className="w-full p-3 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-white dark:bg-[#13131f] text-slate-900 dark:text-white transition-all focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-slate-400"
                     />
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">We&apos;ll send a verification code to this email</p>
                   </div>
@@ -1003,7 +1003,7 @@ export default function WalletModal({ isOpen, onClose, onNavigateToEarn }: Walle
                       value={bankSearch}
                       onChange={(e) => setBankSearch(e.target.value)}
                       placeholder="Search banks..."
-                      className="w-full p-3 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-white dark:bg-[#1f162b] text-slate-900 dark:text-white transition-all focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-slate-400 mb-2"
+                      className="w-full p-3 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-white dark:bg-[#13131f] text-slate-900 dark:text-white transition-all focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-slate-400 mb-2"
                     />
                   </div>
                   <div className="max-h-[280px] overflow-y-auto space-y-1" style={{ scrollbarWidth: 'thin' }}>
@@ -1011,7 +1011,7 @@ export default function WalletModal({ isOpen, onClose, onNavigateToEarn }: Walle
                       <button
                         key={bank.id}
                         onClick={() => handleBankSelect(bank.id)}
-                        className="w-full p-3 text-left bg-white dark:bg-[#281e36] border border-slate-100 dark:border-slate-800 rounded-xl text-sm font-medium text-slate-900 dark:text-white transition-all hover:border-primary hover:bg-primary/5 dark:hover:bg-primary/10 cursor-pointer"
+                        className="w-full p-3 text-left bg-white dark:bg-[#1a1a2c] border border-slate-100 dark:border-slate-800 rounded-xl text-sm font-medium text-slate-900 dark:text-white transition-all hover:border-primary hover:bg-primary/5 dark:hover:bg-primary/10 cursor-pointer"
                       >
                         {bank.name}
                       </button>
@@ -1024,7 +1024,7 @@ export default function WalletModal({ isOpen, onClose, onNavigateToEarn }: Walle
               {/* Account Number Step */}
               {bankStep === 'account' && (
                 <div className="space-y-4">
-                  <div className="bg-slate-50 dark:bg-[#281e36] rounded-xl p-3 border border-slate-100 dark:border-slate-800">
+                  <div className="bg-slate-50 dark:bg-[#1a1a2c] rounded-xl p-3 border border-slate-100 dark:border-slate-800">
                     <div className="text-xs text-slate-500 dark:text-slate-400">Selected Bank</div>
                     <div className="font-semibold text-slate-900 dark:text-white">{selectedBank?.name}</div>
                   </div>
@@ -1035,7 +1035,7 @@ export default function WalletModal({ isOpen, onClose, onNavigateToEarn }: Walle
                       value={accountNumber}
                       onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
                       placeholder="Enter 10-digit account number"
-                      className="w-full p-3 border border-slate-200 dark:border-slate-700 rounded-xl text-lg font-mono text-center tracking-wider bg-white dark:bg-[#1f162b] text-slate-900 dark:text-white transition-all focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-slate-400"
+                      className="w-full p-3 border border-slate-200 dark:border-slate-700 rounded-xl text-lg font-mono text-center tracking-wider bg-white dark:bg-[#13131f] text-slate-900 dark:text-white transition-all focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-slate-400"
                       maxLength={10}
                     />
                   </div>
@@ -1113,15 +1113,15 @@ export default function WalletModal({ isOpen, onClose, onNavigateToEarn }: Walle
                     </div>
                   </div>
 
-                  <div className="bg-slate-50 dark:bg-[#281e36] rounded-xl p-4 border border-slate-100 dark:border-slate-800">
+                  <div className="bg-slate-50 dark:bg-[#1a1a2c] rounded-xl p-4 border border-slate-100 dark:border-slate-800">
                     <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">Send exactly this amount:</h4>
-                    <div className="bg-white dark:bg-[#1f162b] rounded-xl p-3 border border-slate-100 dark:border-slate-800 text-center mb-4">
+                    <div className="bg-white dark:bg-[#13131f] rounded-xl p-3 border border-slate-100 dark:border-slate-800 text-center mb-4">
                       <div className="text-2xl font-bold text-primary">{parseFloat(bankAmount).toFixed(2)} USDC</div>
                       <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">≈ ₦{estimatedFiat.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
                     </div>
 
                     <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-2">To this address:</h4>
-                    <div className="bg-white dark:bg-[#1f162b] rounded-xl p-3 border border-slate-100 dark:border-slate-800">
+                    <div className="bg-white dark:bg-[#13131f] rounded-xl p-3 border border-slate-100 dark:border-slate-800">
                       <div className="font-mono text-xs text-slate-900 dark:text-white break-all mb-2">{order.paj_deposit_address}</div>
                       <button
                         onClick={() => {
@@ -1150,7 +1150,7 @@ export default function WalletModal({ isOpen, onClose, onNavigateToEarn }: Walle
                     </ol>
                   </div>
 
-                  <div className="bg-white dark:bg-[#281e36] rounded-xl p-3 border border-slate-100 dark:border-slate-800">
+                  <div className="bg-white dark:bg-[#1a1a2c] rounded-xl p-3 border border-slate-100 dark:border-slate-800">
                     <div className="flex justify-between text-sm">
                       <span className="text-slate-500 dark:text-slate-400">Recipient</span>
                       <span className="font-medium text-slate-900 dark:text-white">{accountDetails?.accountName}</span>
@@ -1213,7 +1213,7 @@ export default function WalletModal({ isOpen, onClose, onNavigateToEarn }: Walle
             }}
           >
             {/* Header */}
-            <div className="bg-white dark:bg-[#1f162b] p-5 px-6 border-b border-slate-100 dark:border-slate-800 sticky top-0 z-10">
+            <div className="bg-white dark:bg-[#13131f] p-5 px-6 border-b border-slate-100 dark:border-slate-800 sticky top-0 z-10">
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
                   <button
@@ -1238,7 +1238,7 @@ export default function WalletModal({ isOpen, onClose, onNavigateToEarn }: Walle
               {activityLoading ? (
                 <div className="flex flex-col gap-2">
                   {[1, 2, 3, 4, 5].map(i => (
-                    <div key={i} className="bg-white dark:bg-[#281e36] rounded-xl p-3 flex items-center gap-3 border border-slate-100 dark:border-slate-800 animate-pulse">
+                    <div key={i} className="bg-white dark:bg-[#1a1a2c] rounded-xl p-3 flex items-center gap-3 border border-slate-100 dark:border-slate-800 animate-pulse">
                       <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 shrink-0" />
                       <div className="flex-1">
                         <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-2/3 mb-1.5" />
@@ -1272,7 +1272,7 @@ export default function WalletModal({ isOpen, onClose, onNavigateToEarn }: Walle
                             {txDate}
                           </div>
                         )}
-                        <div className="bg-white dark:bg-[#281e36] rounded-xl p-3 flex items-center gap-3 border border-slate-100 dark:border-slate-800 transition-all hover:border-primary/40 hover:shadow-sm">
+                        <div className="bg-white dark:bg-[#1a1a2c] rounded-xl p-3 flex items-center gap-3 border border-slate-100 dark:border-slate-800 transition-all hover:border-primary/40 hover:shadow-sm">
                           <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
                             tx.status === 'confirmed' ? 'bg-emerald-100 dark:bg-emerald-900/30' :
                             tx.status === 'pending' ? 'bg-amber-100 dark:bg-amber-900/30' :

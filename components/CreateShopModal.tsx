@@ -58,7 +58,7 @@ export default function CreateShopModal({ onClose, onCreated }: CreateShopModalP
 
   return (
     <div className="fixed inset-0 z-[300] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="w-full max-w-md bg-white dark:bg-[#1f162b] rounded-3xl shadow-2xl overflow-hidden">
+      <div className="w-full max-w-md bg-white dark:bg-[#13131f] rounded-3xl shadow-2xl overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-6 pb-4">
           <div>
@@ -122,7 +122,7 @@ export default function CreateShopModal({ onClose, onCreated }: CreateShopModalP
                   type="button"
                   onClick={() => setThemeColor(c.value)}
                   className={`w-9 h-9 rounded-full transition-transform ${
-                    themeColor === c.value ? 'scale-110 ring-2 ring-offset-2 ring-offset-white dark:ring-offset-[#1f162b] ring-current' : 'hover:scale-105'
+                    themeColor === c.value ? 'scale-110 ring-2 ring-offset-2 ring-offset-white dark:ring-offset-[#13131f] ring-current' : 'hover:scale-105'
                   }`}
                   style={{ backgroundColor: c.value, color: c.value }}
                   title={c.label}

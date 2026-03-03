@@ -154,7 +154,7 @@ export default function CreateProductModal({ shopId, onClose, onCreated }: Creat
 
   return (
     <div className="fixed inset-0 z-[300] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="w-full max-w-md bg-white dark:bg-[#1f162b] rounded-3xl shadow-2xl overflow-hidden">
+      <div className="w-full max-w-md bg-white dark:bg-[#13131f] rounded-3xl shadow-2xl overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-6 pb-4">
           <div>

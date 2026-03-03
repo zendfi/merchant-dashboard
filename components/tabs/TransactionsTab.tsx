@@ -208,7 +208,7 @@ export default function TransactionsTab({ limit = 25, showViewAll = true }: Tran
               placeholder="Search by ID, email, name…"
               value={searchInput}
               onChange={e => setSearchInput(e.target.value)}
-              className="w-full pl-9 pr-8 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-[#1a1128] text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30"
+              className="w-full pl-9 pr-8 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-[#0f0f1a] text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30"
             />
             {searchInput && (
               <button onClick={() => setSearchInput('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
@@ -221,7 +221,7 @@ export default function TransactionsTab({ limit = 25, showViewAll = true }: Tran
 
       {/* Stats strip */}
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
-        <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 p-3 sm:p-4">
+        <div className="bg-white dark:bg-[#13131f] rounded-xl border border-slate-100 dark:border-slate-800 p-3 sm:p-4">
           <div className="flex items-center gap-1.5 mb-1">
             <TrendingUp size={13} className="text-primary shrink-0" />
             <span className="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 truncate">Volume</span>
@@ -229,7 +229,7 @@ export default function TransactionsTab({ limit = 25, showViewAll = true }: Tran
           <p className="text-base sm:text-xl font-bold text-slate-900 dark:text-white truncate">{formatAmountFull(stats?.total_volume || 0)}</p>
           <p className="text-[10px] sm:text-xs text-slate-400 mt-0.5 hidden sm:block">confirmed only</p>
         </div>
-        <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 p-3 sm:p-4">
+        <div className="bg-white dark:bg-[#13131f] rounded-xl border border-slate-100 dark:border-slate-800 p-3 sm:p-4">
           <div className="flex items-center gap-1.5 mb-1">
             <CheckCircle size={13} className="text-emerald-500 shrink-0" />
             <span className="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 truncate">Success</span>
@@ -237,7 +237,7 @@ export default function TransactionsTab({ limit = 25, showViewAll = true }: Tran
           <p className="text-base sm:text-xl font-bold text-slate-900 dark:text-white">{calculateSuccessRate()}%</p>
           <p className="text-[10px] sm:text-xs text-slate-400 mt-0.5 hidden sm:block">{stats?.confirmed_payments ?? 0} confirmed</p>
         </div>
-        <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 p-3 sm:p-4">
+        <div className="bg-white dark:bg-[#13131f] rounded-xl border border-slate-100 dark:border-slate-800 p-3 sm:p-4">
           <div className="flex items-center gap-1.5 mb-1">
             <Clock size={13} className="text-amber-500 shrink-0" />
             <span className="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 truncate">Pending</span>
@@ -257,7 +257,7 @@ export default function TransactionsTab({ limit = 25, showViewAll = true }: Tran
             className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
               statusFilter === s
                 ? 'bg-primary text-white'
-                : 'bg-white dark:bg-[#1f162b] border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5'
+                : 'bg-white dark:bg-[#13131f] border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5'
             }`}
           >
             {s === 'all' ? 'All' : s.charAt(0).toUpperCase() + s.slice(1)}
@@ -268,7 +268,7 @@ export default function TransactionsTab({ limit = 25, showViewAll = true }: Tran
         <select
           value={reconciledFilter}
           onChange={e => { setReconciledFilter(e.target.value); setCurrentPage(1); }}
-          className="shrink-0 px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1f162b] text-slate-600 dark:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30"
+          className="shrink-0 px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#13131f] text-slate-600 dark:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30"
         >
           <option value="all">Reconciled: All</option>
           <option value="true">Reconciled</option>
@@ -279,14 +279,14 @@ export default function TransactionsTab({ limit = 25, showViewAll = true }: Tran
           type="date"
           value={startDate}
           onChange={e => { setStartDate(e.target.value); setCurrentPage(1); }}
-          className="shrink-0 px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1f162b] text-slate-600 dark:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30"
+          className="shrink-0 px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#13131f] text-slate-600 dark:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30"
         />
         <span className="text-xs text-slate-400 shrink-0">–</span>
         <input
           type="date"
           value={endDate}
           onChange={e => { setEndDate(e.target.value); setCurrentPage(1); }}
-          className="shrink-0 px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#1f162b] text-slate-600 dark:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30"
+          className="shrink-0 px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-[#13131f] text-slate-600 dark:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30"
         />
         {activeFilters > 0 && (
           <button
@@ -299,7 +299,7 @@ export default function TransactionsTab({ limit = 25, showViewAll = true }: Tran
       </div>
 
       {/* Table */}
-      <div className="bg-white dark:bg-[#1f162b] rounded-xl border border-slate-100 dark:border-slate-800 overflow-hidden">
+      <div className="bg-white dark:bg-[#13131f] rounded-xl border border-slate-100 dark:border-slate-800 overflow-hidden">
 
         {/* ── Mobile card list (< sm) ── */}
         <div className="sm:hidden">

@@ -76,7 +76,7 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }: Sid
       {/* Sidebar */}
       <aside className={`
         fixed lg:sticky top-0 left-0 h-screen z-[200]
-        w-56 bg-white dark:bg-[#191022] 
+        w-56 bg-white dark:bg-[#0d0d14] 
         flex flex-col shrink-0 transition-all duration-300
         ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
