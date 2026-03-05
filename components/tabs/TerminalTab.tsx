@@ -255,7 +255,7 @@ export default function TerminalTab() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6">
+    <div className="max-w-2xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -357,7 +357,7 @@ export default function TerminalTab() {
               <span className="text-sm font-medium text-slate-400 uppercase tracking-widest">Charge Amount</span>
             </div>
             <div className="text-center mb-6">
-              <span className="text-5xl font-black text-slate-900 dark:text-white tabular-nums">
+            <span className="text-4xl sm:text-5xl font-black text-slate-900 dark:text-white tabular-nums">
                 ₦{amount > 0 ? amount.toLocaleString() : '0'}
               </span>
             </div>
@@ -494,7 +494,7 @@ export default function TerminalTab() {
       {step === 'display' && activeCharge && (
         <div className="space-y-4">
           {/* The big display */}
-          <div className="bg-white dark:bg-slate-900 rounded-3xl border-2 border-emerald-100 dark:border-emerald-900/50 shadow-lg p-8">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border-2 border-emerald-100 dark:border-emerald-900/50 shadow-lg p-5 sm:p-8">
             <div className="text-center mb-2">
               <span className="text-sm font-medium text-slate-400 uppercase tracking-[0.2em]">
                 Pay via Bank Transfer
@@ -502,17 +502,17 @@ export default function TerminalTab() {
             </div>
 
             {/* Big amount */}
-            <h1 className="text-5xl font-black text-emerald-600 text-center mb-8">
+            <h1 className="text-4xl sm:text-5xl font-black text-emerald-600 text-center mb-6 sm:mb-8">
               ₦{activeCharge.amount_ngn.toLocaleString()}
             </h1>
 
             {/* Bank details card */}
-            <div className="bg-slate-50 dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-4">
+            <div className="bg-slate-50 dark:bg-slate-800 p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-4">
               {/* Account number (most important) */}
               <div className="text-center">
                 <p className="text-xs text-slate-400 uppercase font-bold mb-1 tracking-wider">Account Number</p>
-                <div className="flex items-center justify-center gap-3">
-                  <span className="text-4xl font-mono font-bold tracking-tight text-slate-900 dark:text-white">
+                <div className="flex items-center justify-center gap-2 sm:gap-3">
+                  <span className="text-2xl sm:text-4xl font-mono font-bold tracking-tight text-slate-900 dark:text-white">
                     {activeCharge.bank_account_number}
                   </span>
                   <button
@@ -573,14 +573,14 @@ export default function TerminalTab() {
 
       {/* ── SUCCESS STEP ── */}
       {step === 'success' && activeCharge && (
-        <div className="bg-white dark:bg-slate-900 rounded-3xl border-2 border-emerald-200 dark:border-emerald-800 shadow-lg p-8 text-center">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl border-2 border-emerald-200 dark:border-emerald-800 shadow-lg p-5 sm:p-8 text-center">
           {/* Success animation */}
           <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-4 animate-[scale-in_0.3s_ease-out]">
             <span className="material-symbols-outlined text-emerald-600 text-4xl">check_circle</span>
           </div>
 
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">Payment Confirmed!</h2>
-          <p className="text-3xl font-black text-emerald-600 mb-6">
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-1">Payment Confirmed!</h2>
+          <p className="text-2xl sm:text-3xl font-black text-emerald-600 mb-6">
             ₦{activeCharge.amount_ngn.toLocaleString()}
           </p>
 
