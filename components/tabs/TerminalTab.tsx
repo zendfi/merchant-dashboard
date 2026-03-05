@@ -260,7 +260,7 @@ export default function TerminalTab() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <span className="material-symbols-rounded text-emerald-500">point_of_sale</span>
+            <span className="material-symbols-outlined text-emerald-500">point_of_sale</span>
             Terminal
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
@@ -272,7 +272,7 @@ export default function TerminalTab() {
             onClick={() => setShowHistory(!showHistory)}
             className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition"
           >
-            <span className="material-symbols-rounded text-[18px]">receipt_long</span>
+            <span className="material-symbols-outlined text-[18px]">receipt_long</span>
             History
           </button>
         )}
@@ -281,9 +281,9 @@ export default function TerminalTab() {
       {/* Error banner */}
       {error && (
         <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-700 dark:text-red-300 flex items-center gap-2">
-          <span className="material-symbols-rounded text-[18px]">error</span>
+          <span className="material-symbols-outlined text-[18px]">error</span>
           {error}
-          <button onClick={() => setError(null)} className="ml-auto text-red-400 hover:text-red-600"><span className="material-symbols-rounded text-[18px]">close</span></button>
+          <button onClick={() => setError(null)} className="ml-auto text-red-400 hover:text-red-600"><span className="material-symbols-outlined text-[18px]">close</span></button>
         </div>
       )}
 
@@ -291,7 +291,7 @@ export default function TerminalTab() {
       {step === 'setup' && (
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-8 text-center">
           <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <span className="material-symbols-rounded text-emerald-600 text-3xl">point_of_sale</span>
+            <span className="material-symbols-outlined text-emerald-600 text-3xl">point_of_sale</span>
           </div>
           <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Enable Terminal Mode</h2>
           <p className="text-slate-500 dark:text-slate-400 mb-6 max-w-md mx-auto">
@@ -452,7 +452,7 @@ export default function TerminalTab() {
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 divide-y divide-slate-100 dark:divide-slate-800">
             {charges.length === 0 ? (
               <div className="p-8 text-center text-slate-400">
-                <span className="material-symbols-rounded text-4xl mb-2 block">receipt_long</span>
+                <span className="material-symbols-outlined text-4xl mb-2 block">receipt_long</span>
                 No transactions today
               </div>
             ) : (
@@ -520,7 +520,7 @@ export default function TerminalTab() {
                     className="p-2 bg-white dark:bg-slate-700 rounded-lg shadow-sm active:scale-95 transition-transform border border-slate-200 dark:border-slate-600"
                     title="Copy"
                   >
-                    <span className="material-symbols-rounded text-[18px] text-slate-500">content_copy</span>
+                    <span className="material-symbols-outlined text-[18px] text-slate-500">content_copy</span>
                   </button>
                 </div>
               </div>
@@ -576,7 +576,7 @@ export default function TerminalTab() {
         <div className="bg-white dark:bg-slate-900 rounded-3xl border-2 border-emerald-200 dark:border-emerald-800 shadow-lg p-8 text-center">
           {/* Success animation */}
           <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-4 animate-[scale-in_0.3s_ease-out]">
-            <span className="material-symbols-rounded text-emerald-600 text-4xl">check_circle</span>
+            <span className="material-symbols-outlined text-emerald-600 text-4xl">check_circle</span>
           </div>
 
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">Payment Confirmed!</h2>
@@ -615,7 +615,7 @@ export default function TerminalTab() {
             </div>
           ) : (
             <div className="mb-6 flex items-center justify-center gap-2 text-emerald-600">
-              <span className="material-symbols-rounded text-[18px]">check</span>
+              <span className="material-symbols-outlined text-[18px]">check</span>
               <span className="text-sm font-medium">Receipt sent to {receiptEmail}</span>
             </div>
           )}
