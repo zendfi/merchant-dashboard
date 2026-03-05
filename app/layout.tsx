@@ -8,9 +8,16 @@ export const metadata: Metadata = {
     template: '%s | ZendFi',
   },
   description: 'Merchant Dashboard for ZendFi — Accept Solana payments with ease.',
+  manifest: '/manifest.json',
   icons: {
     icon: '/favicon.ico',
-    apple: '/favicon.svg',
+    apple: '/icons/icon-192.png',
+    shortcut: '/favicon.ico',
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'ZendFi',
   },
   robots: {
     index: false,
@@ -35,17 +42,20 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        {/* PWA: register service worker */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `if('serviceWorker' in navigator){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('/sw.js').catch(function(){});
+  });
+}`,
+          }}
+        />
         {/* Prevent flash of wrong theme — runs synchronously before paint */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){
-  try{
-    var t=localStorage.getItem('zendfi-theme');
-    if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches)){
-      document.documentElement.classList.add('dark');
-    }
-  }catch(e){}
-})();`,
+            __html: `(function(){try{var t=localStorage.getItem('zendfi-theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark');}}catch(e){}})();`,
           }}
         />
       </head>
