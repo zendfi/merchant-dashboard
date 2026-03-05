@@ -22,6 +22,7 @@ import ProfileTab from '@/components/tabs/ProfileTab';
 import SupportTab from '@/components/tabs/SupportTab';
 import EarnTab from '@/components/tabs/EarnTab';
 import ShopTab from '@/components/tabs/ShopTab';
+import TerminalTab from '@/components/tabs/TerminalTab';
 
 function DashboardContent() {
   const router = useRouter();
@@ -87,6 +88,8 @@ function DashboardContent() {
         return <EarnTab />;
       case 'shop':
         return <ShopTab />;
+      case 'terminal':
+        return <TerminalTab />;
       case 'payment-links':
         return <PaymentLinksTab onModalToggle={setHeaderHidden} />;
       case 'customers':

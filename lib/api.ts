@@ -1138,6 +1138,135 @@ export const shops = {
   },
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Terminal (POS) APIs
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface TerminalStatus {
+  enabled: boolean;
+  wallet_address: string | null;
+  settings: TerminalSettings | null;
+  today_summary: TerminalSummary;
+}
+
+export interface TerminalSettings {
+  business_name: string | null;
+  quick_amounts: number[];
+  sound_enabled: boolean;
+  auto_receipt: boolean;
+}
+
+export interface TerminalSummary {
+  total_ngn: number;
+  total_usd: number;
+  transaction_count: number;
+  completed_count: number;
+}
+
+export interface TerminalCharge {
+  charge_id: string;
+  amount_ngn: number;
+  bank_account_number: string;
+  bank_account_name: string;
+  bank_name: string;
+  status: string;
+  reference: string | null;
+  expires_at: string;
+  created_at: string;
+}
+
+export interface TerminalChargeStatus {
+  charge_id: string;
+  amount_ngn: number;
+  status: string;
+  bank_account_number: string | null;
+  bank_account_name: string | null;
+  bank_name: string | null;
+  reference: string | null;
+  confirmed_at: string | null;
+  created_at: string;
+  expires_at: string;
+}
+
+export interface TerminalChargeListItem {
+  id: string;
+  amount_ngn: number;
+  amount_usd: number | null;
+  status: string;
+  reference: string | null;
+  receipt_email: string | null;
+  bank_name: string | null;
+  created_at: string;
+  confirmed_at: string | null;
+}
+
+export interface TerminalChargesResponse {
+  charges: TerminalChargeListItem[];
+  total: number;
+  summary: TerminalSummary;
+}
+
+export const terminal = {
+  getStatus: async (): Promise<TerminalStatus> => {
+    return apiCall('/api/v1/merchants/me/terminal/status');
+  },
+
+  enable: async (params: {
+    business_name?: string;
+    quick_amounts?: number[];
+  }): Promise<{ success: boolean; wallet_address: string; message: string }> => {
+    return apiCall('/api/v1/merchants/me/terminal/enable', {
+      method: 'POST',
+      body: JSON.stringify(params),
+    });
+  },
+
+  updateSettings: async (params: {
+    business_name?: string;
+    quick_amounts?: number[];
+    sound_enabled?: boolean;
+    auto_receipt?: boolean;
+  }): Promise<{ success: boolean }> => {
+    return apiCall('/api/v1/merchants/me/terminal/settings', {
+      method: 'PATCH',
+      body: JSON.stringify(params),
+    });
+  },
+
+  charge: async (params: {
+    amount_ngn: number;
+    reference?: string;
+  }): Promise<TerminalCharge> => {
+    return apiCall('/api/v1/merchants/me/terminal/charge', {
+      method: 'POST',
+      body: JSON.stringify(params),
+    });
+  },
+
+  getChargeStatus: async (chargeId: string): Promise<TerminalChargeStatus> => {
+    return apiCall(`/api/v1/merchants/me/terminal/charges/${chargeId}`);
+  },
+
+  listCharges: async (params?: {
+    limit?: number;
+    offset?: number;
+    period?: string;
+  }): Promise<TerminalChargesResponse> => {
+    const query = new URLSearchParams();
+    if (params?.limit) query.set('limit', params.limit.toString());
+    if (params?.offset) query.set('offset', params.offset.toString());
+    if (params?.period) query.set('period', params.period);
+    return apiCall(`/api/v1/merchants/me/terminal/charges?${query.toString()}`);
+  },
+
+  sendReceipt: async (chargeId: string, email: string): Promise<{ success: boolean }> => {
+    return apiCall(`/api/v1/merchants/me/terminal/charges/${chargeId}/receipt`, {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  },
+};
+
 export default {
   auth,
   merchant,
@@ -1151,4 +1280,5 @@ export default {
   customers,
   earn,
   shops,
+  terminal,
 };
