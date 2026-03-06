@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 import { terminal, TerminalStatus, TerminalCharge, TerminalChargeStatus, TerminalChargeListItem } from '@/lib/api';
+import { useMerchant } from '@/lib/merchant-context';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -49,6 +51,7 @@ function playSuccessSound() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function TerminalTab() {
+  const { merchant } = useMerchant();
   const [status, setStatus] = useState<TerminalStatus | null>(null);
   const [step, setStep] = useState<TerminalStep>('input');
   const [loading, setLoading] = useState(true);
@@ -73,6 +76,10 @@ export default function TerminalTab() {
   // Setup
   const [setupName, setSetupName] = useState('');
   const [isEnabling, setIsEnabling] = useState(false);
+  const [kioskCopied, setKioskCopied] = useState(false);
+  const kioskUrl = typeof window !== 'undefined' && merchant?.id
+    ? `${window.location.origin}/terminal/kiosk/${merchant.id}`
+    : '';
 
   // Polling ref
   const pollRef = useRef<NodeJS.Timeout | null>(null);
@@ -262,12 +269,31 @@ export default function TerminalTab() {
           Terminal
         </h1>
         {status?.enabled && step === 'input' && (
-          <button
-            onClick={() => setShowHistory(!showHistory)}
-            className="text-xs font-medium text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition uppercase tracking-wider"
-          >
-            {showHistory ? '← Back' : 'History'}
-          </button>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => {
+                if (kioskUrl) {
+                  navigator.clipboard.writeText(kioskUrl);
+                  setKioskCopied(true);
+                  setTimeout(() => setKioskCopied(false), 2000);
+                }
+              }}
+              className="text-xs font-medium text-slate-300 dark:text-slate-600 hover:text-slate-500 dark:hover:text-slate-400 transition uppercase tracking-wider flex items-center gap-1"
+              title="Copy kiosk URL for customer-facing display"
+            >
+              {kioskCopied ? (
+                <><span className="material-symbols-outlined text-[13px] text-emerald-500">check</span> Copied</>
+              ) : (
+                <><span className="material-symbols-outlined text-[13px]">tv</span> Kiosk</>
+              )}
+            </button>
+            <button
+              onClick={() => setShowHistory(!showHistory)}
+              className="text-xs font-medium text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition uppercase tracking-wider"
+            >
+              {showHistory ? '← Back' : 'History'}
+            </button>
+          </div>
         )}
       </div>
 
@@ -519,15 +545,29 @@ export default function TerminalTab() {
             </div>
           </div>
 
+          {/* QR code — customer scans to see bank details on their own phone */}
+          <div className="flex flex-col items-center py-6">
+            <div className="bg-white p-3 rounded-xl">
+              <QRCodeSVG
+                value={`${typeof window !== 'undefined' ? window.location.origin : ''}/terminal/display/${activeCharge.charge_id}`}
+                size={120}
+                level="M"
+                bgColor="#ffffff"
+                fgColor="#0f172a"
+              />
+            </div>
+            <p className="text-[11px] text-slate-300 dark:text-slate-600 mt-2">Customer scan</p>
+          </div>
+
           {/* Reference */}
           {activeCharge.reference && (
-            <p className="text-center text-xs text-slate-300 dark:text-slate-600 mb-4">
+            <p className="text-center text-xs text-slate-300 dark:text-slate-600 mb-2">
               Ref: {activeCharge.reference}
             </p>
           )}
 
           {/* Waiting indicator — minimal */}
-          <div className="flex items-center justify-center gap-2 py-6">
+          <div className="flex items-center justify-center gap-2 py-4">
             <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
             <span className="text-xs text-slate-400 dark:text-slate-500">
               Listening for transfer · {formatElapsed(elapsed)}
