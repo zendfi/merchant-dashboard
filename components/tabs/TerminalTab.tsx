@@ -249,165 +249,161 @@ export default function TerminalTab() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-[60vh]">
-        <div className="w-8 h-8 border-4 border-slate-200 border-t-emerald-500 rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-slate-200 dark:border-slate-700 border-t-slate-500 rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <span className="material-symbols-outlined text-emerald-500">point_of_sale</span>
-            Terminal
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Accept in-person bank transfer payments
-          </p>
-        </div>
+    <div className="max-w-lg mx-auto">
+      {/* ── Minimal header ── */}
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-lg font-semibold text-slate-900 dark:text-white tracking-tight">
+          Terminal
+        </h1>
         {status?.enabled && step === 'input' && (
           <button
             onClick={() => setShowHistory(!showHistory)}
-            className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition"
+            className="text-xs font-medium text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition uppercase tracking-wider"
           >
-            <span className="material-symbols-outlined text-[18px]">receipt_long</span>
-            History
+            {showHistory ? '← Back' : 'History'}
           </button>
         )}
       </div>
 
       {/* Error banner */}
       {error && (
-        <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-700 dark:text-red-300 flex items-center gap-2">
-          <span className="material-symbols-outlined text-[18px]">error</span>
-          {error}
-          <button onClick={() => setError(null)} className="ml-auto text-red-400 hover:text-red-600"><span className="material-symbols-outlined text-[18px]">close</span></button>
+        <div className="mb-6 px-4 py-3 bg-red-50/80 dark:bg-red-950/20 rounded-2xl text-sm text-red-600 dark:text-red-400 flex items-center gap-3">
+          <span className="material-symbols-outlined text-[16px] shrink-0">error</span>
+          <span className="flex-1">{error}</span>
+          <button onClick={() => setError(null)} className="text-red-300 hover:text-red-500 transition"><span className="material-symbols-outlined text-[16px]">close</span></button>
         </div>
       )}
 
       {/* ── SETUP STEP ── */}
       {step === 'setup' && (
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-8 text-center">
-          <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <span className="material-symbols-outlined text-emerald-600 text-3xl">point_of_sale</span>
-          </div>
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Enable Terminal Mode</h2>
-          <p className="text-slate-500 dark:text-slate-400 mb-6 max-w-md mx-auto">
-            Turn your device into a payment terminal. Accept bank transfers in person — customers just transfer Naira, you receive USDC.
-          </p>
-
-          <div className="max-w-xs mx-auto mb-6">
-            <label className="block text-left text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-              Business Name (shown to customers)
-            </label>
-            <input
-              type="text"
-              value={setupName}
-              onChange={(e) => setSetupName(e.target.value)}
-              placeholder="e.g. Mama's Kitchen"
-              className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-            />
+        <div className="pt-8 pb-4">
+          <div className="text-center mb-10">
+            <div className="w-14 h-14 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-5">
+              <span className="material-symbols-outlined text-slate-400 dark:text-slate-500 text-2xl">point_of_sale</span>
+            </div>
+            <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">Enable Terminal</h2>
+            <p className="text-sm text-slate-400 dark:text-slate-500 max-w-xs mx-auto leading-relaxed">
+              Accept bank transfers in person. Customers transfer Naira — you receive USDC instantly.
+            </p>
           </div>
 
-          <button
-            onClick={handleEnable}
-            disabled={isEnabling}
-            className="px-8 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl transition disabled:opacity-50"
-          >
-            {isEnabling ? (
-              <span className="flex items-center gap-2">
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Setting up...
-              </span>
-            ) : (
-              'Enable Terminal'
-            )}
-          </button>
+          <div className="max-w-xs mx-auto space-y-5">
+            <div>
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">
+                Business Name
+              </label>
+              <input
+                type="text"
+                value={setupName}
+                onChange={(e) => setSetupName(e.target.value)}
+                placeholder="e.g. Mama's Kitchen"
+                className="w-full px-4 py-3 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-xl text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-slate-300 dark:focus:ring-slate-600 transition"
+              />
+            </div>
+
+            <button
+              onClick={handleEnable}
+              disabled={isEnabling}
+              className="w-full py-3.5 bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 font-medium rounded-xl transition disabled:opacity-40"
+            >
+              {isEnabling ? (
+                <span className="flex items-center justify-center gap-2">
+                  <div className="w-3.5 h-3.5 border-2 border-white/30 dark:border-slate-900/30 border-t-white dark:border-t-slate-900 rounded-full animate-spin" />
+                  Setting up...
+                </span>
+              ) : (
+                'Enable Terminal'
+              )}
+            </button>
+          </div>
         </div>
       )}
 
       {/* ── INPUT STEP (Numpad) ── */}
       {step === 'input' && !showHistory && (
-        <div className="space-y-4">
-          {/* Today's summary bar */}
+        <div>
+          {/* Today's summary — subtle inline */}
           {status?.today_summary && status.today_summary.transaction_count > 0 && (
-            <div className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border border-emerald-200 dark:border-emerald-800 rounded-2xl p-4 flex items-center justify-between">
+            <div className="flex items-baseline justify-between mb-8 px-1">
               <div>
-                <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Today&apos;s Sales</p>
-                <p className="text-xl font-bold text-emerald-700 dark:text-emerald-300">
+                <span className="text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider font-medium">Today</span>
+                <p className="text-lg font-semibold text-slate-900 dark:text-white -mt-0.5">
                   ₦{status.today_summary.total_ngn.toLocaleString()}
                 </p>
               </div>
-              <div className="text-right">
-                <p className="text-sm text-emerald-600 dark:text-emerald-400">
-                  {status.today_summary.completed_count}/{status.today_summary.transaction_count} completed
-                </p>
-                <p className="text-xs text-emerald-500 dark:text-emerald-500">
-                  ≈ ${status.today_summary.total_usd.toFixed(2)} USDC
-                </p>
-              </div>
+              <span className="text-xs text-slate-400 dark:text-slate-500 tabular-nums">
+                {status.today_summary.completed_count} of {status.today_summary.transaction_count} · ${status.today_summary.total_usd.toFixed(2)}
+              </span>
             </div>
           )}
 
-          {/* Amount display */}
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-6">
-            <div className="text-center mb-2">
-              <span className="text-sm font-medium text-slate-400 uppercase tracking-widest">Charge Amount</span>
-            </div>
-            <div className="text-center mb-6">
-            <span className="text-4xl sm:text-5xl font-black text-slate-900 dark:text-white tabular-nums">
-                ₦{amount > 0 ? amount.toLocaleString() : '0'}
-              </span>
-            </div>
+          {/* Amount hero */}
+          <div className="text-center pt-2 pb-8">
+            <span className="text-5xl sm:text-6xl font-extralight text-slate-900 dark:text-white tabular-nums tracking-tight">
+              <span className="text-slate-300 dark:text-slate-600">₦</span>
+              {amount > 0 ? amount.toLocaleString() : '0'}
+            </span>
+          </div>
 
-            {/* Quick amounts */}
-            <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
-              {(quickAmounts as number[]).map((qa: number) => (
-                <button
-                  key={qa}
-                  onClick={() => handleCharge(qa)}
-                  className="flex-shrink-0 px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-slate-700 dark:text-slate-300 hover:text-emerald-700 dark:hover:text-emerald-300 font-semibold rounded-xl transition text-sm"
-                >
-                  ₦{qa.toLocaleString()}
-                </button>
-              ))}
-            </div>
+          {/* Quick amounts — subtle pills */}
+          <div className="flex justify-center gap-1.5 mb-6">
+            {(quickAmounts as number[]).map((qa: number) => (
+              <button
+                key={qa}
+                onClick={() => handleCharge(qa)}
+                className="px-3.5 py-1.5 text-xs font-medium text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition"
+              >
+                ₦{qa.toLocaleString()}
+              </button>
+            ))}
+          </div>
 
-            {/* Numpad */}
-            <div className="grid grid-cols-3 gap-2 mb-4">
-              {['1', '2', '3', '4', '5', '6', '7', '8', '9', 'C', '0', '00'].map((key) => (
-                <button
-                  key={key}
-                  onClick={() => handleNumpad(key)}
-                  className={`py-4 text-xl font-bold rounded-xl transition active:scale-95 ${
-                    key === 'C'
-                      ? 'bg-red-100 dark:bg-red-900/30 text-red-600 hover:bg-red-200 dark:hover:bg-red-900/50'
-                      : 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white hover:bg-slate-200 dark:hover:bg-slate-700'
-                  }`}
-                >
-                  {key}
-                </button>
-              ))}
-            </div>
+          {/* Numpad — soft, spacious */}
+          <div className="grid grid-cols-3 gap-1.5 mb-5 max-w-xs mx-auto">
+            {['1', '2', '3', '4', '5', '6', '7', '8', '9', 'C', '0', '←'].map((key) => (
+              <button
+                key={key}
+                onClick={() => handleNumpad(key)}
+                className={`h-14 text-lg rounded-2xl transition-all active:scale-[0.92] select-none ${
+                  key === 'C'
+                    ? 'text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium text-sm'
+                    : key === '←'
+                    ? 'text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium text-sm'
+                    : 'text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium'
+                }`}
+              >
+                {key === '←' ? (
+                  <span className="material-symbols-outlined text-[20px]">backspace</span>
+                ) : key}
+              </button>
+            ))}
+          </div>
 
-            {/* Optional reference */}
+          {/* Reference — collapsible feel */}
+          <div className="mb-4 max-w-xs mx-auto">
             <input
               type="text"
               value={reference}
               onChange={(e) => setReference(e.target.value)}
-              placeholder="Reference (optional, e.g. Table 5)"
-              className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 mb-4"
+              placeholder="Add a reference..."
+              className="w-full px-0 py-2 bg-transparent border-0 border-b border-slate-100 dark:border-slate-800 text-sm text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-slate-600 focus:outline-none focus:border-slate-300 dark:focus:border-slate-600 transition text-center"
             />
+          </div>
 
-            {/* Charge button */}
+          {/* Charge button */}
+          <div className="max-w-xs mx-auto">
             <button
               onClick={() => handleCharge()}
               disabled={amount < 100}
-              className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-400 text-white font-bold text-lg rounded-2xl transition active:scale-[0.98]"
+              className="w-full py-4 bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 disabled:bg-slate-100 dark:disabled:bg-slate-800/50 disabled:text-slate-300 dark:disabled:text-slate-600 text-white dark:text-slate-900 font-semibold rounded-2xl transition active:scale-[0.98]"
             >
-              {amount < 100 ? 'Enter amount ₦100+' : `Charge ₦${amount.toLocaleString()}`}
+              {amount < 100 ? 'Enter amount' : `Charge ₦${amount.toLocaleString()}`}
             </button>
           </div>
         </div>
@@ -415,64 +411,54 @@ export default function TerminalTab() {
 
       {/* ── HISTORY VIEW ── */}
       {step === 'input' && showHistory && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white">Today&apos;s Transactions</h2>
-            <button
-              onClick={() => setShowHistory(false)}
-              className="text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
-            >
-              ← Back to Terminal
-            </button>
-          </div>
-
-          {/* Summary card */}
+        <div>
+          {/* Summary row */}
           {status?.today_summary && (
-            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 grid grid-cols-2 gap-4">
+            <div className="flex items-baseline gap-6 mb-6 px-1">
               <div>
-                <p className="text-xs text-slate-500 uppercase font-medium">Total Sales</p>
-                <p className="text-2xl font-bold text-slate-900 dark:text-white">₦{status.today_summary.total_ngn.toLocaleString()}</p>
+                <span className="text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider font-medium">Revenue</span>
+                <p className="text-xl font-semibold text-slate-900 dark:text-white">₦{status.today_summary.total_ngn.toLocaleString()}</p>
               </div>
               <div>
-                <p className="text-xs text-slate-500 uppercase font-medium">USDC Settled</p>
-                <p className="text-2xl font-bold text-emerald-600">${status.today_summary.total_usd.toFixed(2)}</p>
+                <span className="text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider font-medium">Settled</span>
+                <p className="text-xl font-semibold text-slate-900 dark:text-white">${status.today_summary.total_usd.toFixed(2)}</p>
               </div>
-              <div>
-                <p className="text-xs text-slate-500 uppercase font-medium">Transactions</p>
-                <p className="text-lg font-bold text-slate-900 dark:text-white">{status.today_summary.transaction_count}</p>
-              </div>
-              <div>
-                <p className="text-xs text-slate-500 uppercase font-medium">Completed</p>
-                <p className="text-lg font-bold text-emerald-600">{status.today_summary.completed_count}</p>
+              <div className="ml-auto text-right">
+                <span className="text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider font-medium">Count</span>
+                <p className="text-xl font-semibold text-slate-900 dark:text-white">{status.today_summary.completed_count}<span className="text-slate-300 dark:text-slate-600">/{status.today_summary.transaction_count}</span></p>
               </div>
             </div>
           )}
 
           {/* Charges list */}
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 divide-y divide-slate-100 dark:divide-slate-800">
+          <div className="space-y-1">
             {charges.length === 0 ? (
-              <div className="p-8 text-center text-slate-400">
-                <span className="material-symbols-outlined text-4xl mb-2 block">receipt_long</span>
-                No transactions today
+              <div className="py-16 text-center">
+                <p className="text-sm text-slate-300 dark:text-slate-600">No transactions today</p>
               </div>
             ) : (
               charges.map((c) => (
-                <div key={c.id} className="px-4 py-3 flex items-center justify-between">
-                  <div>
-                    <p className="font-semibold text-slate-900 dark:text-white">
-                      ₦{c.amount_ngn.toLocaleString()}
-                    </p>
-                    <p className="text-xs text-slate-400">
-                      {c.reference || c.bank_name || 'Terminal charge'} · {new Date(c.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </p>
+                <div key={c.id} className="flex items-center justify-between py-3 px-1">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                      c.status === 'COMPLETED' ? 'bg-emerald-400' :
+                      c.status === 'PENDING' || c.status === 'PROCESSING' ? 'bg-amber-400' :
+                      'bg-slate-300 dark:bg-slate-600'
+                    }`} />
+                    <div>
+                      <p className="text-sm font-medium text-slate-900 dark:text-white">
+                        ₦{c.amount_ngn.toLocaleString()}
+                      </p>
+                      <p className="text-xs text-slate-400 dark:text-slate-500">
+                        {c.reference || 'Terminal'} · {new Date(c.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
                   </div>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    c.status === 'COMPLETED' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
-                    c.status === 'PENDING' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
-                    c.status === 'PROCESSING' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
-                    'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
-                  }`}>
-                    {c.status}
+                  <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">
+                    {c.status === 'COMPLETED' ? 'Paid' :
+                     c.status === 'PENDING' ? 'Pending' :
+                     c.status === 'PROCESSING' ? 'Processing' :
+                     c.status === 'EXPIRED' ? 'Expired' : c.status}
                   </span>
                 </div>
               ))
@@ -483,150 +469,136 @@ export default function TerminalTab() {
 
       {/* ── LOADING STEP ── */}
       {step === 'loading' && (
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700 p-12 text-center">
-          <div className="w-12 h-12 border-4 border-emerald-200 border-t-emerald-500 rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-lg font-semibold text-slate-900 dark:text-white mb-1">Generating bank details...</p>
-          <p className="text-sm text-slate-400">This usually takes a couple of seconds</p>
+        <div className="py-20 text-center">
+          <div className="w-8 h-8 border-2 border-slate-200 dark:border-slate-700 border-t-slate-400 rounded-full animate-spin mx-auto mb-5" />
+          <p className="text-sm font-medium text-slate-900 dark:text-white">Generating bank details</p>
+          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Usually takes a few seconds</p>
         </div>
       )}
 
       {/* ── DISPLAY STEP (Customer-facing bank details) ── */}
       {step === 'display' && activeCharge && (
-        <div className="space-y-4">
-          {/* The big display */}
-          <div className="bg-white dark:bg-slate-900 rounded-3xl border-2 border-emerald-100 dark:border-emerald-900/50 shadow-lg p-5 sm:p-8">
-            <div className="text-center mb-2">
-              <span className="text-sm font-medium text-slate-400 uppercase tracking-[0.2em]">
-                Pay via Bank Transfer
-              </span>
-            </div>
-
-            {/* Big amount */}
-            <h1 className="text-4xl sm:text-5xl font-black text-emerald-600 text-center mb-6 sm:mb-8">
+        <div>
+          {/* Amount */}
+          <div className="text-center pt-2 mb-8">
+            <p className="text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider font-medium mb-2">Transfer exactly</p>
+            <h1 className="text-4xl sm:text-5xl font-semibold text-slate-900 dark:text-white tracking-tight">
               ₦{activeCharge.amount_ngn.toLocaleString()}
             </h1>
-
-            {/* Bank details card */}
-            <div className="bg-slate-50 dark:bg-slate-800 p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-4">
-              {/* Account number (most important) */}
-              <div className="text-center">
-                <p className="text-xs text-slate-400 uppercase font-bold mb-1 tracking-wider">Account Number</p>
-                <div className="flex items-center justify-center gap-2 sm:gap-3">
-                  <span className="text-2xl sm:text-4xl font-mono font-bold tracking-tight text-slate-900 dark:text-white">
-                    {activeCharge.bank_account_number}
-                  </span>
-                  <button
-                    onClick={() => navigator.clipboard.writeText(activeCharge.bank_account_number)}
-                    className="p-2 bg-white dark:bg-slate-700 rounded-lg shadow-sm active:scale-95 transition-transform border border-slate-200 dark:border-slate-600"
-                    title="Copy"
-                  >
-                    <span className="material-symbols-outlined text-[18px] text-slate-500">content_copy</span>
-                  </button>
-                </div>
-              </div>
-
-              <hr className="border-slate-200 dark:border-slate-600" />
-
-              {/* Account name */}
-              <div className="flex justify-between items-center">
-                <span className="text-slate-500 text-sm font-medium">Account Name</span>
-                <span className="text-slate-900 dark:text-white font-bold text-sm">{activeCharge.bank_account_name}</span>
-              </div>
-
-              {/* Bank name */}
-              <div className="flex justify-between items-center">
-                <span className="text-slate-500 text-sm font-medium">Bank</span>
-                <span className="text-slate-900 dark:text-white font-bold text-sm">{activeCharge.bank_name}</span>
-              </div>
-            </div>
-
-            {/* Live status indicator */}
-            <div className="mt-6 flex flex-col items-center gap-2">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse" />
-                <span className="text-emerald-600 dark:text-emerald-400 font-medium">
-                  Waiting for transfer... ({formatElapsed(elapsed)})
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-400 text-center">
-                Transfer the exact amount shown above. Payment auto-confirms in 10-30 seconds.
-              </p>
-            </div>
-
-            {/* Reference if any */}
-            {activeCharge.reference && (
-              <div className="mt-4 text-center">
-                <span className="text-xs text-slate-400">Ref: {activeCharge.reference}</span>
-              </div>
-            )}
           </div>
 
-          {/* Cancel / back */}
+          {/* Bank details — clean card */}
+          <div className="bg-white dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700/50 p-6 sm:p-8 mb-2">
+            {/* Account number — hero */}
+            <div className="text-center mb-6">
+              <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-medium tracking-[0.15em] mb-2">Account Number</p>
+              <div className="flex items-center justify-center gap-3">
+                <span className="text-3xl sm:text-4xl font-mono font-semibold tracking-wider text-slate-900 dark:text-white">
+                  {activeCharge.bank_account_number}
+                </span>
+                <button
+                  onClick={() => navigator.clipboard.writeText(activeCharge.bank_account_number)}
+                  className="p-1.5 text-slate-300 dark:text-slate-600 hover:text-slate-500 dark:hover:text-slate-400 active:scale-90 transition-all"
+                  title="Copy"
+                >
+                  <span className="material-symbols-outlined text-[18px]">content_copy</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Bank & account name */}
+            <div className="space-y-3 pt-5 border-t border-slate-100 dark:border-slate-700/50">
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider font-medium">Bank</span>
+                <span className="text-sm text-slate-900 dark:text-white font-medium">{activeCharge.bank_name}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider font-medium">Account Name</span>
+                <span className="text-sm text-slate-900 dark:text-white font-medium">{activeCharge.bank_account_name}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Reference */}
+          {activeCharge.reference && (
+            <p className="text-center text-xs text-slate-300 dark:text-slate-600 mb-4">
+              Ref: {activeCharge.reference}
+            </p>
+          )}
+
+          {/* Waiting indicator — minimal */}
+          <div className="flex items-center justify-center gap-2 py-6">
+            <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
+            <span className="text-xs text-slate-400 dark:text-slate-500">
+              Listening for transfer · {formatElapsed(elapsed)}
+            </span>
+          </div>
+
+          {/* Cancel */}
           <button
             onClick={handleNewCharge}
-            className="w-full py-3 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 text-sm font-medium transition"
+            className="w-full py-3 text-xs text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 font-medium transition uppercase tracking-wider"
           >
-            Cancel & start new charge
+            Cancel
           </button>
         </div>
       )}
 
       {/* ── SUCCESS STEP ── */}
       {step === 'success' && activeCharge && (
-        <div className="bg-white dark:bg-slate-900 rounded-3xl border-2 border-emerald-200 dark:border-emerald-800 shadow-lg p-5 sm:p-8 text-center">
-          {/* Success animation */}
-          <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-4 animate-[scale-in_0.3s_ease-out]">
-            <span className="material-symbols-outlined text-emerald-600 text-4xl">check_circle</span>
+        <div className="pt-8 pb-4 text-center">
+          {/* Check mark — subtle */}
+          <div className="w-16 h-16 rounded-full border-2 border-emerald-400 flex items-center justify-center mx-auto mb-6">
+            <span className="material-symbols-outlined text-emerald-500 text-3xl">check</span>
           </div>
 
-          <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-1">Payment Confirmed!</h2>
-          <p className="text-2xl sm:text-3xl font-black text-emerald-600 mb-6">
+          <p className="text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider font-medium mb-1">Payment received</p>
+          <h2 className="text-3xl sm:text-4xl font-semibold text-slate-900 dark:text-white mb-2 tracking-tight">
             ₦{activeCharge.amount_ngn.toLocaleString()}
-          </p>
+          </h2>
 
           {chargeStatus?.confirmed_at && (
-            <p className="text-sm text-slate-400 mb-6">
-              Completed in {formatElapsed(elapsed)}
+            <p className="text-xs text-slate-400 dark:text-slate-500 mb-8">
+              Confirmed in {formatElapsed(elapsed)}
             </p>
           )}
 
-          {/* Receipt prompt */}
+          {/* Receipt — inline */}
           {!receiptSent ? (
-            <div className="mb-6">
-              <p className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-3">
-                How would you like the receipt?
-              </p>
-              <div className="flex gap-2 max-w-sm mx-auto">
+            <div className="max-w-xs mx-auto mb-8">
+              <div className="flex gap-2">
                 <input
                   type="email"
                   value={receiptEmail}
                   onChange={(e) => setReceiptEmail(e.target.value)}
-                  placeholder="customer@email.com"
-                  className="flex-1 px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  placeholder="Receipt email (optional)"
+                  className="flex-1 px-4 py-3 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-slate-300 dark:focus:ring-slate-600 transition"
                 />
                 <button
                   onClick={handleSendReceipt}
                   disabled={!receiptEmail || !receiptEmail.includes('@')}
-                  className="px-4 py-3 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-400 text-white font-semibold rounded-xl transition text-sm"
+                  className="px-4 py-3 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white disabled:text-slate-300 dark:disabled:text-slate-600 transition"
                 >
                   Send
                 </button>
               </div>
             </div>
           ) : (
-            <div className="mb-6 flex items-center justify-center gap-2 text-emerald-600">
-              <span className="material-symbols-outlined text-[18px]">check</span>
-              <span className="text-sm font-medium">Receipt sent to {receiptEmail}</span>
+            <div className="mb-8 flex items-center justify-center gap-1.5">
+              <span className="material-symbols-outlined text-[14px] text-emerald-500">check</span>
+              <span className="text-xs text-slate-400 dark:text-slate-500">Sent to {receiptEmail}</span>
             </div>
           )}
 
-          {/* New charge button */}
-          <button
-            onClick={handleNewCharge}
-            className="w-full max-w-sm py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-lg rounded-2xl transition active:scale-[0.98]"
-          >
-            New Charge
-          </button>
+          {/* Next charge */}
+          <div className="max-w-xs mx-auto">
+            <button
+              onClick={handleNewCharge}
+              className="w-full py-4 bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-100 text-white dark:text-slate-900 font-semibold rounded-2xl transition active:scale-[0.98]"
+            >
+              New Charge
+            </button>
+          </div>
         </div>
       )}
     </div>
