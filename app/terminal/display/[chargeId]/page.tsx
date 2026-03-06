@@ -24,23 +24,16 @@ interface PublicChargeStatus {
 // Public Display Page — shown to customers (no auth)
 // ─────────────────────────────────────────────────────────────────────────────
 
-export default function TerminalDisplayPage({ params }: { params: Promise<{ chargeId: string }> }) {
-  const [chargeId, setChargeId] = useState<string | null>(null);
+export default function TerminalDisplayPage({ params }: { params: { chargeId: string } }) {
+  const chargeId = params.chargeId;
   const [data, setData] = useState<PublicChargeStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Resolve params
-  useEffect(() => {
-    params.then((p) => setChargeId(p.chargeId));
-  }, [params]);
-
   // Fetch charge status
   useEffect(() => {
-    if (!chargeId) return;
-
     const fetchStatus = async () => {
       try {
         const res = await fetch(`/api/v1/terminal/charges/${chargeId}/status`);
