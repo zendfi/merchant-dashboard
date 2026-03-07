@@ -42,6 +42,7 @@ export default function TerminalDisplayPage({ params }: { params: { chargeId: st
           return;
         }
         const json = await res.json();
+        setError(null);
         setData(json);
 
         if (json.status === 'COMPLETED' || json.status === 'EXPIRED' || json.status === 'FAILED') {
@@ -71,7 +72,7 @@ export default function TerminalDisplayPage({ params }: { params: { chargeId: st
 
   const handleCopy = () => {
     if (!data) return;
-    navigator.clipboard.writeText(data.bank_account_number);
+    navigator.clipboard.writeText(data.bank_account_number).catch(() => {});
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };

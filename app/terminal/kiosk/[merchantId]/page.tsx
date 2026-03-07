@@ -38,7 +38,9 @@ export default function KioskPage({ params }: { params: { merchantId: string } }
   const [showSuccess, setShowSuccess] = useState(false);
   const [successAmount, setSuccessAmount] = useState(0);
   const prevChargeRef = useRef<string | null>(null);
+  const completedChargesRef = useRef<Set<string>>(new Set());
   const pollRef = useRef<NodeJS.Timeout | null>(null);
+  const successTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Poll for active charge
   useEffect(() => {
@@ -52,12 +54,18 @@ export default function KioskPage({ params }: { params: { merchantId: string } }
         const json: KioskResponse = await res.json();
         setData(json);
 
-        // Detect completion transition
-        if (json.charge && json.charge.status === 'COMPLETED') {
+        // Detect completion transition — fire success flash ONCE per charge
+        if (
+          json.charge &&
+          json.charge.status === 'COMPLETED' &&
+          !completedChargesRef.current.has(json.charge.charge_id)
+        ) {
+          completedChargesRef.current.add(json.charge.charge_id);
           setSuccessAmount(json.charge.amount_ngn);
           setShowSuccess(true);
           // Auto-clear success after 8 seconds
-          setTimeout(() => setShowSuccess(false), 8000);
+          if (successTimerRef.current) clearTimeout(successTimerRef.current);
+          successTimerRef.current = setTimeout(() => setShowSuccess(false), 8000);
         }
 
         // Detect new charge — reset timer
@@ -78,12 +86,13 @@ export default function KioskPage({ params }: { params: { merchantId: string } }
 
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
+      if (successTimerRef.current) clearTimeout(successTimerRef.current);
     };
   }, [merchantId]);
 
-  // Elapsed timer — only when there's an active pending charge
+  // Elapsed timer — only when there's an active pending/processing charge
   useEffect(() => {
-    if (!data?.charge || data.charge.status !== 'PENDING' && data.charge.status !== 'PROCESSING') {
+    if (!data?.charge || (data.charge.status !== 'PENDING' && data.charge.status !== 'PROCESSING')) {
       return;
     }
     const timer = setInterval(() => setElapsed((e) => e + 1), 1000);
@@ -94,7 +103,7 @@ export default function KioskPage({ params }: { params: { merchantId: string } }
 
   const handleCopy = () => {
     if (!data?.charge) return;
-    navigator.clipboard.writeText(data.charge.bank_account_number);
+    navigator.clipboard.writeText(data.charge.bank_account_number).catch(() => {});
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -153,6 +162,29 @@ export default function KioskPage({ params }: { params: { merchantId: string } }
             ₦{successAmount.toLocaleString()}
           </h1>
           <p className="text-sm text-slate-400 mt-3">{data.business_name}</p>
+        </div>
+      </Shell>
+    );
+  }
+
+  // ── Expired/Failed charge — brief notice then idle ──
+  if (data.charge && (data.charge.status === 'EXPIRED' || data.charge.status === 'FAILED')) {
+    return (
+      <Shell>
+        <div className="text-center py-8">
+          <div className="w-14 h-14 rounded-full border-2 border-slate-200 flex items-center justify-center mx-auto mb-5">
+            <svg className="w-6 h-6 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4m0 4h.01" />
+            </svg>
+          </div>
+          <p className="text-xs text-slate-400 uppercase tracking-wider font-medium mb-2">
+            {data.charge.status === 'EXPIRED' ? 'Charge expired' : 'Charge failed'}
+          </p>
+          <p className="text-sm text-slate-400 mt-1">{data.business_name}</p>
+          <div className="mt-6 flex items-center justify-center gap-2">
+            <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
+            <span className="text-xs text-slate-400">Waiting for next charge</span>
+          </div>
         </div>
       </Shell>
     );

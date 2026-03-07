@@ -41,6 +41,9 @@ function playSuccessSound() {
     osc2.connect(gain2).connect(ctx.destination);
     osc2.start(now + 0.1);
     osc2.stop(now + 0.5);
+
+    // Clean up after sound completes
+    setTimeout(() => ctx.close().catch(() => {}), 600);
   } catch {
     // Audio not available
   }
@@ -114,13 +117,11 @@ export default function TerminalTab() {
     try {
       const resp = await terminal.listCharges({ period: 'today', limit: 50 });
       setCharges(resp.charges);
-      if (status) {
-        setStatus({ ...status, today_summary: resp.summary });
-      }
+      setStatus((prev) => prev ? { ...prev, today_summary: resp.summary } : prev);
     } catch {
       // ignore
     }
-  }, [status]);
+  }, []);
 
   useEffect(() => {
     if (status?.enabled) loadCharges();
@@ -230,6 +231,7 @@ export default function TerminalTab() {
 
   // ── New charge (reset) ──
   const handleNewCharge = () => {
+    if (pollRef.current) clearInterval(pollRef.current);
     setActiveCharge(null);
     setChargeStatus(null);
     setReceiptEmail('');
@@ -273,7 +275,7 @@ export default function TerminalTab() {
             <button
               onClick={() => {
                 if (kioskUrl) {
-                  navigator.clipboard.writeText(kioskUrl);
+                  navigator.clipboard.writeText(kioskUrl).catch(() => {});
                   setKioskCopied(true);
                   setTimeout(() => setKioskCopied(false), 2000);
                 }
@@ -523,7 +525,7 @@ export default function TerminalTab() {
                   {activeCharge.bank_account_number}
                 </span>
                 <button
-                  onClick={() => navigator.clipboard.writeText(activeCharge.bank_account_number)}
+                  onClick={() => navigator.clipboard.writeText(activeCharge.bank_account_number).catch(() => {})}
                   className="p-1.5 text-slate-300 dark:text-slate-600 hover:text-slate-500 dark:hover:text-slate-400 active:scale-90 transition-all"
                   title="Copy"
                 >
