@@ -94,6 +94,7 @@ export interface Transaction {
 export interface DashboardStats {
   total_payments: number;
   total_volume: number;
+  confirmed_volume: number;
   confirmed_payments: number;
   pending_payments: number;
 }

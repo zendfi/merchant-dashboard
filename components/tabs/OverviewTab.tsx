@@ -166,16 +166,16 @@ export default function OverviewTab({ onViewAllTransactions }: OverviewTabProps)
           </h3>
         </div>
 
-        {/* Current Balance */}
+        {/* Total Received */}
         <div className="bg-white dark:bg-[#13131f] p-4 rounded-xl border border-slate-100 dark:border-slate-800 hover:border-amber-200 dark:hover:border-amber-900 hover:-translate-y-0.5 transition-all duration-250 group">
           <div className="mb-3">
             <div className="p-1.5 bg-amber-50 dark:bg-amber-900/20 rounded-lg text-amber-600 dark:text-amber-400 inline-block">
               <span className="material-symbols-outlined text-[20px]">account_balance_wallet</span>
             </div>
           </div>
-          <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Current Balance</p>
+          <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Total Received</p>
           <h3 className="text-xl font-bold text-slate-900 dark:text-white mt-0.5">
-            {formatFullAmount((stats?.total_volume || 0) * 0.034)}
+            {formatFullAmount(stats?.confirmed_volume || 0)}
           </h3>
         </div>
       </div>
