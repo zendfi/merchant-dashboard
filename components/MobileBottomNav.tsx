@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 interface MobileBottomNavProps {
   activeTab: string;
@@ -7,24 +7,37 @@ interface MobileBottomNavProps {
 }
 
 const PRIMARY_NAV = [
-  { id: 'overview',       icon: 'dashboard',  label: 'Home'     },
-  { id: 'transactions',   icon: 'payments',   label: 'Payments' },
-  { id: 'payment-links',  icon: 'link',       label: 'Links'    },
-  { id: 'earn',           icon: 'savings',    label: 'Earn'     },
+  { id: "overview", icon: "dashboard", label: "Home" },
+  { id: "transactions", icon: "payments", label: "Payments" },
+  { id: "payment-links", icon: "link", label: "Links" },
+  { id: "earn", icon: "savings", label: "Earn" },
 ];
 
 // tabs that live only in the sidebar; highlight "more" when one is active
-const SECONDARY_TABS = new Set(['shop','customers','api-keys','webhooks','support','profile','session-keys']);
+const SECONDARY_TABS = new Set([
+  "shop",
+  "invoices",
+  "customers",
+  "api-keys",
+  "webhooks",
+  "support",
+  "profile",
+  "session-keys",
+]);
 
-export default function MobileBottomNav({ activeTab, onTabChange, onOpenMore }: MobileBottomNavProps) {
+export default function MobileBottomNav({
+  activeTab,
+  onTabChange,
+  onOpenMore,
+}: MobileBottomNavProps) {
   const moreActive = SECONDARY_TABS.has(activeTab);
 
   return (
     <nav
       className="lg:hidden fixed bottom-0 left-0 right-0 z-[190] bg-white dark:bg-[#0d0d14] border-t border-slate-200 dark:border-slate-800 flex items-stretch"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+      style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
-      {PRIMARY_NAV.map(item => {
+      {PRIMARY_NAV.map((item) => {
         const isActive = activeTab === item.id;
         return (
           <button
@@ -32,8 +45,8 @@ export default function MobileBottomNav({ activeTab, onTabChange, onOpenMore }: 
             onClick={() => onTabChange(item.id)}
             className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 transition-colors ${
               isActive
-                ? 'text-primary dark:text-purple-400'
-                : 'text-slate-500 dark:text-slate-400 active:text-primary'
+                ? "text-primary dark:text-purple-400"
+                : "text-slate-500 dark:text-slate-400 active:text-primary"
             }`}
           >
             <span
@@ -42,7 +55,11 @@ export default function MobileBottomNav({ activeTab, onTabChange, onOpenMore }: 
             >
               {item.icon}
             </span>
-            <span className={`text-[10px] font-medium leading-none ${isActive ? 'font-semibold' : ''}`}>
+            <span
+              className={`text-[10px] font-medium leading-none ${
+                isActive ? "font-semibold" : ""
+              }`}
+            >
               {item.label}
             </span>
             {isActive && (
@@ -57,8 +74,8 @@ export default function MobileBottomNav({ activeTab, onTabChange, onOpenMore }: 
         onClick={onOpenMore}
         className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 transition-colors ${
           moreActive
-            ? 'text-primary dark:text-purple-400'
-            : 'text-slate-500 dark:text-slate-400 active:text-primary'
+            ? "text-primary dark:text-purple-400"
+            : "text-slate-500 dark:text-slate-400 active:text-primary"
         }`}
       >
         <span
@@ -67,7 +84,11 @@ export default function MobileBottomNav({ activeTab, onTabChange, onOpenMore }: 
         >
           grid_view
         </span>
-        <span className={`text-[10px] font-medium leading-none ${moreActive ? 'font-semibold' : ''}`}>
+        <span
+          className={`text-[10px] font-medium leading-none ${
+            moreActive ? "font-semibold" : ""
+          }`}
+        >
           More
         </span>
         {moreActive && (

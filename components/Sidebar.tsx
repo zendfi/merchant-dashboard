@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { useMerchant } from '@/lib/merchant-context';
-import { useDeveloperOptions } from '@/lib/developer-options-context';
-import Image from 'next/image';
-import Link from 'next/link';
+import { useEffect } from "react";
+import { useMerchant } from "@/lib/merchant-context";
+import { useDeveloperOptions } from "@/lib/developer-options-context";
+import Image from "next/image";
+import Link from "next/link";
 
 interface SidebarProps {
   activeTab: string;
@@ -22,45 +22,56 @@ interface NavItem {
 }
 
 const mainNavItems: NavItem[] = [
-  { id: 'overview', label: 'Overview', icon: 'dashboard' },
-  { id: 'transactions', label: 'Transactions', icon: 'payments' },
-  { id: 'terminal', label: 'Terminal', icon: 'point_of_sale', badge: 'New' },
-  { id: 'earn', label: 'Earn', icon: 'savings', badge: 'New' },
-  { id: 'shop', label: 'Shop', icon: 'storefront', badge: 'New' },
-  { id: 'payment-links', label: 'Payment Links', icon: 'link' },
-  { id: 'customers', label: 'Customers', icon: 'group' },
-  { id: 'api-keys', label: 'API Keys', icon: 'vpn_key' },
-  { id: 'webhooks', label: 'Webhooks', icon: 'webhook' },
-  { id: 'support', label: 'Live Support', icon: 'support_agent' },
+  { id: "overview", label: "Overview", icon: "dashboard" },
+  { id: "transactions", label: "Transactions", icon: "payments" },
+  { id: "terminal", label: "Terminal", icon: "point_of_sale", badge: "New" },
+  { id: "earn", label: "Earn", icon: "savings", badge: "New" },
+  { id: "shop", label: "Shop", icon: "storefront", badge: "New" },
+  { id: "payment-links", label: "Payment Links", icon: "link" },
+  { id: "invoices", label: "Invoices", icon: "receipt_long" },
+  { id: "customers", label: "Customers", icon: "group" },
+  { id: "api-keys", label: "API Keys", icon: "vpn_key" },
+  { id: "webhooks", label: "Webhooks", icon: "webhook" },
+  { id: "support", label: "Live Support", icon: "support_agent" },
 ];
 
 const settingsNavItems: NavItem[] = [
-  { id: 'feedback', label: 'Feedback', icon: 'thumb_up', action: 'mailto:hello@zendfi.tech?subject=Log Feedback' },
-  { id: 'profile', label: 'Settings', icon: 'settings' },
+  {
+    id: "feedback",
+    label: "Feedback",
+    icon: "thumb_up",
+    action: "mailto:hello@zendfi.tech?subject=Log Feedback",
+  },
+  { id: "profile", label: "Settings", icon: "settings" },
 ];
 
-export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }: SidebarProps) {
+export default function Sidebar({
+  activeTab,
+  onTabChange,
+  isOpen,
+  onClose,
+}: SidebarProps) {
   const { merchant } = useMerchant();
   const { showDeveloperOptions } = useDeveloperOptions();
 
   // Close sidebar on escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === "Escape") onClose();
     };
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
   }, [onClose]);
 
   // Prevent body scroll when sidebar is open on mobile
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = '';
+      document.body.style.overflow = "";
     }
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = "";
     };
   }, [isOpen]);
 
@@ -75,12 +86,14 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }: Sid
       )}
 
       {/* Sidebar */}
-      <aside className={`
+      <aside
+        className={`
         fixed lg:sticky top-0 left-0 h-screen z-[200]
-        w-56 bg-white dark:bg-[#0d0d14] 
+        w-56 bg-white dark:bg-[#0d0d14]
         flex flex-col shrink-0 transition-all duration-300
-        ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-      `}>
+        ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+      `}
+      >
         {/* Logo */}
         <div className="px-6 py-5 flex items-center gap-3 border-b border-slate-100 dark:border-slate-800">
           <Link href="/" className="flex items-center">
@@ -98,7 +111,10 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }: Sid
         {/* Navigation */}
         <nav className="flex-1 px-4 flex flex-col gap-1 overflow-y-auto py-4">
           {mainNavItems.map((item) => {
-            if ((item.id === 'api-keys' || item.id === 'webhooks') && !showDeveloperOptions) {
+            if (
+              (item.id === "api-keys" || item.id === "webhooks") &&
+              !showDeveloperOptions
+            ) {
               return null;
             }
             return (
@@ -108,18 +124,27 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }: Sid
                   onTabChange(item.id);
                   onClose();
                 }}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg w-full text-left transition-all duration-250 group ${activeTab === item.id
-                  ? 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-purple-300 shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
-                  }`}
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg w-full text-left transition-all duration-250 group ${
+                  activeTab === item.id
+                    ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-purple-300 shadow-xs"
+                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white"
+                }`}
               >
                 <span
                   className="material-symbols-outlined group-hover:scale-110 transition-transform text-[22px]"
-                  style={activeTab === item.id ? { fontVariationSettings: "'FILL' 1" } : {}}
+                  style={
+                    activeTab === item.id
+                      ? { fontVariationSettings: "'FILL' 1" }
+                      : {}
+                  }
                 >
                   {item.icon}
                 </span>
-                <span className={`text-[14px] flex-1 ${activeTab === item.id ? 'font-semibold' : 'font-medium'}`}>
+                <span
+                  className={`text-[14px] flex-1 ${
+                    activeTab === item.id ? "font-semibold" : "font-medium"
+                  }`}
+                >
                   {item.label}
                 </span>
                 {item.badge && activeTab !== item.id && (
@@ -142,7 +167,9 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }: Sid
                   href={item.action}
                   className="flex items-center gap-3 px-4 py-3 rounded-lg w-full text-left transition-all duration-250 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white"
                 >
-                  <span className="material-symbols-outlined text-[22px]">{item.icon}</span>
+                  <span className="material-symbols-outlined text-[22px]">
+                    {item.icon}
+                  </span>
                   <span className="text-[14px] font-medium">{item.label}</span>
                 </a>
               );
@@ -154,12 +181,15 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }: Sid
                   onTabChange(item.id);
                   onClose();
                 }}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg w-full text-left transition-all duration-250 ${activeTab === item.id
-                  ? 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-purple-300 shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
-                  }`}
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg w-full text-left transition-all duration-250 ${
+                  activeTab === item.id
+                    ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-purple-300 shadow-xs"
+                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white"
+                }`}
               >
-                <span className="material-symbols-outlined text-[22px]">{item.icon}</span>
+                <span className="material-symbols-outlined text-[22px]">
+                  {item.icon}
+                </span>
                 <span className="text-[14px] font-medium">{item.label}</span>
               </button>
             );
@@ -168,11 +198,15 @@ export default function Sidebar({ activeTab, onTabChange, isOpen, onClose }: Sid
           {/* User Profile */}
           <div className="mt-4 flex items-center gap-3 px-4 py-2">
             <div className="size-8 rounded-full bg-primary flex items-center justify-center text-white text-[12px] font-bold">
-              {merchant?.name?.charAt(0) || 'A'}
+              {merchant?.name?.charAt(0) || "A"}
             </div>
             <div className="flex flex-col">
-              <span className="text-[12px] font-bold text-slate-900 dark:text-white">{merchant?.name || 'Merchant'}</span>
-              <span className="text-[11px] text-slate-500 dark:text-slate-400">Merchant</span>
+              <span className="text-[12px] font-bold text-slate-900 dark:text-white">
+                {merchant?.name || "Merchant"}
+              </span>
+              <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                Merchant
+              </span>
             </div>
           </div>
         </div>

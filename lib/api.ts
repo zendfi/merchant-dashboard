@@ -1,7 +1,7 @@
 // API Client for ZendFi Merchant Dashboard
 // This module handles all API calls to the backend
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || '';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
 // Types
 export interface MerchantProfile {
@@ -137,6 +137,19 @@ export interface PaymentLink {
   created_at: string;
   onramp: boolean;
   payer_service_charge: boolean;
+  collect_customer_info: boolean;
+  customer_data?: {
+    email: string;
+    name?: string;
+    phone?: string;
+    company?: string;
+    billing_address_line1?: string;
+    billing_address_line2?: string;
+    billing_city?: string;
+    billing_state?: string;
+    billing_postal_code?: string;
+    billing_country?: string;
+  } | null;
 }
 
 export interface PaymentLinkPayment {
@@ -173,13 +186,91 @@ export interface CreatePaymentLinkRequest {
   /** Original NGN amount for exact PAJ conversion (if created via NGN calculator) */
   amount_ngn?: number;
   /**
-   * If true, a service charge (max(₦30, ceil(3% of amount_ngn))) is added on top
+   * If true, a service charge (max(₦30, ceil(2.5% of amount_ngn))) is added on top
    * and charged to the payer. The payer sees the breakdown on checkout.
    * If false/absent, the merchant absorbs any PAJ slippage.
    */
   payer_service_charge?: boolean;
   /** If true, checkout shows an expanded form collecting name, phone, company & billing address */
   collect_customer_info?: boolean;
+  /**
+   * Optional pre-filled customer object.  When present:
+   * - checkout skips the info-collection step ("Continue to Pay" CTA)
+   * - max_uses is automatically forced to 1
+   * - customer data is forwarded straight into the onramp / payment flow
+   */
+  customer?: {
+    email: string;
+    name?: string;
+    phone?: string;
+    company?: string;
+    billing_address_line1?: string;
+    billing_address_line2?: string;
+    billing_city?: string;
+    billing_state?: string;
+    billing_postal_code?: string;
+    billing_country?: string;
+  };
+}
+
+// ── Invoice types ─────────────────────────────────────────────────────────────
+
+export interface LineItem {
+  description: string;
+  quantity: number;
+  unit_price: number;
+}
+
+export interface Invoice {
+  id: string;
+  invoice_number: string;
+  customer_email: string;
+  customer_name?: string;
+  amount_usd: number;
+  currency: string;
+  token: string;
+  description: string;
+  line_items: LineItem[];
+  status: "draft" | "sent" | "paid" | "overdue" | "cancelled";
+  payment_url?: string;
+  due_date?: string;
+  sent_at?: string;
+  paid_at?: string;
+  created_at: string;
+  /** Whether the payment link generated on send uses the PAJ onramp flow. */
+  onramp: boolean;
+  /** Max uses configured for the generated payment link (default 1). */
+  payment_link_max_uses?: number;
+  collect_customer_info: boolean;
+  payer_service_charge: boolean;
+  amount_ngn?: number;
+}
+
+export interface CreateInvoiceRequest {
+  customer_email: string;
+  customer_name?: string;
+  amount: number;
+  token?: string;
+  description: string;
+  line_items?: LineItem[];
+  due_date?: string;
+  metadata?: Record<string, unknown>;
+  onramp?: boolean;
+  payment_link_max_uses?: number;
+  collect_customer_info?: boolean;
+  amount_ngn?: number;
+  payer_service_charge?: boolean;
+}
+
+export interface SendInvoiceResponse {
+  success: boolean;
+  invoice_id: string;
+  invoice_number: string;
+  sent_to: string;
+  payment_url: string;
+  status: string;
+  onramp: boolean;
+  max_uses: number;
 }
 
 export interface ChartDataPoint {
@@ -201,16 +292,18 @@ async function apiCall<T>(
 ): Promise<T> {
   const response = await fetch(`${API_BASE}${endpoint}`, {
     ...options,
-    credentials: 'include',
+    credentials: "include",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       ...options.headers,
     },
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Request failed' }));
-    throw new Error(error.message || error.error || 'Request failed');
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Request failed" }));
+    throw new Error(error.message || error.error || "Request failed");
   }
 
   return response.json();
@@ -220,8 +313,8 @@ async function apiCall<T>(
 export const auth = {
   // Start passkey login flow
   loginStart: async (email: string): Promise<LoginChallengeResponse> => {
-    return apiCall('/api/v1/merchants/login/start', {
-      method: 'POST',
+    return apiCall("/api/v1/merchants/login/start", {
+      method: "POST",
       body: JSON.stringify({ email }),
     });
   },
@@ -231,8 +324,8 @@ export const auth = {
     sessionId: string,
     credentialResponse: unknown
   ): Promise<MerchantAuthResponse> => {
-    return apiCall('/api/v1/merchants/login/verify', {
-      method: 'POST',
+    return apiCall("/api/v1/merchants/login/verify", {
+      method: "POST",
       body: JSON.stringify({
         session_id: sessionId,
         credential_response: credentialResponse,
@@ -241,25 +334,28 @@ export const auth = {
   },
 
   // Password login
-  loginPassword: async (email: string, password: string): Promise<PasswordLoginResponse> => {
-    return apiCall('/api/v1/merchants/login/password', {
-      method: 'POST',
+  loginPassword: async (
+    email: string,
+    password: string
+  ): Promise<PasswordLoginResponse> => {
+    return apiCall("/api/v1/merchants/login/password", {
+      method: "POST",
       body: JSON.stringify({ email, password }),
     });
   },
 
   // Logout
   logout: async (): Promise<{ success: boolean; message: string }> => {
-    return apiCall('/api/v1/merchants/logout', { method: 'POST' });
+    return apiCall("/api/v1/merchants/logout", { method: "POST" });
   },
 
   // Request password reset
   requestReset: async (
     email: string,
-    resetType: 'password' | 'passkey'
+    resetType: "password" | "passkey"
   ): Promise<{ success: boolean }> => {
-    return apiCall('/api/v1/merchants/password/reset/request', {
-      method: 'POST',
+    return apiCall("/api/v1/merchants/password/reset/request", {
+      method: "POST",
       body: JSON.stringify({ email, reset_type: resetType }),
     });
   },
@@ -267,9 +363,14 @@ export const auth = {
   // Verify reset token
   verifyResetToken: async (
     token: string
-  ): Promise<{ valid: boolean; email?: string; token_type?: string; merchant_id?: string }> => {
-    return apiCall('/api/v1/merchants/password/reset/verify', {
-      method: 'POST',
+  ): Promise<{
+    valid: boolean;
+    email?: string;
+    token_type?: string;
+    merchant_id?: string;
+  }> => {
+    return apiCall("/api/v1/merchants/password/reset/verify", {
+      method: "POST",
       body: JSON.stringify({ token }),
     });
   },
@@ -280,8 +381,8 @@ export const auth = {
     newPassword: string,
     confirmPassword: string
   ): Promise<{ success: boolean }> => {
-    return apiCall('/api/v1/merchants/password/reset', {
-      method: 'POST',
+    return apiCall("/api/v1/merchants/password/reset", {
+      method: "POST",
       body: JSON.stringify({
         token,
         new_password: newPassword,
@@ -301,13 +402,13 @@ export const merchant = {
   },
 
   // Get dashboard stats
-  getStats: async (mode: 'test' | 'live'): Promise<DashboardStats> => {
+  getStats: async (mode: "test" | "live"): Promise<DashboardStats> => {
     return apiCall(`/api/v1/merchants/me/stats?mode=${mode}`);
   },
 
   // Get dashboard analytics
   getAnalytics: async (): Promise<DashboardAnalytics> => {
-    return apiCall('/api/v1/merchants/me/analytics');
+    return apiCall("/api/v1/merchants/me/analytics");
   },
 };
 
@@ -319,7 +420,7 @@ export interface SessionKey {
   remaining_usdc: number;
   expires_at: string;
   is_active: boolean;
-  status: 'active' | 'expired' | 'revoked';
+  status: "active" | "expired" | "revoked";
   created_at: string;
   session_wallet: string | null;
   agent_id: string | null;
@@ -338,8 +439,11 @@ export interface SessionKeyStats {
 // Session Keys APIs
 export const sessionKeys = {
   // List all session keys
-  list: async (): Promise<{ session_keys: SessionKey[]; stats: SessionKeyStats }> => {
-    return apiCall('/api/v1/merchants/me/session-keys');
+  list: async (): Promise<{
+    session_keys: SessionKey[];
+    stats: SessionKeyStats;
+  }> => {
+    return apiCall("/api/v1/merchants/me/session-keys");
   },
 };
 
@@ -347,18 +451,22 @@ export const sessionKeys = {
 export const apiKeys = {
   // List all API keys
   list: async (): Promise<{ api_keys: ApiKey[]; total: number }> => {
-    return apiCall('/api/v1/merchants/me/api-keys');
+    return apiCall("/api/v1/merchants/me/api-keys");
   },
 
   // Regenerate API key
-  regenerate: async (keyId: string): Promise<{ api_key: string; key_id: string }> => {
+  regenerate: async (
+    keyId: string
+  ): Promise<{ api_key: string; key_id: string }> => {
     return apiCall(`/api/v1/merchants/me/api-keys/${keyId}/regenerate`, {
-      method: 'POST',
+      method: "POST",
     });
   },
 
   // Get API usage timeline
-  getUsageTimeline: async (hours: number = 168): Promise<{ timeline: ApiUsageTimelineEntry[] }> => {
+  getUsageTimeline: async (
+    hours: number = 168
+  ): Promise<{ timeline: ApiUsageTimelineEntry[] }> => {
     return apiCall(`/api/v1/merchants/me/api-keys/usage?hours=${hours}`);
   },
 };
@@ -368,7 +476,7 @@ export const transactions = {
   // List transactions
   list: async (
     params: {
-      mode?: 'test' | 'live';
+      mode?: "test" | "live";
       limit?: number;
       page?: number;
       status?: string;
@@ -376,23 +484,30 @@ export const transactions = {
       reconciled?: boolean;
       start_date?: string;
       end_date?: string;
-      sort_by?: 'amount' | 'status' | 'created_at';
-      sort_order?: 'asc' | 'desc';
+      sort_by?: "amount" | "status" | "created_at";
+      sort_order?: "asc" | "desc";
     } = {}
-  ): Promise<{ transactions: Transaction[]; total: number; showing: number }> => {
+  ): Promise<{
+    transactions: Transaction[];
+    total: number;
+    showing: number;
+  }> => {
     const searchParams = new URLSearchParams();
-    if (params.mode) searchParams.set('mode', params.mode);
-    if (params.limit) searchParams.set('limit', params.limit.toString());
-    if (params.page) searchParams.set('page', params.page.toString());
-    if (params.status) searchParams.set('status', params.status);
-    if (params.search) searchParams.set('search', params.search);
-    if (params.reconciled !== undefined) searchParams.set('reconciled', params.reconciled.toString());
-    if (params.start_date) searchParams.set('start_date', params.start_date);
-    if (params.end_date) searchParams.set('end_date', params.end_date);
-    if (params.sort_by) searchParams.set('sort_by', params.sort_by);
-    if (params.sort_order) searchParams.set('sort_order', params.sort_order);
+    if (params.mode) searchParams.set("mode", params.mode);
+    if (params.limit) searchParams.set("limit", params.limit.toString());
+    if (params.page) searchParams.set("page", params.page.toString());
+    if (params.status) searchParams.set("status", params.status);
+    if (params.search) searchParams.set("search", params.search);
+    if (params.reconciled !== undefined)
+      searchParams.set("reconciled", params.reconciled.toString());
+    if (params.start_date) searchParams.set("start_date", params.start_date);
+    if (params.end_date) searchParams.set("end_date", params.end_date);
+    if (params.sort_by) searchParams.set("sort_by", params.sort_by);
+    if (params.sort_order) searchParams.set("sort_order", params.sort_order);
 
-    return apiCall(`/api/v1/merchants/me/transactions?${searchParams.toString()}`);
+    return apiCall(
+      `/api/v1/merchants/me/transactions?${searchParams.toString()}`
+    );
   },
 
   // Update transaction reconciliation
@@ -409,8 +524,8 @@ export const transactions = {
     internal_notes: string | null;
   }> => {
     return apiCall(`/api/v1/merchants/me/transactions/${transactionId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
   },
@@ -421,8 +536,8 @@ export const transactions = {
     reason?: string
   ): Promise<{ success: boolean; payment_id: string; message: string }> => {
     return apiCall(`/api/v1/merchants/me/transactions/${transactionId}/flag`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ reason: reason ?? null }),
     });
   },
@@ -437,18 +552,20 @@ export interface WebhookConfig {
 export const webhooks = {
   // Get webhook config (URL + signing secret)
   getConfig: async (): Promise<WebhookConfig> => {
-    return apiCall('/api/v1/merchants/me/webhook');
+    return apiCall("/api/v1/merchants/me/webhook");
   },
 
   // Get webhook stats
   getStats: async (): Promise<WebhookStats> => {
-    return apiCall('/api/v1/merchants/me/webhook/stats');
+    return apiCall("/api/v1/merchants/me/webhook/stats");
   },
 
   // Update webhook URL
-  update: async (webhookUrl: string | null): Promise<{ message: string; webhook_url: string | null }> => {
-    return apiCall('/api/v1/merchants/me/webhook', {
-      method: 'PUT',
+  update: async (
+    webhookUrl: string | null
+  ): Promise<{ message: string; webhook_url: string | null }> => {
+    return apiCall("/api/v1/merchants/me/webhook", {
+      method: "PUT",
       body: JSON.stringify({ webhook_url: webhookUrl }),
     });
   },
@@ -462,14 +579,14 @@ export const webhooks = {
     message?: string;
     error?: string;
   }> => {
-    return apiCall('/api/v1/merchants/me/webhook/test', { method: 'POST' });
+    return apiCall("/api/v1/merchants/me/webhook/test", { method: "POST" });
   },
 };
 
 // Wallet APIs
 export const wallet = {
   // Get wallet info
-  getInfo: async (mode: 'test' | 'live'): Promise<WalletInfo> => {
+  getInfo: async (mode: "test" | "live"): Promise<WalletInfo> => {
     return apiCall(`/api/v1/merchants/me/wallet?mode=${mode}`);
   },
 
@@ -477,17 +594,17 @@ export const wallet = {
   withdraw: async (
     toAddress: string,
     amount: number,
-    token: 'Sol' | 'Usdc',
+    token: "Sol" | "Usdc",
     passkeySignature: {
       credential_id: string;
       authenticator_data: number[];
       signature: number[];
       client_data_json: number[];
     },
-    mode: 'test' | 'live' = 'live'
+    mode: "test" | "live" = "live"
   ): Promise<{ success: boolean; explorer_url: string }> => {
-    return apiCall('/api/v1/merchants/me/wallet/withdraw', {
-      method: 'POST',
+    return apiCall("/api/v1/merchants/me/wallet/withdraw", {
+      method: "POST",
       body: JSON.stringify({
         to_address: toAddress,
         amount,
@@ -505,8 +622,8 @@ export const wallet = {
     signature: number[];
     client_data_json: number[];
   }): Promise<{ private_key_base58: string }> => {
-    return apiCall('/api/v1/merchants/me/wallet/export', {
-      method: 'POST',
+    return apiCall("/api/v1/merchants/me/wallet/export", {
+      method: "POST",
       body: JSON.stringify({ passkey_signature: passkeySignature }),
     });
   },
@@ -566,29 +683,34 @@ export interface OfframpOrder {
 export const offramp = {
   // Get offramp rates and USDC balance
   getRates: async (): Promise<OfframpRates> => {
-    return apiCall('/api/v1/offramp/rates');
+    return apiCall("/api/v1/offramp/rates");
   },
 
   // Initiate offramp session (send OTP)
-  initiate: async (email: string): Promise<{ session_initiated: boolean; message: string }> => {
-    return apiCall('/api/v1/offramp/initiate', {
-      method: 'POST',
+  initiate: async (
+    email: string
+  ): Promise<{ session_initiated: boolean; message: string }> => {
+    return apiCall("/api/v1/offramp/initiate", {
+      method: "POST",
       body: JSON.stringify({ email }),
     });
   },
 
   // Verify OTP and get session token
-  verifyOtp: async (email: string, otp: string): Promise<{ session_token: string; verified: boolean }> => {
-    return apiCall('/api/v1/offramp/verify-otp', {
-      method: 'POST',
+  verifyOtp: async (
+    email: string,
+    otp: string
+  ): Promise<{ session_token: string; verified: boolean }> => {
+    return apiCall("/api/v1/offramp/verify-otp", {
+      method: "POST",
       body: JSON.stringify({ email, otp }),
     });
   },
 
   // Get available banks
   getBanks: async (sessionToken: string): Promise<{ banks: PajBank[] }> => {
-    return apiCall('/api/v1/offramp/banks', {
-      method: 'POST',
+    return apiCall("/api/v1/offramp/banks", {
+      method: "POST",
       body: JSON.stringify({ session_token: sessionToken }),
     });
   },
@@ -599,8 +721,8 @@ export const offramp = {
     bankId: string,
     accountNumber: string
   ): Promise<BankAccountDetails> => {
-    return apiCall('/api/v1/offramp/resolve-account', {
-      method: 'POST',
+    return apiCall("/api/v1/offramp/resolve-account", {
+      method: "POST",
       body: JSON.stringify({
         session_token: sessionToken,
         bank_id: bankId,
@@ -616,8 +738,8 @@ export const offramp = {
     bankId: string,
     accountNumber: string
   ): Promise<OfframpOrder> => {
-    return apiCall('/api/v1/offramp/create-order', {
-      method: 'POST',
+    return apiCall("/api/v1/offramp/create-order", {
+      method: "POST",
       body: JSON.stringify({
         session_token: sessionToken,
         amount_usdc: amountUsdc,
@@ -636,9 +758,14 @@ export const offramp = {
       signature: number[];
       client_data_json: number[];
     }
-  ): Promise<{ success: boolean; tx_signature: string; explorer_url: string; message: string }> => {
-    return apiCall('/api/v1/offramp/execute-transfer', {
-      method: 'POST',
+  ): Promise<{
+    success: boolean;
+    tx_signature: string;
+    explorer_url: string;
+    message: string;
+  }> => {
+    return apiCall("/api/v1/offramp/execute-transfer", {
+      method: "POST",
       body: JSON.stringify({
         order_id: orderId,
         passkey_signature: passkeySignature,
@@ -655,9 +782,11 @@ export const offramp = {
 // Support APIs
 export const support = {
   // Send support message
-  sendMessage: async (message: string): Promise<{ success: boolean; message: string }> => {
-    return apiCall('/api/v1/merchants/me/support', {
-      method: 'POST',
+  sendMessage: async (
+    message: string
+  ): Promise<{ success: boolean; message: string }> => {
+    return apiCall("/api/v1/merchants/me/support", {
+      method: "POST",
       body: JSON.stringify({ message }),
     });
   },
@@ -672,8 +801,8 @@ export const webauthn = {
     display_name: string;
     is_reset?: boolean;
   }): Promise<{ challenge_id: string; options: unknown }> => {
-    return apiCall('/api/v1/webauthn/register/start', {
-      method: 'POST',
+    return apiCall("/api/v1/webauthn/register/start", {
+      method: "POST",
       body: JSON.stringify(data),
     });
   },
@@ -683,8 +812,8 @@ export const webauthn = {
     challenge_id: string;
     credential: unknown;
   }): Promise<{ success: boolean }> => {
-    return apiCall('/api/v1/webauthn/register/finish', {
-      method: 'POST',
+    return apiCall("/api/v1/webauthn/register/finish", {
+      method: "POST",
       body: JSON.stringify(data),
     });
   },
@@ -698,17 +827,21 @@ export const paymentLinks = {
     data: CreatePaymentLinkRequest
   ): Promise<PaymentLink> => {
     const response = await fetch(`${API_BASE}/api/v1/payment-links`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify(data),
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Request failed' }));
-      throw new Error(error.message || error.error || 'Failed to create payment link');
+      const error = await response
+        .json()
+        .catch(() => ({ error: "Request failed" }));
+      throw new Error(
+        error.message || error.error || "Failed to create payment link"
+      );
     }
 
     return response.json();
@@ -716,39 +849,54 @@ export const paymentLinks = {
 
   // List payment links (session auth — for merchant dashboard)
   listSession: async (): Promise<PaymentLink[]> => {
-    const data = await apiCall<{ links: PaymentLink[] }>('/api/v1/merchants/me/payment-links');
+    const data = await apiCall<{ links: PaymentLink[] }>(
+      "/api/v1/merchants/me/payment-links"
+    );
     return data.links;
   },
 
   // List payment links
   list: async (apiKey: string): Promise<PaymentLink[]> => {
     const response = await fetch(`${API_BASE}/api/v1/payment-links`, {
-      method: 'GET',
+      method: "GET",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
       },
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Request failed' }));
-      throw new Error(error.message || error.error || 'Failed to list payment links');
+      const error = await response
+        .json()
+        .catch(() => ({ error: "Request failed" }));
+      throw new Error(
+        error.message || error.error || "Failed to list payment links"
+      );
     }
 
     return response.json();
   },
 
   // Get transactions for a specific payment link (dashboard session auth)
-  getLinkTransactions: async (linkCode: string): Promise<PaymentLinkTransactionsResponse> => {
-    const response = await fetch(`${API_BASE}/api/v1/merchants/me/payment-links/${linkCode}/transactions`, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-    });
+  getLinkTransactions: async (
+    linkCode: string
+  ): Promise<PaymentLinkTransactionsResponse> => {
+    const response = await fetch(
+      `${API_BASE}/api/v1/merchants/me/payment-links/${linkCode}/transactions`,
+      {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      }
+    );
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Request failed' }));
-      throw new Error(error.message || error.error || 'Failed to fetch link transactions');
+      const error = await response
+        .json()
+        .catch(() => ({ error: "Request failed" }));
+      throw new Error(
+        error.message || error.error || "Failed to fetch link transactions"
+      );
     }
 
     return response.json();
@@ -773,7 +921,7 @@ export interface Customer {
   billing_country: string | null;
   billing_city: string | null;
   churn_risk: boolean;
-  customer_type: 'new' | 'returning' | 'no_payment';
+  customer_type: "new" | "returning" | "no_payment";
 }
 
 export interface CustomerChartPoint {
@@ -821,24 +969,33 @@ export interface CustomerDetail {
 }
 
 export const customers = {
-  list: async (params: {
-    mode?: string;
-    search?: string;
-    sort_by?: string;
-    limit?: number;
-    page?: number;
-  } = {}): Promise<{ customers: Customer[]; total: number; page: number; limit: number }> => {
+  list: async (
+    params: {
+      mode?: string;
+      search?: string;
+      sort_by?: string;
+      limit?: number;
+      page?: number;
+    } = {}
+  ): Promise<{
+    customers: Customer[];
+    total: number;
+    page: number;
+    limit: number;
+  }> => {
     const query = new URLSearchParams();
-    if (params.mode) query.set('mode', params.mode);
-    if (params.search) query.set('search', params.search);
-    if (params.sort_by) query.set('sort_by', params.sort_by);
-    if (params.limit) query.set('limit', String(params.limit));
-    if (params.page) query.set('page', String(params.page));
+    if (params.mode) query.set("mode", params.mode);
+    if (params.search) query.set("search", params.search);
+    if (params.sort_by) query.set("sort_by", params.sort_by);
+    if (params.limit) query.set("limit", String(params.limit));
+    if (params.page) query.set("page", String(params.page));
     return apiCall(`/api/v1/merchants/me/customers?${query.toString()}`);
   },
 
-  getDetail: async (email: string, mode = 'live'): Promise<CustomerDetail> => {
-    return apiCall(`/api/v1/merchants/me/customers/${encodeURIComponent(email)}?mode=${mode}`);
+  getDetail: async (email: string, mode = "live"): Promise<CustomerDetail> => {
+    return apiCall(
+      `/api/v1/merchants/me/customers/${encodeURIComponent(email)}?mode=${mode}`
+    );
   },
 };
 
@@ -905,31 +1062,31 @@ export interface EarnWithdrawResponse {
 export const earn = {
   /** Get live vault APY, TVL, and holder count. */
   getMetrics: async (): Promise<EarnMetrics> => {
-    return apiCall('/api/v1/merchants/me/earn/metrics');
+    return apiCall("/api/v1/merchants/me/earn/metrics");
   },
 
   /** Get the merchant's current KVault position and PnL. */
   getPosition: async (): Promise<EarnPosition> => {
-    return apiCall('/api/v1/merchants/me/earn/position');
+    return apiCall("/api/v1/merchants/me/earn/position");
   },
 
   /** Get a breakdown of what the merchant will receive on full withdrawal. */
   previewWithdraw: async (): Promise<EarnPreviewWithdraw> => {
-    return apiCall('/api/v1/merchants/me/earn/preview-withdraw');
+    return apiCall("/api/v1/merchants/me/earn/preview-withdraw");
   },
 
   /** Deposit USDC into the Kamino vault. */
   deposit: async (amountUsdc: number): Promise<EarnDepositResponse> => {
-    return apiCall('/api/v1/merchants/me/earn/deposit', {
-      method: 'POST',
+    return apiCall("/api/v1/merchants/me/earn/deposit", {
+      method: "POST",
       body: JSON.stringify({ amount_usdc: amountUsdc }),
     });
   },
 
   /** Withdraw all from the Kamino vault (atomically deducts performance fee). */
   withdraw: async (): Promise<EarnWithdrawResponse> => {
-    return apiCall('/api/v1/merchants/me/earn/withdraw', {
-      method: 'POST',
+    return apiCall("/api/v1/merchants/me/earn/withdraw", {
+      method: "POST",
     });
   },
 };
@@ -981,7 +1138,7 @@ export interface ShopProduct {
   token: string;
   payment_link_id: string | null;
   payment_link_code: string | null;
-  quantity_type: 'unlimited' | 'limited';
+  quantity_type: "unlimited" | "limited";
   quantity_available: number | null;
   quantity_sold: number;
   media_urls: string[];
@@ -1032,7 +1189,7 @@ export interface CreateProductRequest {
   description?: string;
   price_usd: number;
   token?: string;
-  quantity_type: 'unlimited' | 'limited';
+  quantity_type: "unlimited" | "limited";
   quantity_available?: number;
   media_urls?: string[];
   display_order?: number;
@@ -1047,7 +1204,7 @@ export interface UpdateProductRequest {
   description?: string;
   price_usd?: number;
   token?: string;
-  quantity_type?: 'unlimited' | 'limited';
+  quantity_type?: "unlimited" | "limited";
   quantity_available?: number;
   media_urls?: string[];
   display_order?: number;
@@ -1074,12 +1231,12 @@ export interface MediaUploadUrlResponse {
 
 export const shops = {
   list: async (): Promise<Shop[]> => {
-    return apiCall('/api/v1/merchants/me/shops');
+    return apiCall("/api/v1/merchants/me/shops");
   },
 
   create: async (req: CreateShopRequest): Promise<Shop> => {
-    return apiCall('/api/v1/merchants/me/shops', {
-      method: 'POST',
+    return apiCall("/api/v1/merchants/me/shops", {
+      method: "POST",
       body: JSON.stringify(req),
     });
   },
@@ -1090,39 +1247,57 @@ export const shops = {
 
   update: async (id: string, req: UpdateShopRequest): Promise<Shop> => {
     return apiCall(`/api/v1/merchants/me/shops/${id}`, {
-      method: 'PATCH',
+      method: "PATCH",
       body: JSON.stringify(req),
     });
   },
 
   delete: async (id: string): Promise<{ success: boolean }> => {
-    return apiCall(`/api/v1/merchants/me/shops/${id}`, { method: 'DELETE' });
+    return apiCall(`/api/v1/merchants/me/shops/${id}`, { method: "DELETE" });
   },
 
   duplicate: async (id: string): Promise<Shop> => {
-    return apiCall(`/api/v1/merchants/me/shops/${id}/duplicate`, { method: 'POST' });
+    return apiCall(`/api/v1/merchants/me/shops/${id}/duplicate`, {
+      method: "POST",
+    });
   },
 
   listProducts: async (shopId: string): Promise<ShopProduct[]> => {
     return apiCall(`/api/v1/merchants/me/shops/${shopId}/products`);
   },
 
-  createProduct: async (shopId: string, req: CreateProductRequest): Promise<ShopProduct> => {
+  createProduct: async (
+    shopId: string,
+    req: CreateProductRequest
+  ): Promise<ShopProduct> => {
     return apiCall(`/api/v1/merchants/me/shops/${shopId}/products`, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify(req),
     });
   },
 
-  updateProduct: async (shopId: string, productId: string, req: UpdateProductRequest): Promise<ShopProduct> => {
-    return apiCall(`/api/v1/merchants/me/shops/${shopId}/products/${productId}`, {
-      method: 'PATCH',
-      body: JSON.stringify(req),
-    });
+  updateProduct: async (
+    shopId: string,
+    productId: string,
+    req: UpdateProductRequest
+  ): Promise<ShopProduct> => {
+    return apiCall(
+      `/api/v1/merchants/me/shops/${shopId}/products/${productId}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify(req),
+      }
+    );
   },
 
-  deleteProduct: async (shopId: string, productId: string): Promise<{ success: boolean }> => {
-    return apiCall(`/api/v1/merchants/me/shops/${shopId}/products/${productId}`, { method: 'DELETE' });
+  deleteProduct: async (
+    shopId: string,
+    productId: string
+  ): Promise<{ success: boolean }> => {
+    return apiCall(
+      `/api/v1/merchants/me/shops/${shopId}/products/${productId}`,
+      { method: "DELETE" }
+    );
   },
 
   getUploadUrl: async (params: {
@@ -1132,8 +1307,8 @@ export const shops = {
     mime_type: string;
     file_size: number;
   }): Promise<MediaUploadUrlResponse> => {
-    return apiCall('/api/v1/merchants/me/media/upload-url', {
-      method: 'POST',
+    return apiCall("/api/v1/merchants/me/media/upload-url", {
+      method: "POST",
       body: JSON.stringify(params),
     });
   },
@@ -1209,15 +1384,19 @@ export interface TerminalChargesResponse {
 
 export const terminal = {
   getStatus: async (): Promise<TerminalStatus> => {
-    return apiCall('/api/v1/merchants/me/terminal/status');
+    return apiCall("/api/v1/merchants/me/terminal/status");
   },
 
   enable: async (params: {
     business_name?: string;
     quick_amounts?: number[];
-  }): Promise<{ success: boolean; wallet_address: string; message: string }> => {
-    return apiCall('/api/v1/merchants/me/terminal/enable', {
-      method: 'POST',
+  }): Promise<{
+    success: boolean;
+    wallet_address: string;
+    message: string;
+  }> => {
+    return apiCall("/api/v1/merchants/me/terminal/enable", {
+      method: "POST",
       body: JSON.stringify(params),
     });
   },
@@ -1228,8 +1407,8 @@ export const terminal = {
     sound_enabled?: boolean;
     auto_receipt?: boolean;
   }): Promise<{ success: boolean }> => {
-    return apiCall('/api/v1/merchants/me/terminal/settings', {
-      method: 'PATCH',
+    return apiCall("/api/v1/merchants/me/terminal/settings", {
+      method: "PATCH",
       body: JSON.stringify(params),
     });
   },
@@ -1238,8 +1417,8 @@ export const terminal = {
     amount_ngn: number;
     reference?: string;
   }): Promise<TerminalCharge> => {
-    return apiCall('/api/v1/merchants/me/terminal/charge', {
-      method: 'POST',
+    return apiCall("/api/v1/merchants/me/terminal/charge", {
+      method: "POST",
       body: JSON.stringify(params),
     });
   },
@@ -1254,18 +1433,46 @@ export const terminal = {
     period?: string;
   }): Promise<TerminalChargesResponse> => {
     const query = new URLSearchParams();
-    if (params?.limit) query.set('limit', params.limit.toString());
-    if (params?.offset) query.set('offset', params.offset.toString());
-    if (params?.period) query.set('period', params.period);
+    if (params?.limit) query.set("limit", params.limit.toString());
+    if (params?.offset) query.set("offset", params.offset.toString());
+    if (params?.period) query.set("period", params.period);
     return apiCall(`/api/v1/merchants/me/terminal/charges?${query.toString()}`);
   },
 
-  sendReceipt: async (chargeId: string, email: string): Promise<{ success: boolean }> => {
-    return apiCall(`/api/v1/merchants/me/terminal/charges/${chargeId}/receipt`, {
-      method: 'POST',
-      body: JSON.stringify({ email }),
-    });
+  sendReceipt: async (
+    chargeId: string,
+    email: string
+  ): Promise<{ success: boolean }> => {
+    return apiCall(
+      `/api/v1/merchants/me/terminal/charges/${chargeId}/receipt`,
+      {
+        method: "POST",
+        body: JSON.stringify({ email }),
+      }
+    );
   },
+};
+
+// ── Invoices API (session auth — dashboard only) ──────────────────────────────
+
+export const invoices = {
+  list: () => apiCall<Invoice[]>("/api/v1/merchants/me/invoices"),
+
+  get: (id: string) => apiCall<Invoice>(`/api/v1/merchants/me/invoices/${id}`),
+
+  create: (data: CreateInvoiceRequest) =>
+    apiCall<Invoice>("/api/v1/merchants/me/invoices", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    }),
+
+  /** `mode` determines which Solana network the generated payment link uses. */
+  send: (id: string, mode: "live" | "test" = "live") =>
+    apiCall<SendInvoiceResponse>(
+      `/api/v1/merchants/me/invoices/${id}/send?mode=${mode}`,
+      { method: "POST" }
+    ),
 };
 
 export default {
@@ -1282,4 +1489,5 @@ export default {
   earn,
   shops,
   terminal,
+  invoices,
 };
