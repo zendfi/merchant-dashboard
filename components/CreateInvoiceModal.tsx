@@ -66,10 +66,6 @@ export default function CreateInvoiceModal({ isOpen, onClose, mode }: Props) {
   const [exchangeRate, setExchangeRate] = useState<number | null>(null);
   const [loadingRate, setLoadingRate] = useState(false);
 
-  const [showCalculator, setShowCalculator] = useState(false);
-  const [exchangeRate, setExchangeRate] = useState<number | null>(null);
-  const [loadingRate, setLoadingRate] = useState(false);
-
   // ── Step 3 ────────────────────────────────────────────────────────────────
   const [onramp, setOnramp] = useState(false);
   const [amountNgn, setAmountNgn] = useState('');
@@ -119,27 +115,6 @@ export default function CreateInvoiceModal({ isOpen, onClose, mode }: Props) {
   };
 
   const lineItemTotal = lineItems.reduce((s, li) => s + li.quantity * li.unit_price, 0);
-
-  const loadExchangeRate = useCallback(async () => {
-    if (exchangeRate) return;
-    setLoadingRate(true);
-    try {
-      const resp = await fetch('/api/v1/onramp/rates');
-      const data = await resp.json();
-      const rate = data.rates?.NGN?.buy || 1550;
-      setExchangeRate(rate);
-    } catch {
-      // ignore
-    } finally {
-      setLoadingRate(false);
-    }
-  }, [exchangeRate]);
-
-  useEffect(() => {
-    if (showCalculator && !exchangeRate) loadExchangeRate();
-  }, [showCalculator, exchangeRate, loadExchangeRate]);
-  
-  const ngnUsd = amountNgn && exchangeRate ? parseFloat(amountNgn) / exchangeRate : null;
 
   const loadExchangeRate = useCallback(async () => {
     if (exchangeRate) return;

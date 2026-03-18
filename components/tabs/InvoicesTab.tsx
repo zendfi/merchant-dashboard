@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import React from "react";
 import { useMode } from "@/lib/mode-context";
 import { invoices as invoicesApi, Invoice } from "@/lib/api";
 import {
@@ -410,46 +411,47 @@ export default function InvoicesTab() {
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <StatCard
-          label="Total invoices"
-          value={items.length}
-          icon={<FileText className="w-5 h-5 text-primary" />}
-          color="bg-primary/10"
-        />
-        <StatCard
-          label="Pending"
-          value={totalPending}
-          icon={<Clock className="w-5 h-5 text-amber-600" />}
-          color="bg-amber-100 dark:bg-amber-900/20"
-        />
-        <StatCard
-          label="Paid"
-          value={totalPaid}
-          icon={<CheckCircle className="w-5 h-5 text-emerald-600" />}
-          color="bg-emerald-100 dark:bg-emerald-900/20"
-        />
+      {/* Stats strip */}
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+        <div className="bg-white dark:bg-[#13131f] rounded-lg border border-slate-200 dark:border-slate-800 p-3 sm:p-4">
+          <div className="flex items-center gap-1.5 mb-2">
+            <FileText size={13} className="text-slate-600 dark:text-slate-400 shrink-0" />
+            <span className="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400">Total</span>
+          </div>
+          <p className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white">{items.length}</p>
+        </div>
+        <div className="bg-white dark:bg-[#13131f] rounded-lg border border-slate-200 dark:border-slate-800 p-3 sm:p-4">
+          <div className="flex items-center gap-1.5 mb-2">
+            <Clock size={13} className="text-slate-600 dark:text-slate-400 shrink-0" />
+            <span className="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400">Pending</span>
+          </div>
+          <p className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white">{totalPending}</p>
+        </div>
+        <div className="bg-white dark:bg-[#13131f] rounded-lg border border-slate-200 dark:border-slate-800 p-3 sm:p-4">
+          <div className="flex items-center gap-1.5 mb-2">
+            <CheckCircle size={13} className="text-slate-600 dark:text-slate-400 shrink-0" />
+            <span className="text-[10px] sm:text-xs font-medium text-slate-500 dark:text-slate-400">Paid</span>
+          </div>
+          <p className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white">{totalPaid}</p>
+        </div>
       </div>
 
-      {/* Filter + Search bar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-        {/* Status pills */}
-        <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-white/5 rounded-lg flex-wrap">
-          {filters.map((f) => (
-            <button
-              key={f.id}
-              onClick={() => setFilter(f.id)}
-              className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
-                filter === f.id
-                  ? "bg-white dark:bg-white/15 text-slate-900 dark:text-white shadow-sm"
-                  : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white"
-              }`}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
+      {/* Filter pills — horizontally scrollable on mobile */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
+        {filters.map((f) => (
+          <button
+            key={f.id}
+            onClick={() => setFilter(f.id)}
+            className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+              filter === f.id
+                ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900'
+                : 'bg-white dark:bg-[#13131f] border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600'
+            }`}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
 
         {/* Search */}
         <div className="relative sm:ml-auto">
@@ -465,55 +467,121 @@ export default function InvoicesTab() {
       </div>
 
       {/* Table */}
-      <div className="bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/5 overflow-hidden">
-        {/* Desktop table */}
-        <div className="hidden md:block overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50 dark:bg-white/[0.03] border-b border-slate-200 dark:border-white/5">
-              <tr>
-                {[
-                  "Invoice #",
-                  "Customer",
-                  "Amount",
-                  "Status",
-                  "Due",
-                  "Actions",
-                ].map((h) => (
-                  <th
-                    key={h}
-                    className={`px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide ${
-                      h === "Actions" ? "text-right" : "text-left"
-                    }`}
+      <div className="bg-white dark:bg-[#13131f] rounded-xl border border-slate-100 dark:border-slate-800 overflow-hidden">
+
+        {/* ── Mobile card list (< sm) ── */}
+        <div className="sm:hidden">
+          {isLoading ? (
+            <div className="divide-y divide-slate-100 dark:divide-slate-800">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="p-3.5 space-y-2">
+                  <div className="flex justify-between">
+                    <div className="h-3 w-20 bg-slate-100 dark:bg-slate-800 rounded animate-pulse" />
+                    <div className="h-4 w-14 bg-slate-100 dark:bg-slate-800 rounded animate-pulse" />
+                  </div>
+                  <div className="flex justify-between">
+                    <div className="h-5 w-16 bg-slate-100 dark:bg-slate-800 rounded animate-pulse" />
+                    <div className="h-3 w-12 bg-slate-100 dark:bg-slate-800 rounded animate-pulse" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : filtered.length === 0 ? (
+            <p className="py-12 text-center text-slate-400 dark:text-slate-500 text-sm">
+              {search || filter !== "all" ? "No invoices match your filters" : "No invoices yet"}
+            </p>
+          ) : (
+            <div className="divide-y divide-slate-100 dark:divide-slate-800">
+              {filtered.map((inv) => {
+                const isExpanded = expandedId === inv.id;
+                const es = effectiveStatus(inv);
+                const canSend = es === "draft" || es === "overdue";
+
+                return (
+                  <div
+                    key={inv.id}
+                    onClick={() => setExpandedId(isExpanded ? null : inv.id)}
+                    className="p-3.5 cursor-pointer active:bg-slate-50 dark:active:bg-white/[0.03] transition-colors"
                   >
-                    {h}
-                  </th>
-                ))}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <p className="font-mono text-xs font-semibold text-primary dark:text-purple-300">{inv.invoice_number}</p>
+                          {inv.onramp && <Banknote size={13} className="text-violet-500" />}
+                        </div>
+                        <p className="text-xs text-slate-600 dark:text-slate-400 truncate">
+                          {inv.customer_name || inv.customer_email}
+                        </p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="font-semibold text-slate-900 dark:text-white text-sm">${inv.amount_usd.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+                        <p className="text-[11px] text-slate-400">{inv.token}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between mt-2 gap-2">
+                      {sentOk === inv.id ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                          <CheckCircle size={12} /> Sent
+                        </span>
+                      ) : (
+                        <StatusBadge inv={inv} />
+                      )}
+                      <span className="text-[11px] text-slate-400">{fmtDate(inv.due_date)}</span>
+                    </div>
+                    {isExpanded && <DetailPanel inv={inv} onClose={() => setExpandedId(null)} />}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* ── Desktop table (sm+) ── */}
+        <div className="hidden sm:block overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-slate-200 dark:border-slate-800">
+                <th className="px-4 py-3 text-left">
+                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Invoice</span>
+                </th>
+                <th className="px-4 py-3 text-left">
+                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Customer</span>
+                </th>
+                <th className="px-4 py-3 text-right">
+                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Amount</span>
+                </th>
+                <th className="px-4 py-3 text-left">
+                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Status</span>
+                </th>
+                <th className="px-4 py-3 text-left">
+                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Due</span>
+                </th>
+                <th className="px-4 py-3 text-center">
+                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Actions</span>
+                </th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
-                Array.from({ length: 4 }).map((_, i) => <SkeletonRow key={i} />)
+                Array.from({ length: 6 }).map((_, i) => (
+                  <tr key={i} className="border-b border-slate-100 dark:border-slate-800">
+                    <td className="px-4 py-3">
+                      <div className="space-y-1.5">
+                        <div className="h-3 w-24 bg-slate-100 dark:bg-slate-800 rounded animate-pulse" />
+                        <div className="h-2.5 w-32 bg-slate-100 dark:bg-slate-800 rounded animate-pulse" />
+                      </div>
+                    </td>
+                    <td className="px-4 py-3"><div className="h-3 w-32 bg-slate-100 dark:bg-slate-800 rounded animate-pulse" /></td>
+                    <td className="px-4 py-3"><div className="h-3 w-16 bg-slate-100 dark:bg-slate-800 rounded animate-pulse ml-auto" /></td>
+                    <td className="px-4 py-3"><div className="h-5 w-16 bg-slate-100 dark:bg-slate-800 rounded animate-pulse" /></td>
+                    <td className="px-4 py-3"><div className="h-3 w-20 bg-slate-100 dark:bg-slate-800 rounded animate-pulse" /></td>
+                    <td className="px-4 py-3"><div className="h-3 w-10 bg-slate-100 dark:bg-slate-800 rounded animate-pulse mx-auto" /></td>
+                  </tr>
+                ))
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-16 text-center">
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center">
-                        <FileText className="w-6 h-6 text-slate-400" />
-                      </div>
-                      <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
-                        {search || filter !== "all"
-                          ? "No invoices match your filters"
-                          : "No invoices yet"}
-                      </p>
-                      {!search && filter === "all" && (
-                        <button
-                          onClick={() => setIsCreateOpen(true)}
-                          className="mt-1 px-4 py-2 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-primary/90 transition-colors"
-                        >
-                          Create your first invoice
-                        </button>
-                      )}
-                    </div>
+                  <td colSpan={6} className="px-4 py-12 text-center text-slate-400 dark:text-slate-500 text-sm">
+                    {search || filter !== "all" ? "No invoices match your filters" : "No invoices yet"}
                   </td>
                 </tr>
               ) : (
@@ -523,251 +591,98 @@ export default function InvoicesTab() {
                   const canSend = es === "draft" || es === "overdue";
 
                   return (
-                    <>
+                    <React.Fragment key={inv.id}>
                       <tr
-                        key={inv.id}
-                        onClick={() =>
-                          setExpandedId(isExpanded ? null : inv.id)
-                        }
-                        className="border-b border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors cursor-pointer"
+                        onClick={() => setExpandedId(isExpanded ? null : inv.id)}
+                        className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-white/[0.02] cursor-pointer transition-colors last:border-0"
                       >
-                        {/* Invoice # */}
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
-                            <span className="font-mono text-xs font-semibold text-primary">
-                              {inv.invoice_number}
-                            </span>
+                            <p className="font-mono text-xs font-semibold text-primary dark:text-purple-300">{inv.invoice_number}</p>
                             {inv.onramp && (
-                              <span title="Onramp (bank transfer)">
-                                <Banknote className="w-3.5 h-3.5 text-violet-500" />
+                              <span title="Onramp enabled">
+                                <Banknote size={13} className="text-violet-500" />
                               </span>
                             )}
                           </div>
                         </td>
 
-                        {/* Customer */}
                         <td className="px-4 py-3">
-                          <p className="font-medium text-slate-900 dark:text-white truncate max-w-[140px]">
-                            {inv.customer_name || inv.customer_email}
-                          </p>
+                          <p className="font-medium text-slate-900 dark:text-white text-sm">{inv.customer_name || inv.customer_email}</p>
                           {inv.customer_name && (
-                            <p className="text-xs text-slate-400 truncate max-w-[140px]">
-                              {inv.customer_email}
-                            </p>
+                            <p className="text-xs text-slate-400 mt-0.5">{inv.customer_email}</p>
                           )}
                         </td>
 
-                        {/* Amount */}
-                        <td className="px-4 py-3">
-                          <span className="font-semibold text-slate-900 dark:text-white">
-                            {fmt(inv.amount_usd, inv.token)}
+                        <td className="px-4 py-3 text-right">
+                          <span className="font-semibold text-slate-900 dark:text-white text-sm">
+                            ${inv.amount_usd.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                           </span>
+                          <p className="text-xs text-slate-400 mt-0.5">{inv.token}</p>
                         </td>
 
-                        {/* Status */}
                         <td className="px-4 py-3">
                           {sentOk === inv.id ? (
-                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400">
-                              <CheckCircle className="w-3 h-3" /> Sent!
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                              <CheckCircle size={12} /> Sent
                             </span>
                           ) : (
                             <StatusBadge inv={inv} />
                           )}
                         </td>
 
-                        {/* Due */}
-                        <td className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">
-                          {fmtDate(inv.due_date)}
+                        <td className="px-4 py-3">
+                          <span className="text-xs text-slate-500 dark:text-slate-400">
+                            {fmtDate(inv.due_date)}
+                          </span>
                         </td>
 
-                        {/* Actions */}
                         <td className="px-4 py-3">
                           <div
-                            className="flex items-center justify-end gap-1.5"
+                            className="flex items-center justify-center gap-1"
                             onClick={(e) => e.stopPropagation()}
                           >
                             {canSend && (
                               <button
                                 onClick={() => handleSend(inv)}
                                 disabled={sendingId === inv.id}
-                                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 transition-colors disabled:opacity-60"
+                                title="Send invoice"
+                                className="p-1.5 rounded text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors disabled:opacity-60"
                               >
                                 {sendingId === inv.id ? (
-                                  <RefreshCw className="w-3 h-3 animate-spin" />
+                                  <RefreshCw size={14} className="animate-spin" />
                                 ) : (
-                                  <Send className="w-3 h-3" />
+                                  <Send size={14} />
                                 )}
-                                {sendingId === inv.id ? "Sending…" : "Send"}
                               </button>
                             )}
                             {inv.payment_url && (
-                              <button
-                                onClick={() =>
-                                  handleCopy(inv.payment_url!, inv.id)
-                                }
-                                className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
-                                title="Copy payment link"
+                              <a
+                                href={inv.payment_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                title="Open payment link"
+                                className="p-1.5 rounded text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
                               >
-                                {copyOk === inv.id ? (
-                                  <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
-                                ) : (
-                                  <Copy className="w-3.5 h-3.5 text-slate-400" />
-                                )}
-                              </button>
+                                <ExternalLink size={14} />
+                              </a>
                             )}
-                            <button className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-colors">
-                              {isExpanded ? (
-                                <ChevronUp className="w-3.5 h-3.5 text-slate-400" />
-                              ) : (
-                                <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-                              )}
-                            </button>
                           </div>
                         </td>
                       </tr>
-
                       {isExpanded && (
-                        <tr key={`${inv.id}-detail`}>
+                        <tr className="border-b border-slate-100 dark:border-slate-800">
                           <td colSpan={6} className="p-0">
-                            <DetailPanel
-                              inv={inv}
-                              onClose={() => setExpandedId(null)}
-                            />
+                            <DetailPanel inv={inv} onClose={() => setExpandedId(null)} />
                           </td>
                         </tr>
                       )}
-                    </>
+                    </React.Fragment>
                   );
                 })
               )}
             </tbody>
           </table>
-        </div>
-
-        {/* Mobile cards */}
-        <div className="md:hidden divide-y divide-slate-100 dark:divide-white/5">
-          {isLoading ? (
-            Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="p-4 animate-pulse space-y-2">
-                <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-32" />
-                <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-48" />
-                <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-24" />
-              </div>
-            ))
-          ) : filtered.length === 0 ? (
-            <div className="py-16 flex flex-col items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center">
-                <FileText className="w-6 h-6 text-slate-400" />
-              </div>
-              <p className="text-slate-500 dark:text-slate-400 text-sm font-medium text-center px-6">
-                {search || filter !== "all"
-                  ? "No invoices match your filters"
-                  : "No invoices yet"}
-              </p>
-              {!search && filter === "all" && (
-                <button
-                  onClick={() => setIsCreateOpen(true)}
-                  className="px-4 py-2 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-primary/90 transition-colors"
-                >
-                  Create your first invoice
-                </button>
-              )}
-            </div>
-          ) : (
-            filtered.map((inv) => {
-              const isExpanded = expandedId === inv.id;
-              const es = effectiveStatus(inv);
-              const canSend = es === "draft" || es === "overdue";
-
-              return (
-                <div key={inv.id}>
-                  <div
-                    className="p-4 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors cursor-pointer"
-                    onClick={() => setExpandedId(isExpanded ? null : inv.id)}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-mono text-xs font-semibold text-primary">
-                            {inv.invoice_number}
-                          </span>
-                          {inv.onramp && (
-                            <Banknote className="w-3.5 h-3.5 text-violet-500 flex-shrink-0" />
-                          )}
-                        </div>
-                        <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
-                          {inv.customer_name || inv.customer_email}
-                        </p>
-                        {inv.customer_name && (
-                          <p className="text-xs text-slate-400 truncate">
-                            {inv.customer_email}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-                        <StatusBadge inv={inv} />
-                        <span className="text-sm font-semibold text-slate-900 dark:text-white">
-                          {fmt(inv.amount_usd, inv.token)}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between mt-3">
-                      <p className="text-xs text-slate-400">
-                        Due {fmtDate(inv.due_date)}
-                      </p>
-                      <div
-                        className="flex items-center gap-1.5"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {canSend && (
-                          <button
-                            onClick={() => handleSend(inv)}
-                            disabled={sendingId === inv.id}
-                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 transition-colors disabled:opacity-60"
-                          >
-                            {sendingId === inv.id ? (
-                              <RefreshCw className="w-3 h-3 animate-spin" />
-                            ) : (
-                              <Send className="w-3 h-3" />
-                            )}
-                            {sendingId === inv.id ? "Sending…" : "Send"}
-                          </button>
-                        )}
-                        {inv.payment_url && (
-                          <button
-                            onClick={() => handleCopy(inv.payment_url!, inv.id)}
-                            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
-                            title="Copy payment link"
-                          >
-                            {copyOk === inv.id ? (
-                              <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
-                            ) : (
-                              <Copy className="w-3.5 h-3.5 text-slate-400" />
-                            )}
-                          </button>
-                        )}
-                        <span className="text-slate-300 dark:text-slate-600">
-                          {isExpanded ? (
-                            <ChevronUp className="w-3.5 h-3.5" />
-                          ) : (
-                            <ChevronDown className="w-3.5 h-3.5" />
-                          )}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {isExpanded && (
-                    <DetailPanel
-                      inv={inv}
-                      onClose={() => setExpandedId(null)}
-                    />
-                  )}
-                </div>
-              );
-            })
-          )}
         </div>
       </div>
 
