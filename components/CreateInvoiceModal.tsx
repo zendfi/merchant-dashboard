@@ -62,6 +62,14 @@ export default function CreateInvoiceModal({ isOpen, onClose, mode }: Props) {
   const [lineItems, setLineItems] = useState<(LineItem & { _key: number })[]>([]);
   const [dueDate, setDueDate] = useState('');
 
+  const [showCalculator, setShowCalculator] = useState(false);
+  const [exchangeRate, setExchangeRate] = useState<number | null>(null);
+  const [loadingRate, setLoadingRate] = useState(false);
+
+  const [showCalculator, setShowCalculator] = useState(false);
+  const [exchangeRate, setExchangeRate] = useState<number | null>(null);
+  const [loadingRate, setLoadingRate] = useState(false);
+
   // ── Step 3 ────────────────────────────────────────────────────────────────
   const [onramp, setOnramp] = useState(false);
   const [amountNgn, setAmountNgn] = useState('');
@@ -111,6 +119,48 @@ export default function CreateInvoiceModal({ isOpen, onClose, mode }: Props) {
   };
 
   const lineItemTotal = lineItems.reduce((s, li) => s + li.quantity * li.unit_price, 0);
+
+  const loadExchangeRate = useCallback(async () => {
+    if (exchangeRate) return;
+    setLoadingRate(true);
+    try {
+      const resp = await fetch('/api/v1/onramp/rates');
+      const data = await resp.json();
+      const rate = data.rates?.NGN?.buy || 1550;
+      setExchangeRate(rate);
+    } catch {
+      // ignore
+    } finally {
+      setLoadingRate(false);
+    }
+  }, [exchangeRate]);
+
+  useEffect(() => {
+    if (showCalculator && !exchangeRate) loadExchangeRate();
+  }, [showCalculator, exchangeRate, loadExchangeRate]);
+  
+  const ngnUsd = amountNgn && exchangeRate ? parseFloat(amountNgn) / exchangeRate : null;
+
+  const loadExchangeRate = useCallback(async () => {
+    if (exchangeRate) return;
+    setLoadingRate(true);
+    try {
+      const resp = await fetch('/api/v1/onramp/rates');
+      const data = await resp.json();
+      const rate = data.rates?.NGN?.buy || 1550;
+      setExchangeRate(rate);
+    } catch {
+      // ignore
+    } finally {
+      setLoadingRate(false);
+    }
+  }, [exchangeRate]);
+
+  useEffect(() => {
+    if (showCalculator && !exchangeRate) loadExchangeRate();
+  }, [showCalculator, exchangeRate, loadExchangeRate]);
+  
+  const ngnUsd = amountNgn && exchangeRate ? parseFloat(amountNgn) / exchangeRate : null;
 
   // ── Validation ────────────────────────────────────────────────────────────
   const validateStep1 = () => {
@@ -253,7 +303,7 @@ export default function CreateInvoiceModal({ isOpen, onClose, mode }: Props) {
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
 
-          {/* ── Step 1: Customer & Amount ─────────────────────────────────── */}
+                    {/* ── Step 1: Customer & Amount ─────────────────────────────────── */}
           {step === 1 && (
             <>
               <div className={SECTION_CLS}>
@@ -288,21 +338,24 @@ export default function CreateInvoiceModal({ isOpen, onClose, mode }: Props) {
                 <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-3">
                   Invoice details
                 </h3>
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <div className="flex gap-3">
-                    <div className="flex-1">
+                    <div className="flex-1 space-y-1">
                       <label className={LABEL_CLS}>Amount *</label>
-                      <input
-                        type="number"
-                        min="0.01"
-                        step="0.01"
-                        className={INPUT_CLS}
-                        placeholder="0.00"
-                        value={amount}
-                        onChange={e => setAmount(e.target.value)}
-                      />
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium">$</span>
+                        <input
+                          type="number"
+                          min="0.01"
+                          step="0.01"
+                          className={`${INPUT_CLS} pl-7`}
+                          placeholder="0.00"
+                          value={amount}
+                          onChange={e => { setAmount(e.target.value); if(amountNgn) setAmountNgn(''); }}
+                        />
+                      </div>
                     </div>
-                    <div className="w-28">
+                    <div className="w-28 space-y-1">
                       <label className={LABEL_CLS}>Token</label>
                       <select
                         className={INPUT_CLS}
@@ -310,17 +363,92 @@ export default function CreateInvoiceModal({ isOpen, onClose, mode }: Props) {
                         onChange={e => setToken(e.target.value)}
                       >
                         <option value="USDC">USDC</option>
-                        <option value="USDT">USDT</option>
                         <option value="SOL">SOL</option>
                       </select>
                     </div>
                   </div>
-                  <div>
-                    <label className={LABEL_CLS}>Description *</label>
-                    <textarea
-                      className={`${INPUT_CLS} resize-none`}
-                      rows={2}
-                      placeholder="Web development – March 2026"
+
+                  <button
+                    type="button"
+                    onClick={() => setShowCalculator(!showCalculator)}
+                    className="text-xs text-primary hover:underline flex items-center gap-1.5"
+                  >
+                    <ChevronDown size={14} className={`transition-transform ${showCalculator ? 'rotate-180' : ''}`} />
+                    {showCalculator ? 'Hide' : 'Show'} NGN Calculator
+                  </button>
+
+                  {showCalculator && (
+                    <div className="p-4 bg-primary/5 border border-primary/20 rounded-xl space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Banknote size={16} className="text-primary" />
+                        <span className="text-xs font-semibold text-primary">NGN to USD Calculator</span>
+                      </div>
+                      {loadingRate ? (
+                        <div className="text-xs text-slate-500 py-2">Loading exchange rate…</div>
+                      ) : exchangeRate ? (
+                        <>
+                          <div className="text-xs text-slate-500">
+                            Current rate: <span className="font-semibold text-slate-900 dark:text-white">₦{exchangeRate.toFixed(2)} = $1.00</span>
+                          </div>
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium">₦</span>
+                            <input
+                              type="number"
+                              step="1"
+                              min="1"
+                              className={`${INPUT_CLS} pl-7`}
+                              placeholder="Enter NGN amount"
+                              value={amountNgn}
+                              onChange={(e) => { 
+                                setAmountNgn(e.target.value); 
+                                if (e.target.value) setAmount(''); 
+                              }}
+                            />
+                          </div>
+                          {ngnUsd !== null && ngnUsd > 0 && (
+                            <div className="flex justify-between items-center p-3 bg-white dark:bg-slate-800 rounded-lg">
+                              <span className="text-xs text-slate-500">USD Equivalent:</span>
+                              <span className="text-sm font-bold text-primary">${ngnUsd.toFixed(2)}</span>
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <div className="text-xs text-red-500">Failed to load exchange rate.</div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Onramp Toggle */}
+                  <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl mt-2">
+                    <div>
+                      <p className="text-sm font-medium text-slate-900 dark:text-white">Enable Fiat Onramp</p>
+                      <p className="text-xs text-slate-500 mt-0.5">Pay via NGN bank transfer</p>
+                    </div>
+                    <Toggle checked={onramp} onChange={() => {
+                        setOnramp(!onramp);
+                        if (!onramp) {
+                            setShowCalculator(true);
+                        }
+                    }} />
+                  </div>
+
+                  {onramp && (
+                    <div className="pl-4 space-y-3 border-l-2 border-primary/20 ml-2 mt-3">
+                      <div className="flex items-center justify-between pr-2">
+                        <div>
+                          <p className="text-sm text-slate-700 dark:text-slate-300">Payer covers service charge</p>
+                        </div>
+                        <Toggle checked={payerServiceCharge} onChange={() => setPayerServiceCharge(!payerServiceCharge)} />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-1 mt-4">
+                    <label className={LABEL_CLS}>Description</label>
+                    <input
+                      type="text"
+                      className={INPUT_CLS}
+                      placeholder="Enter a description for this invoice"
                       value={description}
                       onChange={e => setDescription(e.target.value)}
                     />
@@ -330,7 +458,7 @@ export default function CreateInvoiceModal({ isOpen, onClose, mode }: Props) {
             </>
           )}
 
-          {/* ── Step 2: Line Items & Due Date ─────────────────────────────── */}
+{/* ── Step 2: Line Items & Due Date ─────────────────────────────── */}
           {step === 2 && (
             <>
               <div className={SECTION_CLS}>
@@ -438,55 +566,7 @@ export default function CreateInvoiceModal({ isOpen, onClose, mode }: Props) {
           {/* ── Step 3: Payment options & Review ──────────────────────────── */}
           {step === 3 && (
             <>
-              {/* Onramp */}
-              <div className={SECTION_CLS}>
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center flex-shrink-0">
-                      <Banknote className="w-4 h-4 text-violet-600 dark:text-violet-400" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-slate-900 dark:text-white">Pay with Bank (NGN onramp)</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                        Customer pays via NGN bank transfer. Converted to {token} and settled to your wallet.
-                      </p>
-                    </div>
-                  </div>
-                  <Toggle checked={onramp} onChange={() => setOnramp(v => !v)} />
-                </div>
 
-                {onramp && (
-                  <div className="mt-4 space-y-3 pl-10">
-                    <div>
-                      <label className={LABEL_CLS}>NGN Amount (optional)</label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400 font-medium">₦</span>
-                        <input
-                          type="number"
-                          min="1000"
-                          step="1"
-                          className={`${INPUT_CLS} pl-7`}
-                          placeholder="e.g. 42500"
-                          value={amountNgn}
-                          onChange={e => setAmountNgn(e.target.value)}
-                        />
-                      </div>
-                      <p className="text-xs text-slate-400 mt-1">
-                        Sets an exact NGN amount, bypassing the live FX re-quote at checkout. Min ₦1,000.
-                      </p>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Payer covers service charge</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                          max(₦30, ceil(amount × 2.5%)) added on top, visible to payer
-                        </p>
-                      </div>
-                      <Toggle checked={payerServiceCharge} onChange={() => setPayerServiceCharge(v => !v)} />
-                    </div>
-                  </div>
-                )}
-              </div>
 
               {/* Collect customer info */}
               <div className={SECTION_CLS}>
