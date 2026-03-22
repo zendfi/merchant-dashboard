@@ -24,6 +24,8 @@ interface NavItem {
 const mainNavItems: NavItem[] = [
   { id: "overview", label: "Overview", icon: "dashboard" },
   { id: "transactions", label: "Transactions", icon: "payments" },
+  { id: "refunds", label: "Refunds", icon: "currency_exchange" },
+  { id: "disputes", label: "Disputes", icon: "gavel" },
   { id: "terminal", label: "Terminal", icon: "point_of_sale", badge: "New" },
   { id: "earn", label: "Earn", icon: "savings", badge: "New" },
   { id: "shop", label: "Shop", icon: "storefront", badge: "New" },

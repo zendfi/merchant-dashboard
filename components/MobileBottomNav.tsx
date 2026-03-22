@@ -15,6 +15,8 @@ const PRIMARY_NAV = [
 
 // tabs that live only in the sidebar; highlight "more" when one is active
 const SECONDARY_TABS = new Set([
+  "refunds",
+  "disputes",
   "shop",
   "invoices",
   "customers",

@@ -24,6 +24,8 @@ import EarnTab from "@/components/tabs/EarnTab";
 import ShopTab from "@/components/tabs/ShopTab";
 import TerminalTab from "@/components/tabs/TerminalTab";
 import InvoicesTab from "@/components/tabs/InvoicesTab";
+import RefundsTab from "@/components/tabs/RefundsTab";
+import DisputesTab from "@/components/tabs/DisputesTab";
 
 function DashboardContent() {
   const router = useRouter();
@@ -101,6 +103,10 @@ function DashboardContent() {
         return <PaymentLinksTab onModalToggle={setHeaderHidden} />;
       case "invoices":
         return <InvoicesTab />;
+      case "refunds":
+        return <RefundsTab />;
+      case "disputes":
+        return <DisputesTab />;
       case "customers":
         return <CustomersTab onModalToggle={setHeaderHidden} />;
       case "api-keys":

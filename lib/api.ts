@@ -91,6 +91,49 @@ export interface Transaction {
   paj_external_order_id: string | null;
 }
 
+export interface Refund {
+  id: string;
+  payment_id: string;
+  amount_usd: number;
+  refund_reason: string | null;
+  status: "pending" | "processing" | "completed" | "failed";
+  initiated_by: "merchant" | "admin" | "system";
+  transaction_signature: string | null;
+  customer_wallet: string | null;
+  customer_email: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  completed_at: string | null;
+}
+
+export interface Dispute {
+  id: string;
+  payment_id: string;
+  refund_id: string | null;
+  merchant_id: string;
+  customer_email: string | null;
+  customer_wallet: string | null;
+  dispute_type:
+    | "duplicate"
+    | "unauthorized"
+    | "product_not_received"
+    | "other";
+  description: string | null;
+  evidence: Record<string, unknown>;
+  status:
+    | "open"
+    | "under_review"
+    | "resolved_merchant_favor"
+    | "resolved_customer_favor"
+    | "closed";
+  resolution_notes: string | null;
+  resolved_by: string | null;
+  opened_at: string;
+  resolved_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface DashboardStats {
   total_payments: number;
   total_volume: number;
@@ -390,6 +433,16 @@ export const auth = {
       }),
     });
   },
+
+  // Complete passkey reset after successful WebAuthn registration
+  completePasskeyReset: async (
+    token: string
+  ): Promise<{ success: boolean }> => {
+    return apiCall("/api/v1/merchants/passkey/reset/complete", {
+      method: "POST",
+      body: JSON.stringify({ token }),
+    });
+  },
 };
 
 // Merchant APIs
@@ -539,6 +592,106 @@ export const transactions = {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ reason: reason ?? null }),
+    });
+  },
+};
+
+export const refunds = {
+  list: async (
+    params: {
+      limit?: number;
+      offset?: number;
+      status?: string;
+      start_date?: string;
+      end_date?: string;
+    } = {}
+  ): Promise<{ refunds: Refund[]; total: number; limit: number; offset: number }> => {
+    const searchParams = new URLSearchParams();
+    if (params.limit) searchParams.set("limit", params.limit.toString());
+    if (params.offset !== undefined)
+      searchParams.set("offset", params.offset.toString());
+    if (params.status) searchParams.set("status", params.status);
+    if (params.start_date) searchParams.set("start_date", params.start_date);
+    if (params.end_date) searchParams.set("end_date", params.end_date);
+
+    return apiCall(`/api/v1/merchants/me/refunds?${searchParams.toString()}`);
+  },
+
+  get: async (id: string): Promise<Refund> => {
+    return apiCall(`/api/v1/merchants/me/refunds/${id}`);
+  },
+
+  createForPayment: async (
+    paymentId: string,
+    data: { amount_usd: number; refund_reason?: string; metadata?: Record<string, unknown> }
+  ): Promise<{
+    id: string;
+    payment_id: string;
+    amount: number;
+    status: string;
+    estimated_completion: string;
+  }> => {
+    return apiCall(`/api/v1/payments/${paymentId}/refund`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+};
+
+export const disputes = {
+  list: async (
+    params: {
+      limit?: number;
+      offset?: number;
+      status?: string;
+      dispute_type?: string;
+      start_date?: string;
+      end_date?: string;
+    } = {}
+  ): Promise<{ disputes: Dispute[]; total: number; limit: number; offset: number }> => {
+    const searchParams = new URLSearchParams();
+    if (params.limit) searchParams.set("limit", params.limit.toString());
+    if (params.offset !== undefined)
+      searchParams.set("offset", params.offset.toString());
+    if (params.status) searchParams.set("status", params.status);
+    if (params.dispute_type) searchParams.set("dispute_type", params.dispute_type);
+    if (params.start_date) searchParams.set("start_date", params.start_date);
+    if (params.end_date) searchParams.set("end_date", params.end_date);
+
+    return apiCall(`/api/v1/merchants/me/disputes?${searchParams.toString()}`);
+  },
+
+  get: async (id: string): Promise<Dispute> => {
+    return apiCall(`/api/v1/merchants/me/disputes/${id}`);
+  },
+
+  respond: async (
+    id: string,
+    data: { response: string; evidence?: Record<string, unknown> }
+  ): Promise<Dispute> => {
+    return apiCall(`/api/v1/merchants/me/disputes/${id}/respond`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+
+  issueRefund: async (
+    id: string,
+    data: { amount_usd: number; refund_reason?: string; metadata?: Record<string, unknown> }
+  ): Promise<{
+    dispute_id: string;
+    refund: {
+      id: string;
+      payment_id: string;
+      amount: number;
+      status: string;
+      estimated_completion: string;
+    };
+    status: string;
+  }> => {
+    return apiCall(`/api/v1/merchants/me/disputes/${id}/issue-refund`, {
+      method: "POST",
+      body: JSON.stringify(data),
     });
   },
 };

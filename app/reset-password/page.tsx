@@ -31,7 +31,7 @@ function ResetPasswordContent() {
     const verifyToken = async () => {
       try {
         const data = await auth.verifyResetToken(token);
-        if (data.valid) {
+        if (data.valid && data.token_type === 'password') {
           setIsValid(true);
           setEmail(data.email || '');
         }

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { invoices as invoicesApi, CreateInvoiceRequest, LineItem } from '@/lib/api';
-import { X, Plus, Trash2, ChevronRight, ChevronLeft, FileText, Send, Banknote, AlertCircle, CheckCircle } from 'lucide-react';
+import { X, Plus, Trash2, ChevronRight, ChevronLeft, ChevronDown, FileText, Send, Banknote, AlertCircle, CheckCircle } from 'lucide-react';
 
 interface Props {
   isOpen: boolean;

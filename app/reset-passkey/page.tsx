@@ -95,7 +95,7 @@ function ResetPasskeyContent() {
         credential: credential,
       });
 
-      await auth.resetPassword(token!, 'passkey_reset', 'passkey_reset');
+      await auth.completePasskeyReset(token!);
 
       setSuccess('Passkey registered successfully! Redirecting to login...');
       setTimeout(() => {
