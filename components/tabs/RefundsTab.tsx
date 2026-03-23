@@ -7,6 +7,13 @@ export default function RefundsTab() {
   const [refunds, setRefunds] = useState<Refund[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [status, setStatus] = useState('all');
+  const [paymentId, setPaymentId] = useState('');
+  const [amount, setAmount] = useState('');
+  const [amountCurrency, setAmountCurrency] = useState<'usd' | 'ngn'>('usd');
+  const [reason, setReason] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formMessage, setFormMessage] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const load = async () => {
     setIsLoading(true);
@@ -24,8 +31,88 @@ export default function RefundsTab() {
     load();
   }, [status]);
 
+  const submitRefund = async () => {
+    setFormMessage(null);
+    setFormError(null);
+
+    const trimmedPaymentId = paymentId.trim();
+    if (!trimmedPaymentId) {
+      setFormError('Payment ID is required.');
+      return;
+    }
+
+    const numericAmount = Number(amount);
+    if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+      setFormError('Enter a valid amount greater than 0.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await refundsApi.createForPayment(trimmedPaymentId, {
+        amount_usd: amountCurrency === 'usd' ? numericAmount : undefined,
+        amount_ngn: amountCurrency === 'ngn' ? numericAmount : undefined,
+        refund_reason: reason.trim() || undefined,
+      });
+      setFormMessage('Refund request submitted successfully.');
+      setAmount('');
+      setReason('');
+      await load();
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : 'Failed to create refund');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
+      <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4 space-y-3">
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Create Refund</h3>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <input
+            value={paymentId}
+            onChange={(e) => setPaymentId(e.target.value)}
+            placeholder="Payment ID"
+            className="md:col-span-2 px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-[#0f0f1a]"
+          />
+          <input
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            type="number"
+            min="0"
+            step="0.000001"
+            placeholder={amountCurrency === 'usd' ? 'Amount (USD)' : 'Amount (NGN)'}
+            className="px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-[#0f0f1a]"
+          />
+          <select
+            value={amountCurrency}
+            onChange={(e) => setAmountCurrency(e.target.value as 'usd' | 'ngn')}
+            className="px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-[#0f0f1a]"
+          >
+            <option value="usd">USD</option>
+            <option value="ngn">NGN</option>
+          </select>
+        </div>
+        <div className="flex flex-col md:flex-row gap-3">
+          <input
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="Reason (optional)"
+            className="flex-1 px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-[#0f0f1a]"
+          />
+          <button
+            onClick={submitRefund}
+            disabled={isSubmitting}
+            className="px-4 py-2 text-sm font-semibold rounded-lg bg-primary text-white disabled:opacity-50"
+          >
+            {isSubmitting ? 'Submitting...' : 'Submit Refund'}
+          </button>
+        </div>
+        {formMessage && <p className="text-xs text-emerald-600 dark:text-emerald-400">{formMessage}</p>}
+        {formError && <p className="text-xs text-rose-600 dark:text-rose-400">{formError}</p>}
+      </div>
+
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold text-slate-900 dark:text-white">Refunds</h2>
@@ -51,21 +138,23 @@ export default function RefundsTab() {
               <th className="text-left px-4 py-3">Refund ID</th>
               <th className="text-left px-4 py-3">Payment</th>
               <th className="text-left px-4 py-3">Amount</th>
+              <th className="text-left px-4 py-3">NGN Context</th>
               <th className="text-left px-4 py-3">Status</th>
               <th className="text-left px-4 py-3">Created</th>
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
-              <tr><td className="px-4 py-6 text-slate-500" colSpan={5}>Loading refunds...</td></tr>
+              <tr><td className="px-4 py-6 text-slate-500" colSpan={6}>Loading refunds...</td></tr>
             ) : refunds.length === 0 ? (
-              <tr><td className="px-4 py-6 text-slate-500" colSpan={5}>No refunds found.</td></tr>
+              <tr><td className="px-4 py-6 text-slate-500" colSpan={6}>No refunds found.</td></tr>
             ) : (
               refunds.map((refund) => (
                 <tr key={refund.id} className="border-t border-slate-100 dark:border-slate-800">
                   <td className="px-4 py-3 font-mono text-xs">{refund.id.slice(0, 8)}...</td>
                   <td className="px-4 py-3 font-mono text-xs">{refund.payment_id.slice(0, 8)}...</td>
                   <td className="px-4 py-3">${refund.amount_usd.toFixed(2)}</td>
+                  <td className="px-4 py-3">{typeof refund.amount_ngn === 'number' ? `₦${refund.amount_ngn.toLocaleString()}` : '—'}</td>
                   <td className="px-4 py-3 capitalize">{refund.status}</td>
                   <td className="px-4 py-3">{new Date(refund.created_at).toLocaleString()}</td>
                 </tr>

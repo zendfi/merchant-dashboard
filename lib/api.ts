@@ -95,6 +95,7 @@ export interface Refund {
   id: string;
   payment_id: string;
   amount_usd: number;
+  amount_ngn?: number | null;
   refund_reason: string | null;
   status: "pending" | "processing" | "completed" | "failed";
   initiated_by: "merchant" | "admin" | "system";
@@ -623,7 +624,12 @@ export const refunds = {
 
   createForPayment: async (
     paymentId: string,
-    data: { amount_usd: number; refund_reason?: string; metadata?: Record<string, unknown> }
+    data: {
+      amount_usd?: number;
+      amount_ngn?: number;
+      refund_reason?: string;
+      metadata?: Record<string, unknown>;
+    }
   ): Promise<{
     id: string;
     payment_id: string;
@@ -677,7 +683,12 @@ export const disputes = {
 
   issueRefund: async (
     id: string,
-    data: { amount_usd: number; refund_reason?: string; metadata?: Record<string, unknown> }
+    data: {
+      amount_usd?: number;
+      amount_ngn?: number;
+      refund_reason?: string;
+      metadata?: Record<string, unknown>;
+    }
   ): Promise<{
     dispute_id: string;
     refund: {
