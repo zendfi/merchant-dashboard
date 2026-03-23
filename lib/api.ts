@@ -637,7 +637,7 @@ export const refunds = {
     status: string;
     estimated_completion: string;
   }> => {
-    return apiCall(`/api/v1/payments/${paymentId}/refund`, {
+    return apiCall(`/api/v1/merchants/me/payments/${paymentId}/refund`, {
       method: "POST",
       body: JSON.stringify(data),
     });
