@@ -1,14 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useMerchant } from '@/lib/merchant-context';
 import { useMode } from '@/lib/mode-context';
 import { useCurrency } from '@/lib/currency-context';
-import { merchant as merchantApi, DashboardStats, DashboardAnalytics, transactions as transactionsApi, Transaction } from '@/lib/api';
+import { merchant as merchantApi, DashboardStats, DashboardAnalytics } from '@/lib/api';
 import {
-  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
+  LineChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
+import { RefreshCw, List } from 'lucide-react';
+import { TabHeader, StatTile, SurfaceCard, SectionTitle } from './shared/TabScaffold';
 
 interface OverviewTabProps {
   onViewAllTransactions: () => void;
@@ -20,30 +22,27 @@ export default function OverviewTab({ onViewAllTransactions }: OverviewTabProps)
   const { currency, exchangeRate } = useCurrency();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [analytics, setAnalytics] = useState<DashboardAnalytics | null>(null);
-  const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true);
-      try {
-        const [statsData, analyticsData, txData] = await Promise.all([
-          merchantApi.getStats(mode),
-          merchantApi.getAnalytics(),
-          transactionsApi.list({ mode, limit: 5 }),
-        ]);
-        setStats(statsData);
-        setAnalytics(analyticsData);
-        setRecentTransactions(txData.transactions || []);
-      } catch (error) {
-        console.error('Failed to load dashboard data:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadData();
+  const loadData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const [statsData, analyticsData] = await Promise.all([
+        merchantApi.getStats(mode),
+        merchantApi.getAnalytics(),
+      ]);
+      setStats(statsData);
+      setAnalytics(analyticsData);
+    } catch (error) {
+      console.error('Failed to load dashboard data:', error);
+    } finally {
+      setIsLoading(false);
+    }
   }, [mode]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   // Generate bar chart data
   const volumeData = analytics?.volume_chart || [];
@@ -94,105 +93,87 @@ export default function OverviewTab({ onViewAllTransactions }: OverviewTabProps)
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <div className="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin" />
+      <div className="space-y-5">
+        <TabHeader
+          title="Overview"
+          subtitle={`Loading dashboard for ${mode} mode`}
+        />
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div
+              key={i}
+              className="bg-white dark:bg-[#13131f] rounded-xl border border-slate-100 dark:border-slate-800 p-4"
+            >
+              <div className="h-3 w-20 bg-slate-100 dark:bg-slate-800 rounded animate-pulse mb-3" />
+              <div className="h-6 w-24 bg-slate-100 dark:bg-slate-800 rounded animate-pulse" />
+            </div>
+          ))}
+        </div>
+        <SurfaceCard className="p-5">
+          <div className="h-[240px] bg-slate-100 dark:bg-slate-800/70 rounded-lg animate-pulse" />
+        </SurfaceCard>
       </div>
     );
   }
 
-  const getStatusBadge = (status: string) => {
-    const styles: Record<string, string> = {
-      confirmed: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
-      pending: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-      failed: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
-      expired: 'bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-400',
-    };
-    const dotStyles: Record<string, string> = {
-      confirmed: 'bg-emerald-500',
-      pending: 'bg-amber-500',
-      failed: 'bg-rose-500',
-      expired: 'bg-slate-500',
-    };
-    return (
-      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${styles[status] || styles.pending}`}>
-        <span className={`size-1.5 rounded-full ${dotStyles[status] || dotStyles.pending}`}></span>
-        {status.charAt(0).toUpperCase() + status.slice(1)}
-      </span>
-    );
-  };
-
   return (
-    <div className="space-y-6">
-      {/* Stats Cards */}
+    <div className="space-y-5">
+      <TabHeader
+        title="Overview"
+        subtitle={`${merchant?.name || 'Merchant dashboard'} in ${mode} mode`}
+        actions={(
+          <>
+            <button
+              onClick={() => loadData()}
+              title="Refresh"
+              className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+            >
+              <RefreshCw size={16} />
+            </button>
+            <button
+              onClick={onViewAllTransactions}
+              className="flex items-center gap-1.5 px-3 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary/90 transition-colors whitespace-nowrap"
+            >
+              <List size={15} /> View Transactions
+            </button>
+          </>
+        )}
+      />
+
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
-        {/* Total Volume */}
-        <div className="bg-white dark:bg-[#13131f] p-4 rounded-xl border border-slate-100 dark:border-slate-800 hover:border-primary/30 hover:-translate-y-0.5 transition-all duration-250 group">
-          <div className="mb-3">
-            <div className="p-1.5 bg-primary/10 dark:bg-primary/20 rounded-lg text-primary inline-block">
-              <span className="material-symbols-outlined text-[20px]">bar_chart</span>
-            </div>
-          </div>
-          <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Total Volume</p>
-          <h3 className="text-xl font-bold text-slate-900 dark:text-white mt-0.5">
-            {formatFullAmount(stats?.total_volume || 0)}
-          </h3>
-        </div>
-
-        {/* Success Rate */}
-        <div className="bg-white dark:bg-[#13131f] p-4 rounded-xl border border-slate-100 dark:border-slate-800 hover:border-indigo-200 dark:hover:border-indigo-900 hover:-translate-y-0.5 transition-all duration-250 group">
-          <div className="mb-3">
-            <div className="p-1.5 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg text-indigo-600 dark:text-indigo-400 inline-block">
-              <span className="material-symbols-outlined text-[20px]">check_circle</span>
-            </div>
-          </div>
-          <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Success Rate</p>
-          <h3 className="text-xl font-bold text-slate-900 dark:text-white mt-0.5">
-            {stats?.confirmed_payments && stats?.total_payments
-              ? ((stats.confirmed_payments / stats.total_payments) * 100).toFixed(1)
-              : '99.9'}%
-          </h3>
-        </div>
-
-        {/* Failed Payments */}
-        <div className="bg-white dark:bg-[#13131f] p-4 rounded-xl border border-slate-100 dark:border-slate-800 hover:border-rose-200 dark:hover:border-rose-900 hover:-translate-y-0.5 transition-all duration-250 group">
-          <div className="mb-3">
-            <div className="p-1.5 bg-rose-50 dark:bg-rose-900/20 rounded-lg text-rose-600 dark:text-rose-400 inline-block">
-              <span className="material-symbols-outlined text-[20px]">error</span>
-            </div>
-          </div>
-          <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Failed Payments</p>
-          <h3 className="text-xl font-bold text-slate-900 dark:text-white mt-0.5">
-            {(stats?.total_payments || 0) - (stats?.confirmed_payments || 0) - (stats?.pending_payments || 0)}
-          </h3>
-        </div>
-
-        {/* Total Received */}
-        <div className="bg-white dark:bg-[#13131f] p-4 rounded-xl border border-slate-100 dark:border-slate-800 hover:border-amber-200 dark:hover:border-amber-900 hover:-translate-y-0.5 transition-all duration-250 group">
-          <div className="mb-3">
-            <div className="p-1.5 bg-amber-50 dark:bg-amber-900/20 rounded-lg text-amber-600 dark:text-amber-400 inline-block">
-              <span className="material-symbols-outlined text-[20px]">account_balance_wallet</span>
-            </div>
-          </div>
-          <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Total Received</p>
-          <h3 className="text-xl font-bold text-slate-900 dark:text-white mt-0.5">
-            {formatFullAmount(stats?.confirmed_volume || 0)}
-          </h3>
-        </div>
+        <StatTile
+          label="Total Volume"
+          value={formatFullAmount(stats?.total_volume || 0)}
+          icon="bar_chart"
+          accent="primary"
+        />
+        <StatTile
+          label="Success Rate"
+          value={`${stats?.confirmed_payments && stats?.total_payments
+            ? ((stats.confirmed_payments / stats.total_payments) * 100).toFixed(1)
+            : '99.9'}%`}
+          icon="check_circle"
+          accent="violet"
+        />
+        <StatTile
+          label="Failed Payments"
+          value={(stats?.total_payments || 0) - (stats?.confirmed_payments || 0) - (stats?.pending_payments || 0)}
+          icon="error"
+          accent="amber"
+        />
+        <StatTile
+          label="Total Received"
+          value={formatFullAmount(stats?.confirmed_volume || 0)}
+          icon="account_balance_wallet"
+          accent="emerald"
+        />
       </div>
 
-      {/* Transaction Volume Chart */}
-      <div className="bg-white dark:bg-[#13131f] p-5 rounded-xl border border-slate-100 dark:border-slate-800">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-5">
-          <div>
-            <h3 className="text-base font-bold text-slate-900 dark:text-white">Transaction Volume</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Daily revenue over the last 30 days</p>
-          </div>
-          {/* <div className="flex items-center bg-slate-100 dark:bg-white/5 rounded-lg p-1">
-            <button className="px-3 py-1 text-xs font-bold rounded-md bg-white dark:bg-white/10 shadow text-slate-900 dark:text-white">30D</button>
-            <button className="px-3 py-1 text-xs font-bold rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">7D</button>
-            <button className="px-3 py-1 text-xs font-bold rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">24H</button>
-          </div> */}
-        </div>
+      <SurfaceCard className="p-5">
+        <SectionTitle
+          title="Transaction Volume"
+          subtitle="Daily revenue over the last 30 days"
+        />
         {/* Chart with axes — horizontally scrollable on very small screens */}
         <div className="overflow-x-auto -mx-1">
           <div className="flex min-w-[340px] px-1">
@@ -278,15 +259,15 @@ export default function OverviewTab({ onViewAllTransactions }: OverviewTabProps)
             </div>
           </div>
         </div>
-      </div>
-      </div>
+        </div>
+      </SurfaceCard>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Transaction Status Chart */}
-        <div className="bg-white dark:bg-[#13131f] p-5 rounded-xl border border-slate-100 dark:border-slate-800 transition-all duration-250">
-          <div className="mb-6">
-            <h3 className="text-base font-bold text-slate-900 dark:text-white">Transaction Status</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Successful vs Failed transactions over time</p>
-          </div>
+        <SurfaceCard className="p-5 transition-all duration-250">
+          <SectionTitle
+            title="Transaction Status"
+            subtitle="Successful vs Failed transactions over time"
+          />
           <div className="h-[250px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={analytics?.payments_chart || []}>
@@ -333,14 +314,13 @@ export default function OverviewTab({ onViewAllTransactions }: OverviewTabProps)
               </LineChart>
             </ResponsiveContainer>
           </div>
-        </div>
+        </SurfaceCard>
 
-        {/* Volume Distribution Chart */}
-        <div className="bg-white dark:bg-[#13131f] p-5 rounded-xl border border-slate-100 dark:border-slate-800 transition-all duration-250">
-          <div className="mb-6">
-            <h3 className="text-base font-bold text-slate-900 dark:text-white">Volume Distribution (30d)</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Transaction volume by token</p>
-          </div>
+        <SurfaceCard className="p-5 transition-all duration-250">
+          <SectionTitle
+            title="Volume Distribution (30d)"
+            subtitle="Transaction volume by token"
+          />
           <div className="h-[250px] w-full flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -384,7 +364,7 @@ export default function OverviewTab({ onViewAllTransactions }: OverviewTabProps)
               </PieChart>
             </ResponsiveContainer>
           </div>
-        </div>
+        </SurfaceCard>
       </div>
     </div>
   );

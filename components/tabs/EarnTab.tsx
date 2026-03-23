@@ -13,6 +13,8 @@ import {
   EarnDepositResponse,
   EarnWithdrawResponse,
 } from '@/lib/api';
+import { RefreshCw } from 'lucide-react';
+import { TabHeader, StatTile, SurfaceCard } from './shared/TabScaffold';
 
 // ─── Internal view states ─────────────────────────────────────────────────────
 type EarnView = 'overview' | 'deposit' | 'withdraw-preview' | 'deposit-success' | 'withdraw-success';
@@ -48,34 +50,14 @@ function StatCard({
   icon: string;
   accent: 'primary' | 'emerald' | 'amber' | 'violet';
 }) {
-  const accentMap = {
-    primary: 'bg-primary/10 dark:bg-primary/20 text-primary',
-    emerald: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400',
-    amber: 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400',
-    violet: 'bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400',
-  };
-  const hoverMap = {
-    primary: 'hover:border-primary/30',
-    emerald: 'hover:border-emerald-200 dark:hover:border-emerald-900',
-    amber: 'hover:border-amber-200 dark:hover:border-amber-900',
-    violet: 'hover:border-violet-200 dark:hover:border-violet-900',
-  };
-
   return (
-    <div
-      className={`bg-white dark:bg-[#13131f] p-4 rounded-xl border border-slate-100 dark:border-slate-800 ${hoverMap[accent]} hover:-translate-y-0.5 transition-all duration-250`}
-    >
-      <div className="mb-3">
-        <div className={`p-1.5 ${accentMap[accent]} rounded-lg inline-block`}>
-          <span className="material-symbols-outlined text-[20px]">{icon}</span>
-        </div>
-      </div>
-      <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{label}</p>
-      <h3 className="text-xl font-bold text-slate-900 dark:text-white mt-0.5">{value}</h3>
-      {subValue && (
-        <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{subValue}</p>
-      )}
-    </div>
+    <StatTile
+      label={label}
+      value={value}
+      note={subValue}
+      icon={icon}
+      accent={accent}
+    />
   );
 }
 
@@ -294,63 +276,98 @@ export default function EarnTab() {
 
   if (isTestMode) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 space-y-4">
-        <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-2xl">
-          <span className="material-symbols-outlined text-[40px] text-amber-500 dark:text-amber-400">
-            science
-          </span>
-        </div>
-        <h3 className="text-lg font-bold text-slate-900 dark:text-white">Earn is Live Mode Only</h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400 text-center max-w-sm">
-          The Earn feature runs on Solana mainnet via Kamino Finance. Switch to{' '}
-          <span className="font-semibold text-slate-700 dark:text-slate-300">Live mode</span> to
-          start earning yield on your USDC balance.
-        </p>
+      <div className="space-y-5">
+        <TabHeader
+          title="Earn"
+          subtitle="Live mode feature"
+        />
+        <SurfaceCard className="p-8">
+          <div className="flex flex-col items-center justify-center space-y-4">
+            <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-2xl">
+              <span className="material-symbols-outlined text-[40px] text-amber-500 dark:text-amber-400">
+                science
+              </span>
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Earn is Live Mode Only</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 text-center max-w-sm">
+              The Earn feature runs on Solana mainnet via Kamino Finance. Switch to{' '}
+              <span className="font-semibold text-slate-700 dark:text-slate-300">Live mode</span> to
+              start earning yield on your USDC balance.
+            </p>
+          </div>
+        </SurfaceCard>
       </div>
     );
   }
 
   if (!hasWallet) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 space-y-4">
-        <div className="p-4 bg-primary/10 dark:bg-primary/20 rounded-2xl">
-          <span className="material-symbols-outlined text-[40px] text-primary">
-            account_balance_wallet
-          </span>
-        </div>
-        <h3 className="text-lg font-bold text-slate-900 dark:text-white">Wallet Setup Required</h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400 text-center max-w-sm">
-          Set up your passkey-secured MPC wallet first, then come back to start earning yield on
-          your USDC.
-        </p>
+      <div className="space-y-5">
+        <TabHeader
+          title="Earn"
+          subtitle="Wallet required"
+        />
+        <SurfaceCard className="p-8">
+          <div className="flex flex-col items-center justify-center space-y-4">
+            <div className="p-4 bg-primary/10 dark:bg-primary/20 rounded-2xl">
+              <span className="material-symbols-outlined text-[40px] text-primary">
+                account_balance_wallet
+              </span>
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Wallet Setup Required</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 text-center max-w-sm">
+              Set up your passkey-secured MPC wallet first, then come back to start earning yield on
+              your USDC.
+            </p>
+          </div>
+        </SurfaceCard>
       </div>
     );
   }
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <div className="w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full animate-spin" />
+      <div className="space-y-5">
+        <TabHeader title="Earn" subtitle="Loading your position" />
+        <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div
+              key={i}
+              className="bg-white dark:bg-[#13131f] rounded-xl border border-slate-100 dark:border-slate-800 p-4"
+            >
+              <div className="h-3 w-20 bg-slate-100 dark:bg-slate-800 rounded animate-pulse mb-3" />
+              <div className="h-6 w-24 bg-slate-100 dark:bg-slate-800 rounded animate-pulse" />
+            </div>
+          ))}
+        </div>
+        <SurfaceCard className="p-5">
+          <div className="h-[220px] bg-slate-100 dark:bg-slate-800/70 rounded-lg animate-pulse" />
+        </SurfaceCard>
       </div>
     );
   }
 
   if (dataError) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 space-y-4">
-        <div className="p-4 bg-rose-50 dark:bg-rose-900/20 rounded-2xl">
-          <span className="material-symbols-outlined text-[40px] text-rose-500">error_outline</span>
-        </div>
-        <h3 className="text-base font-bold text-slate-900 dark:text-white">Failed to Load</h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400 text-center max-w-sm">
-          {dataError}
-        </p>
-        <button
-          onClick={loadData}
-          className="px-4 py-2 rounded-lg text-sm font-semibold bg-primary text-white hover:bg-primary/90 transition-colors"
-        >
-          Retry
-        </button>
+      <div className="space-y-5">
+        <TabHeader title="Earn" subtitle="Unable to load position" />
+        <SurfaceCard className="p-8">
+          <div className="flex flex-col items-center justify-center space-y-4">
+            <div className="p-4 bg-rose-50 dark:bg-rose-900/20 rounded-2xl">
+              <span className="material-symbols-outlined text-[40px] text-rose-500">error_outline</span>
+            </div>
+            <h3 className="text-base font-bold text-slate-900 dark:text-white">Failed to Load</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 text-center max-w-sm">
+              {dataError}
+            </p>
+            <button
+              onClick={loadData}
+              className="px-4 py-2 rounded-lg text-sm font-semibold bg-primary text-white hover:bg-primary/90 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        </SurfaceCard>
       </div>
     );
   }
@@ -360,7 +377,8 @@ export default function EarnTab() {
   if (view === 'deposit-success' && depositResult) {
     return (
       <div className="space-y-6 max-w-xl mx-auto">
-        <div className="bg-white dark:bg-[#13131f] rounded-xl border border-slate-100 dark:border-slate-800 p-8 text-center space-y-4">
+        <TabHeader title="Earn" subtitle="Deposit completed" />
+        <SurfaceCard className="p-8 text-center space-y-4">
           <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto">
             <span className="material-symbols-outlined text-[32px] text-emerald-600 dark:text-emerald-400">
               check_circle
@@ -411,7 +429,7 @@ export default function EarnTab() {
               Back to Earn
             </button>
           </div>
-        </div>
+        </SurfaceCard>
       </div>
     );
   }
@@ -421,7 +439,8 @@ export default function EarnTab() {
   if (view === 'withdraw-success' && withdrawResult) {
     return (
       <div className="space-y-6 max-w-xl mx-auto">
-        <div className="bg-white dark:bg-[#13131f] rounded-xl border border-slate-100 dark:border-slate-800 p-8 text-center space-y-4">
+        <TabHeader title="Earn" subtitle="Withdrawal completed" />
+        <SurfaceCard className="p-8 text-center space-y-4">
           <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto">
             <span className="material-symbols-outlined text-[32px] text-emerald-600 dark:text-emerald-400">
               check_circle
@@ -470,7 +489,7 @@ export default function EarnTab() {
               Done
             </button>
           </div>
-        </div>
+        </SurfaceCard>
       </div>
     );
   }
@@ -497,7 +516,7 @@ export default function EarnTab() {
         </div>
 
         {/* Deposit form card */}
-        <div className="bg-white dark:bg-[#13131f] rounded-xl border border-slate-100 dark:border-slate-800 p-5 space-y-5">
+        <SurfaceCard className="p-5 space-y-5">
           <form onSubmit={handleDeposit} className="space-y-4">
             {/* Amount input */}
             <div className="space-y-1.5">
@@ -610,11 +629,11 @@ export default function EarnTab() {
               )}
             </button>
           </form>
-        </div>
+        </SurfaceCard>
 
         {/* Vault info */}
         {metrics && (
-          <div className="bg-white dark:bg-[#13131f] rounded-xl border border-slate-100 dark:border-slate-800 p-4">
+          <SurfaceCard className="p-4">
             <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-3">
               KAMINO USDC VAULT
             </p>
@@ -640,7 +659,7 @@ export default function EarnTab() {
                 </p>
               </div>
             </div>
-          </div>
+          </SurfaceCard>
         )}
       </div>
     );
@@ -670,7 +689,7 @@ export default function EarnTab() {
         </div>
 
         {/* Breakdown card */}
-        <div className="bg-white dark:bg-[#13131f] rounded-xl border border-slate-100 dark:border-slate-800 p-5">
+        <SurfaceCard className="p-5">
           <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">WITHDRAWAL BREAKDOWN</p>
           <p className="text-xs text-slate-400 dark:text-slate-500 mb-4">
             This transaction will execute atomically — all or nothing.
@@ -702,7 +721,7 @@ export default function EarnTab() {
               highlight
             />
           </div>
-        </div>
+        </SurfaceCard>
 
         {/* Atomic execution note */}
         <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-primary/5 dark:bg-primary/10 border border-primary/10 text-xs text-slate-600 dark:text-slate-400">
@@ -744,6 +763,44 @@ export default function EarnTab() {
 
   return (
     <div className="space-y-6">
+      <TabHeader
+        title="Earn"
+        subtitle="Put idle USDC to work with non-custodial yield"
+        actions={(
+          <>
+            <button
+              onClick={loadData}
+              title="Refresh"
+              className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+            >
+              <RefreshCw size={16} />
+            </button>
+            {hasActivePosition && (
+              <>
+                <button
+                  onClick={() => setView('deposit')}
+                  className="px-4 py-2 rounded-lg text-sm font-semibold border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors flex items-center gap-1.5"
+                >
+                  <span className="material-symbols-outlined text-[16px]">add</span>
+                  Deposit More
+                </button>
+                <button
+                  onClick={openWithdrawPreview}
+                  disabled={isLoadingPreview}
+                  className="px-4 py-2 rounded-lg text-sm font-semibold bg-primary text-white hover:bg-primary/90 disabled:opacity-60 transition-colors flex items-center gap-1.5"
+                >
+                  {isLoadingPreview ? (
+                    <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <span className="material-symbols-outlined text-[16px]">account_balance_wallet</span>
+                  )}
+                  Withdraw All
+                </button>
+              </>
+            )}
+          </>
+        )}
+      />
 
       {/* ── Empty State: No position yet ───────────────────────────────────────── */}
       {!hasActivePosition && (
@@ -865,7 +922,7 @@ export default function EarnTab() {
 
           {/* Vault stats footer */}
           {metrics && (
-            <div className="bg-white dark:bg-[#13131f] rounded-xl border border-slate-100 dark:border-slate-800 p-4">
+            <SurfaceCard className="p-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
@@ -904,7 +961,7 @@ export default function EarnTab() {
                   </div>
                 </div>
               </div>
-            </div>
+            </SurfaceCard>
           )}
         </>
       )}
@@ -912,37 +969,6 @@ export default function EarnTab() {
       {/* ── Active Position View ────────────────────────────────────────────────── */}
       {hasActivePosition && position && (
         <>
-          {/* Header strip */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Earn Position</h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Earning yield on Kamino Finance · Non-custodial
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setView('deposit')}
-                className="px-4 py-2 rounded-lg text-sm font-semibold border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors flex items-center gap-1.5"
-              >
-                <span className="material-symbols-outlined text-[16px]">add</span>
-                Deposit More
-              </button>
-              <button
-                onClick={openWithdrawPreview}
-                disabled={isLoadingPreview}
-                className="px-4 py-2 rounded-lg text-sm font-semibold bg-primary text-white hover:bg-primary/90 disabled:opacity-60 transition-colors flex items-center gap-1.5"
-              >
-                {isLoadingPreview ? (
-                  <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                ) : (
-                  <span className="material-symbols-outlined text-[16px]">account_balance_wallet</span>
-                )}
-                Withdraw All
-              </button>
-            </div>
-          </div>
-
           {/* Position stat cards */}
           <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
             <StatCard
@@ -979,7 +1005,7 @@ export default function EarnTab() {
 
           {/* Yield breakdown card */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div className="bg-white dark:bg-[#13131f] rounded-xl border border-slate-100 dark:border-slate-800 p-5">
+            <SurfaceCard className="p-5">
               <SectionDivider label="Yield Breakdown" />
               <div className="divide-y divide-slate-100 dark:divide-slate-800">
                 <BreakdownRow
@@ -1001,11 +1027,11 @@ export default function EarnTab() {
                   highlight
                 />
               </div>
-            </div>
+            </SurfaceCard>
 
             {/* Vault info */}
             {metrics && (
-              <div className="bg-white dark:bg-[#13131f] rounded-xl border border-slate-100 dark:border-slate-800 p-5">
+              <SurfaceCard className="p-5">
                 <SectionDivider
                   label="Vault Info"
                   right={
@@ -1055,7 +1081,7 @@ export default function EarnTab() {
                     </a>
                   </div>
                 </div>
-              </div>
+              </SurfaceCard>
             )}
           </div>
 
