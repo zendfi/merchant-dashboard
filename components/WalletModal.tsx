@@ -33,7 +33,7 @@ function formatRelativeTime(dateStr: string): string {
 const TOKEN_LOGOS: Record<string, string> = {
   SOL: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png',
   USDC: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png',
-  //   USDT: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/Es9vMFrzaCERmKfrWkRbKsY6amJC5EGWSFE7gSWiDmMb/logo.svg',
+  USDT: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/Es9vMFrzaCERmKfrWkRbKsY6amJC5EGWSFE7gSWiDmMb/logo.svg',
 };
 
 export default function WalletModal({ isOpen, onClose, onNavigateToEarn }: WalletModalProps) {
@@ -595,7 +595,7 @@ export default function WalletModal({ isOpen, onClose, onNavigateToEarn }: Walle
                     {[
                       { id: 'SOL', name: 'SOL', logo: TOKEN_LOGOS.SOL, balance: walletData?.sol_balance.toFixed(4) || '0' },
                       { id: 'USDC', name: 'USDC', logo: TOKEN_LOGOS.USDC, balance: walletData?.usdc_balance.toFixed(2) || '0' },
-                      //   { id: 'USDT', name: 'USDT', logo: TOKEN_LOGOS.USDT, balance: '0.00' },
+                      { id: 'USDT', name: 'USDT', logo: TOKEN_LOGOS.USDT, balance: '0.00' },
                     ].map((token) => (
                       <button
                         key={token.id}
