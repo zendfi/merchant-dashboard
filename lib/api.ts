@@ -652,6 +652,11 @@ export const refunds = {
     data: {
       amount_usd?: number;
       amount_ngn?: number;
+      refund_destination?: "wallet" | "bank_account";
+      bank_id?: string;
+      bank_account_number?: string;
+      bank_account_name?: string;
+      paj_session_token?: string;
       refund_reason?: string;
       metadata?: Record<string, unknown>;
     }
@@ -711,6 +716,11 @@ export const disputes = {
     data: {
       amount_usd?: number;
       amount_ngn?: number;
+      refund_destination?: "wallet" | "bank_account";
+      bank_id?: string;
+      bank_account_number?: string;
+      bank_account_name?: string;
+      paj_session_token?: string;
       refund_reason?: string;
       metadata?: Record<string, unknown>;
     }

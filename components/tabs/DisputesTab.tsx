@@ -11,6 +11,11 @@ export default function DisputesTab() {
   const [responseText, setResponseText] = useState('');
   const [refundAmount, setRefundAmount] = useState('');
   const [refundCurrency, setRefundCurrency] = useState<'usd' | 'ngn'>('usd');
+  const [refundDestination, setRefundDestination] = useState<'wallet' | 'bank_account'>('wallet');
+  const [bankId, setBankId] = useState('');
+  const [bankAccountNumber, setBankAccountNumber] = useState('');
+  const [bankAccountName, setBankAccountName] = useState('');
+  const [pajSessionToken, setPajSessionToken] = useState('');
   const [refundReason, setRefundReason] = useState('');
   const [isSubmittingResponse, setIsSubmittingResponse] = useState(false);
   const [isSubmittingRefund, setIsSubmittingRefund] = useState(false);
@@ -71,16 +76,49 @@ export default function DisputesTab() {
       return;
     }
 
+    if (refundCurrency === 'ngn' && refundDestination === 'bank_account') {
+      if (!bankId.trim()) {
+        setActionError('Bank ID is required for NGN bank refunds.');
+        return;
+      }
+      if (!bankAccountNumber.trim()) {
+        setActionError('Bank account number is required for NGN bank refunds.');
+        return;
+      }
+      if (!pajSessionToken.trim()) {
+        setActionError('PAJ session token is required for NGN bank refunds.');
+        return;
+      }
+    }
+
     setIsSubmittingRefund(true);
     try {
       const result = await disputesApi.issueRefund(activeDispute.id, {
         amount_usd: refundCurrency === 'usd' ? amountNum : undefined,
         amount_ngn: refundCurrency === 'ngn' ? amountNum : undefined,
+        refund_destination: refundCurrency === 'ngn' ? refundDestination : 'wallet',
+        bank_id: refundCurrency === 'ngn' && refundDestination === 'bank_account' ? bankId.trim() : undefined,
+        bank_account_number:
+          refundCurrency === 'ngn' && refundDestination === 'bank_account'
+            ? bankAccountNumber.trim()
+            : undefined,
+        bank_account_name:
+          refundCurrency === 'ngn' && refundDestination === 'bank_account' && bankAccountName.trim().length > 0
+            ? bankAccountName.trim()
+            : undefined,
+        paj_session_token:
+          refundCurrency === 'ngn' && refundDestination === 'bank_account'
+            ? pajSessionToken.trim()
+            : undefined,
         refund_reason: refundReason.trim() || undefined,
       });
       setActionMessage(`Refund ${result.refund.id.slice(0, 8)}... issued and dispute resolved.`);
       setRefundAmount('');
       setRefundReason('');
+      setBankId('');
+      setBankAccountNumber('');
+      setBankAccountName('');
+      setPajSessionToken('');
       await load();
       const refreshed = await disputesApi.get(activeDispute.id);
       setActiveDispute(refreshed);
@@ -159,13 +197,63 @@ export default function DisputesTab() {
                 />
                 <select
                   value={refundCurrency}
-                  onChange={(e) => setRefundCurrency(e.target.value as 'usd' | 'ngn')}
+                  onChange={(e) => {
+                    const next = e.target.value as 'usd' | 'ngn';
+                    setRefundCurrency(next);
+                    if (next === 'usd') {
+                      setRefundDestination('wallet');
+                    }
+                  }}
                   className="px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-[#0f0f1a]"
                 >
                   <option value="usd">USD</option>
                   <option value="ngn">NGN</option>
                 </select>
               </div>
+              {refundCurrency === 'ngn' && (
+                <div className="space-y-2">
+                  <select
+                    value={refundDestination}
+                    onChange={(e) => setRefundDestination(e.target.value as 'wallet' | 'bank_account')}
+                    className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-[#0f0f1a]"
+                  >
+                    <option value="wallet">Refund to customer wallet</option>
+                    <option value="bank_account">Refund to customer bank account (NGN)</option>
+                  </select>
+                  {refundDestination === 'bank_account' && (
+                    <input
+                      value={bankId}
+                      onChange={(e) => setBankId(e.target.value)}
+                      placeholder="PAJ Bank ID"
+                      className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-[#0f0f1a]"
+                    />
+                  )}
+                  {refundDestination === 'bank_account' && (
+                    <input
+                      value={bankAccountNumber}
+                      onChange={(e) => setBankAccountNumber(e.target.value)}
+                      placeholder="Bank account number"
+                      className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-[#0f0f1a]"
+                    />
+                  )}
+                  {refundDestination === 'bank_account' && (
+                    <input
+                      value={bankAccountName}
+                      onChange={(e) => setBankAccountName(e.target.value)}
+                      placeholder="Bank account name (optional)"
+                      className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-[#0f0f1a]"
+                    />
+                  )}
+                  {refundDestination === 'bank_account' && (
+                    <input
+                      value={pajSessionToken}
+                      onChange={(e) => setPajSessionToken(e.target.value)}
+                      placeholder="PAJ session token"
+                      className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-[#0f0f1a]"
+                    />
+                  )}
+                </div>
+              )}
               <input
                 value={refundReason}
                 onChange={(e) => setRefundReason(e.target.value)}
