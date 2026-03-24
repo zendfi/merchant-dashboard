@@ -1,5 +1,7 @@
 // WebAuthn utility functions
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || '';
+
 /**
  * Passkey signature type for authenticated operations
  */
@@ -127,6 +129,69 @@ export async function getPasskeySignature(data: {
 } | null> {
   if (!isWebAuthnSupported()) {
     throw new Error('WebAuthn is not supported in this browser');
+  }
+
+  // Prefer server-generated options so mobile clients receive the same allowCredentials/rpId
+  // as login flow. This avoids discoverable-credential edge cases on some devices.
+  try {
+    const challengeRes = await fetch(`${API_BASE}/api/v1/merchants/me/passkey/auth/start`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (challengeRes.ok) {
+      const challengeData = await challengeRes.json();
+      const options = challengeData?.webauthn_options?.publicKey || challengeData?.webauthn_options;
+
+      if (options?.challenge) {
+        const allowCredentials = Array.isArray(options.allowCredentials)
+          ? options.allowCredentials
+          : [];
+
+        const cleanedAllowCredentials = allowCredentials.map(
+          (cred: { id: string; type: string; transports?: string[] }) => {
+            const { transports, ...rest } = cred;
+            void transports;
+            return rest;
+          }
+        );
+
+        const credential = (await navigator.credentials.get({
+          publicKey: {
+            challenge: base64urlToUint8Array(options.challenge),
+            allowCredentials: cleanedAllowCredentials.map((cred: { id: string; type: string }) => ({
+              id: base64urlToUint8Array(cred.id),
+              type: cred.type as PublicKeyCredentialType,
+            })),
+            timeout: options.timeout || 60000,
+            rpId:
+              options.rpId ||
+              (window.location.hostname === 'localhost' ? 'localhost' : window.location.hostname),
+            userVerification:
+              (options.userVerification as UserVerificationRequirement) || 'required',
+          },
+        })) as PublicKeyCredential | null;
+
+        if (credential) {
+          const response = credential.response as AuthenticatorAssertionResponse;
+          return {
+            credential_id: base64urlEncode(credential.rawId),
+            authenticator_data: Array.from(
+              new Uint8Array(response.authenticatorData || new ArrayBuffer(0))
+            ),
+            signature: Array.from(new Uint8Array(response.signature || new ArrayBuffer(0))),
+            client_data_json: Array.from(
+              new Uint8Array(response.clientDataJSON || new ArrayBuffer(0))
+            ),
+          };
+        }
+      }
+    }
+  } catch {
+    // Fall through to legacy local challenge flow.
   }
 
   const challengeData = JSON.stringify(data);

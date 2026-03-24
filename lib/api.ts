@@ -48,6 +48,24 @@ export interface LoginChallengeResponse {
   };
 }
 
+export interface PasskeyAuthChallengeResponse {
+  session_id: string;
+  challenge: string;
+  webauthn_options: {
+    publicKey?: {
+      challenge: string;
+      allowCredentials: Array<{
+        id: string;
+        type: string;
+        transports?: string[];
+      }>;
+      timeout?: number;
+      rpId?: string;
+      userVerification?: string;
+    };
+  };
+}
+
 export interface ApiKey {
   id: string;
   prefix: string;
@@ -360,6 +378,13 @@ export const auth = {
     return apiCall("/api/v1/merchants/login/start", {
       method: "POST",
       body: JSON.stringify({ email }),
+    });
+  },
+
+  // Start passkey auth challenge for currently authenticated merchant session
+  passkeyAuthStart: async (): Promise<PasskeyAuthChallengeResponse> => {
+    return apiCall("/api/v1/merchants/me/passkey/auth/start", {
+      method: "POST",
     });
   },
 
