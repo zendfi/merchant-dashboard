@@ -656,7 +656,6 @@ export const refunds = {
       bank_id?: string;
       bank_account_number?: string;
       bank_account_name?: string;
-      paj_session_token?: string;
       refund_reason?: string;
       metadata?: Record<string, unknown>;
     }
@@ -720,7 +719,6 @@ export const disputes = {
       bank_id?: string;
       bank_account_number?: string;
       bank_account_name?: string;
-      paj_session_token?: string;
       refund_reason?: string;
       metadata?: Record<string, unknown>;
     }

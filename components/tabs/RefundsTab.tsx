@@ -25,7 +25,6 @@ export default function RefundsTab() {
   const [bankId, setBankId] = useState('');
   const [bankAccountNumber, setBankAccountNumber] = useState('');
   const [bankAccountName, setBankAccountName] = useState('');
-  const [pajSessionToken, setPajSessionToken] = useState('');
   const [reason, setReason] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formMessage, setFormMessage] = useState<string | null>(null);
@@ -72,10 +71,6 @@ export default function RefundsTab() {
         setFormError('Bank account number is required for NGN bank refunds.');
         return;
       }
-      if (!pajSessionToken.trim()) {
-        setFormError('PAJ session token is required for NGN bank refunds.');
-        return;
-      }
     }
 
     setIsSubmitting(true);
@@ -93,10 +88,6 @@ export default function RefundsTab() {
           amountCurrency === 'ngn' && refundDestination === 'bank_account' && bankAccountName.trim().length > 0
             ? bankAccountName.trim()
             : undefined,
-        paj_session_token:
-          amountCurrency === 'ngn' && refundDestination === 'bank_account'
-            ? pajSessionToken.trim()
-            : undefined,
         refund_reason: reason.trim() || undefined,
       });
       setFormMessage('Refund request submitted successfully.');
@@ -105,7 +96,6 @@ export default function RefundsTab() {
       setBankId('');
       setBankAccountNumber('');
       setBankAccountName('');
-      setPajSessionToken('');
       await load();
     } catch (error) {
       setFormError(error instanceof Error ? error.message : 'Failed to create refund');
@@ -184,12 +174,9 @@ export default function RefundsTab() {
               />
             )}
             {refundDestination === 'bank_account' && (
-              <input
-                value={pajSessionToken}
-                onChange={(e) => setPajSessionToken(e.target.value)}
-                placeholder="PAJ session token"
-                className="md:col-span-2 px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-[#0f0f1a]"
-              />
+              <p className="md:col-span-2 text-xs text-slate-500 dark:text-slate-400">
+                OTP/session is handled by backend using proxy-email flow, similar to split bank payouts.
+              </p>
             )}
           </div>
         )}

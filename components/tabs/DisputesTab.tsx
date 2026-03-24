@@ -15,7 +15,6 @@ export default function DisputesTab() {
   const [bankId, setBankId] = useState('');
   const [bankAccountNumber, setBankAccountNumber] = useState('');
   const [bankAccountName, setBankAccountName] = useState('');
-  const [pajSessionToken, setPajSessionToken] = useState('');
   const [refundReason, setRefundReason] = useState('');
   const [isSubmittingResponse, setIsSubmittingResponse] = useState(false);
   const [isSubmittingRefund, setIsSubmittingRefund] = useState(false);
@@ -85,10 +84,6 @@ export default function DisputesTab() {
         setActionError('Bank account number is required for NGN bank refunds.');
         return;
       }
-      if (!pajSessionToken.trim()) {
-        setActionError('PAJ session token is required for NGN bank refunds.');
-        return;
-      }
     }
 
     setIsSubmittingRefund(true);
@@ -106,10 +101,6 @@ export default function DisputesTab() {
           refundCurrency === 'ngn' && refundDestination === 'bank_account' && bankAccountName.trim().length > 0
             ? bankAccountName.trim()
             : undefined,
-        paj_session_token:
-          refundCurrency === 'ngn' && refundDestination === 'bank_account'
-            ? pajSessionToken.trim()
-            : undefined,
         refund_reason: refundReason.trim() || undefined,
       });
       setActionMessage(`Refund ${result.refund.id.slice(0, 8)}... issued and dispute resolved.`);
@@ -118,7 +109,6 @@ export default function DisputesTab() {
       setBankId('');
       setBankAccountNumber('');
       setBankAccountName('');
-      setPajSessionToken('');
       await load();
       const refreshed = await disputesApi.get(activeDispute.id);
       setActiveDispute(refreshed);
@@ -245,12 +235,9 @@ export default function DisputesTab() {
                     />
                   )}
                   {refundDestination === 'bank_account' && (
-                    <input
-                      value={pajSessionToken}
-                      onChange={(e) => setPajSessionToken(e.target.value)}
-                      placeholder="PAJ session token"
-                      className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-[#0f0f1a]"
-                    />
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      OTP/session is handled by backend using proxy-email flow.
+                    </p>
                   )}
                 </div>
               )}

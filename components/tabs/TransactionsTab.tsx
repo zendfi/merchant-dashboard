@@ -37,7 +37,6 @@ export default function TransactionsTab({ limit = 25, showViewAll = true }: Tran
   const [refundBankId, setRefundBankId] = useState('');
   const [refundBankAccountNumber, setRefundBankAccountNumber] = useState('');
   const [refundBankAccountName, setRefundBankAccountName] = useState('');
-  const [refundPajSessionToken, setRefundPajSessionToken] = useState('');
   const [refundReason, setRefundReason] = useState('');
   const [isSubmittingRefund, setIsSubmittingRefund] = useState(false);
   const [refundMessage, setRefundMessage] = useState<string | null>(null);
@@ -132,7 +131,6 @@ export default function TransactionsTab({ limit = 25, showViewAll = true }: Tran
     setRefundBankId('');
     setRefundBankAccountNumber('');
     setRefundBankAccountName('');
-    setRefundPajSessionToken('');
     setRefundMessage(null);
     setRefundError(null);
   };
@@ -144,7 +142,6 @@ export default function TransactionsTab({ limit = 25, showViewAll = true }: Tran
     setRefundBankId('');
     setRefundBankAccountNumber('');
     setRefundBankAccountName('');
-    setRefundPajSessionToken('');
     setRefundMessage(null);
     setRefundError(null);
   };
@@ -165,10 +162,6 @@ export default function TransactionsTab({ limit = 25, showViewAll = true }: Tran
       }
       if (!refundBankAccountNumber.trim()) {
         setRefundError('Bank account number is required for NGN bank refunds.');
-        return;
-      }
-      if (!refundPajSessionToken.trim()) {
-        setRefundError('PAJ session token is required for NGN bank refunds.');
         return;
       }
     }
@@ -193,10 +186,6 @@ export default function TransactionsTab({ limit = 25, showViewAll = true }: Tran
         bank_account_name:
           refundCurrency === 'ngn' && refundDestination === 'bank_account' && refundBankAccountName.trim().length > 0
             ? refundBankAccountName.trim()
-            : undefined,
-        paj_session_token:
-          refundCurrency === 'ngn' && refundDestination === 'bank_account'
-            ? refundPajSessionToken.trim()
             : undefined,
         refund_reason: refundReason.trim() || undefined,
       });
@@ -721,12 +710,9 @@ export default function TransactionsTab({ limit = 25, showViewAll = true }: Tran
                   />
                 )}
                 {refundDestination === 'bank_account' && (
-                  <input
-                    value={refundPajSessionToken}
-                    onChange={(e) => setRefundPajSessionToken(e.target.value)}
-                    placeholder="PAJ session token"
-                    className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-[#0f0f1a]"
-                  />
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    OTP/session is handled by backend using proxy-email flow.
+                  </p>
                 )}
               </div>
             )}
