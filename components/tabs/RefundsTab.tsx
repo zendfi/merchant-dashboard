@@ -3,6 +3,17 @@
 import { useEffect, useState } from 'react';
 import { refunds as refundsApi, Refund } from '@/lib/api';
 
+function getFailureReason(refund: Refund): string | null {
+  const errorValue = refund.metadata?.error;
+  if (typeof errorValue === 'string' && errorValue.trim().length > 0) {
+    return errorValue;
+  }
+  if (refund.status === 'failed') {
+    return 'Refund failed. Review payment wallet and settlement balance.';
+  }
+  return null;
+}
+
 export default function RefundsTab() {
   const [refunds, setRefunds] = useState<Refund[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -140,14 +151,15 @@ export default function RefundsTab() {
               <th className="text-left px-4 py-3">Amount</th>
               <th className="text-left px-4 py-3">NGN Context</th>
               <th className="text-left px-4 py-3">Status</th>
+              <th className="text-left px-4 py-3">Failure Reason</th>
               <th className="text-left px-4 py-3">Created</th>
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
-              <tr><td className="px-4 py-6 text-slate-500" colSpan={6}>Loading refunds...</td></tr>
+              <tr><td className="px-4 py-6 text-slate-500" colSpan={7}>Loading refunds...</td></tr>
             ) : refunds.length === 0 ? (
-              <tr><td className="px-4 py-6 text-slate-500" colSpan={6}>No refunds found.</td></tr>
+              <tr><td className="px-4 py-6 text-slate-500" colSpan={7}>No refunds found.</td></tr>
             ) : (
               refunds.map((refund) => (
                 <tr key={refund.id} className="border-t border-slate-100 dark:border-slate-800">
@@ -156,6 +168,13 @@ export default function RefundsTab() {
                   <td className="px-4 py-3">${refund.amount_usd.toFixed(2)}</td>
                   <td className="px-4 py-3">{typeof refund.amount_ngn === 'number' ? `₦${refund.amount_ngn.toLocaleString()}` : '—'}</td>
                   <td className="px-4 py-3 capitalize">{refund.status}</td>
+                  <td className="px-4 py-3 text-xs max-w-[280px]">
+                    {getFailureReason(refund) ? (
+                      <span className="text-rose-600 dark:text-rose-400 break-words">{getFailureReason(refund)}</span>
+                    ) : (
+                      <span className="text-slate-400">—</span>
+                    )}
+                  </td>
                   <td className="px-4 py-3">{new Date(refund.created_at).toLocaleString()}</td>
                 </tr>
               ))
