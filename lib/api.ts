@@ -550,11 +550,11 @@ export const sessionKeys = {
 
 export const subAccounts = {
   list: async (): Promise<{ subaccounts: DashboardSubAccount[]; count: number }> => {
-    return apiCall("/api/v1/subaccounts");
+    return apiCall("/api/v1/merchants/me/subaccounts");
   },
 
   getBalance: async (id: string): Promise<DashboardSubAccountBalance> => {
-    return apiCall(`/api/v1/subaccounts/${id}/balance`);
+    return apiCall(`/api/v1/merchants/me/subaccounts/${id}/balance`);
   },
 };
 
