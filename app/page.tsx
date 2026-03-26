@@ -26,6 +26,7 @@ import TerminalTab from "@/components/tabs/TerminalTab";
 import InvoicesTab from "@/components/tabs/InvoicesTab";
 import RefundsTab from "@/components/tabs/RefundsTab";
 import DisputesTab from "@/components/tabs/DisputesTab";
+import SubAccountsTab from "@/components/tabs/SubAccountsTab";
 
 function DashboardContent() {
   const router = useRouter();
@@ -109,6 +110,8 @@ function DashboardContent() {
         return <DisputesTab />;
       case "customers":
         return <CustomersTab onModalToggle={setHeaderHidden} />;
+      case "subaccounts":
+        return <SubAccountsTab />;
       case "api-keys":
         return <ApiKeysTab />;
       case "webhooks":

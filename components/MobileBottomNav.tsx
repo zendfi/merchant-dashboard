@@ -20,6 +20,7 @@ const SECONDARY_TABS = new Set([
   "shop",
   "invoices",
   "customers",
+  "subaccounts",
   "api-keys",
   "webhooks",
   "support",

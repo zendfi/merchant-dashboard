@@ -20,6 +20,7 @@ const TAB_LABELS: Record<string, string> = {
   overview: 'Overview',
   transactions: 'Transactions',
   'payment-links': 'Payment Links',
+  subaccounts: 'Sub Accounts',
   'api-keys': 'API Keys',
   'session-keys': 'Session Keys',
   webhooks: 'Webhooks',

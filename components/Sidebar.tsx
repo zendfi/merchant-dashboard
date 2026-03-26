@@ -32,6 +32,7 @@ const mainNavItems: NavItem[] = [
   { id: "payment-links", label: "Payment Links", icon: "link" },
   { id: "invoices", label: "Invoices", icon: "receipt_long" },
   { id: "customers", label: "Customers", icon: "group" },
+  { id: "subaccounts", label: "Sub Accounts", icon: "account_tree" },
   { id: "api-keys", label: "API Keys", icon: "vpn_key" },
   { id: "webhooks", label: "Webhooks", icon: "webhook" },
   { id: "support", label: "Live Support", icon: "support_agent" },

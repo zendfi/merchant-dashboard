@@ -515,6 +515,28 @@ export interface SessionKeyStats {
   total_remaining_usdc: number;
 }
 
+export interface DashboardSubAccount {
+  id: string;
+  merchant_id: string;
+  wallet_address: string;
+  label: string;
+  status: "active" | "frozen" | "draining" | "closed" | string;
+  spend_limit_usdc: number;
+  access_mode: "delegated" | "merchant_managed" | string;
+  yield_enabled: boolean;
+  created_at: string;
+}
+
+export interface DashboardSubAccountBalance {
+  subaccount_id: string;
+  wallet_address: string;
+  usdc_balance: number;
+  sol_balance: number;
+  accrued_yield: number;
+  yield_enabled: boolean;
+  status: "active" | "frozen" | "draining" | "closed" | string;
+}
+
 // Session Keys APIs
 export const sessionKeys = {
   // List all session keys
@@ -523,6 +545,16 @@ export const sessionKeys = {
     stats: SessionKeyStats;
   }> => {
     return apiCall("/api/v1/merchants/me/session-keys");
+  },
+};
+
+export const subAccounts = {
+  list: async (): Promise<{ subaccounts: DashboardSubAccount[]; count: number }> => {
+    return apiCall("/api/v1/subaccounts");
+  },
+
+  getBalance: async (id: string): Promise<DashboardSubAccountBalance> => {
+    return apiCall(`/api/v1/subaccounts/${id}/balance`);
   },
 };
 
