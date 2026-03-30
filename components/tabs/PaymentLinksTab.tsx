@@ -24,7 +24,7 @@ export default function PaymentLinksTab({ onModalToggle }: PaymentLinksTabProps 
   const loadLinks = useCallback(async () => {
     setIsLoading(true);
     try {
-      const data = await paymentLinksApi.listSession();
+      const data = await paymentLinksApi.listSession(mode);
       setLinks(data);
     } catch (err) {
       console.error('Failed to load payment links:', err);
@@ -32,7 +32,7 @@ export default function PaymentLinksTab({ onModalToggle }: PaymentLinksTabProps 
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [mode]);
 
   useEffect(() => {
     loadLinks();

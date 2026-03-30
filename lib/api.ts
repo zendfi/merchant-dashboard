@@ -1076,10 +1076,24 @@ export const paymentLinks = {
     return response.json();
   },
 
+  // Create payment link (session auth — for merchant dashboard)
+  createSession: async (
+    mode: "live" | "test",
+    data: CreatePaymentLinkRequest
+  ): Promise<PaymentLink> => {
+    return apiCall(`/api/v1/merchants/me/payment-links?mode=${mode}`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+
   // List payment links (session auth — for merchant dashboard)
-  listSession: async (): Promise<PaymentLink[]> => {
+  listSession: async (mode?: "live" | "test"): Promise<PaymentLink[]> => {
+    const endpoint = mode
+      ? `/api/v1/merchants/me/payment-links?mode=${mode}`
+      : "/api/v1/merchants/me/payment-links";
     const data = await apiCall<{ links: PaymentLink[] }>(
-      "/api/v1/merchants/me/payment-links"
+      endpoint
     );
     return data.links;
   },

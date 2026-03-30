@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { QRCodeSVG } from 'qrcode.react';
-import { paymentLinks, apiKeys as apiKeysApi } from '@/lib/api';
-import type { PaymentLink, ApiKey } from '@/lib/api';
+import { paymentLinks } from '@/lib/api';
+import type { PaymentLink } from '@/lib/api';
 
 interface Props {
   isOpen: boolean;
@@ -13,7 +13,7 @@ interface Props {
   onCreated?: () => void;
 }
 
-type Step = 1 | 2 | 3 | 'success';
+type Step = 1 | 2 | 'success';
 
 function Toggle({
   checked,
@@ -42,7 +42,6 @@ function Toggle({
 const STEP_LABELS: Record<number, string> = {
   1: 'Amount',
   2: 'Details',
-  3: 'API Key',
 };
 
 export default function CreatePaymentLinkModal({
@@ -71,13 +70,6 @@ export default function CreatePaymentLinkModal({
   const [payerServiceCharge, setPayerServiceCharge] = useState(true);
   const [collectCustomerInfo, setCollectCustomerInfo] = useState(false);
 
-  // ── Step 3 state ─────────────────────────────────────────────────────────-
-  const [apiKeysList, setApiKeysList] = useState<ApiKey[]>([]);
-  const [selectedKeyId, setSelectedKeyId] = useState('');
-  const [manualApiKey, setManualApiKey] = useState('');
-  const [showManualInput, setShowManualInput] = useState(false);
-  const [loadingKeys, setLoadingKeys] = useState(false);
-
   // ── Shared ────────────────────────────────────────────────────────────────
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -101,23 +93,6 @@ export default function CreatePaymentLinkModal({
     }
   }, [exchangeRate]);
 
-  // ── Load API keys ────────────────────────────────────────────────────────-
-  const loadApiKeys = useCallback(async () => {
-    setLoadingKeys(true);
-    try {
-      const response = await apiKeysApi.list();
-      const filtered = (response.api_keys ?? response).filter(
-        (k: ApiKey) => k.mode === mode && k.is_active,
-      );
-      setApiKeysList(filtered);
-      if (filtered.length > 0) setSelectedKeyId(filtered[0].id);
-    } catch {
-      setShowManualInput(true);
-    } finally {
-      setLoadingKeys(false);
-    }
-  }, [mode]);
-
   // ── Effects ───────────────────────────────────────────────────────────────
   useEffect(() => {
     if (isOpen) {
@@ -132,8 +107,6 @@ export default function CreatePaymentLinkModal({
       setExpiresIn('');
       setPayerServiceCharge(true);
       setCollectCustomerInfo(false);
-      setManualApiKey('');
-      setShowManualInput(false);
       setError('');
       setCreatedLink(null);
     }
@@ -143,17 +116,11 @@ export default function CreatePaymentLinkModal({
     if (showCalculator && !exchangeRate) loadExchangeRate();
   }, [showCalculator, exchangeRate, loadExchangeRate]);
 
-  useEffect(() => {
-    if (step === 3) loadApiKeys();
-  }, [step, loadApiKeys]);
-
   // ── Derived ───────────────────────────────────────────────────────────────
   const ngnUsd =
     ngnAmount && exchangeRate
       ? parseFloat(ngnAmount) / exchangeRate
       : null;
-
-  const getApiKey = (): string => manualApiKey.trim();
 
   // ── Validation per step ───────────────────────────────────────────────────
   const canProceedStep1 = (): string => {
@@ -168,12 +135,6 @@ export default function CreatePaymentLinkModal({
     return '';
   };
 
-  const canProceedStep3 = (): string => {
-    const key = getApiKey();
-    if (!key) return 'Provide a valid API key.';
-    return '';
-  };
-
   // ── Navigation ────────────────────────────────────────────────────────────
   const goNext = () => {
     setError('');
@@ -183,23 +144,18 @@ export default function CreatePaymentLinkModal({
       if (ngnUsd !== null && ngnUsd > 0) setAmount(ngnUsd.toFixed(2));
       setStep(2);
     } else if (step === 2) {
-      setStep(3);
+      handleSubmit();
     }
   };
 
   const goBack = () => {
     setError('');
     if (step === 2) setStep(1);
-    else if (step === 3) setStep(2);
   };
 
   // ── Submit ────────────────────────────────────────────────────────────────
   const handleSubmit = async () => {
-    const keyErr = canProceedStep3();
-    if (keyErr) { setError(keyErr); return; }
-
     const finalAmount = parseFloat(amount);
-    const key = getApiKey();
 
     setIsLoading(true);
     setError('');
@@ -217,7 +173,7 @@ export default function CreatePaymentLinkModal({
         ...(onramp && ngnAmount && { amount_ngn: parseFloat(ngnAmount) }),
       };
 
-      const created = await paymentLinks.create(key, body);
+      const created = await paymentLinks.createSession(mode, body);
       setCreatedLink(created);
       setStep('success');
       onCreated?.();
@@ -248,7 +204,6 @@ export default function CreatePaymentLinkModal({
     setShowCalculator(false);
     setPayerServiceCharge(true);
     setCollectCustomerInfo(false);
-    setManualApiKey('');
     setError('');
   };
 
@@ -276,7 +231,7 @@ export default function CreatePaymentLinkModal({
               </h2>
               {step !== 'success' && (
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Step {step} of 3 — {STEP_LABELS[step as number]}
+                  Step {step} of 2 — {STEP_LABELS[step as number]}
                 </p>
               )}
             </div>
@@ -302,7 +257,7 @@ export default function CreatePaymentLinkModal({
         {step !== 'success' && (
           <div className="px-6 pt-3 pb-1">
             <div className="flex gap-1.5">
-              {([1, 2, 3] as const).map((s) => (
+              {([1, 2] as const).map((s) => (
                 <div
                   key={s}
                   className={`h-1 flex-1 rounded-full transition-colors ${
@@ -514,47 +469,6 @@ export default function CreatePaymentLinkModal({
             </>
           )}
 
-          {/* ════════ STEP 3 — API Key ═══════════════════════════════════════ */}
-          {step === 3 && (
-            <>
-              <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl flex gap-3">
-                <span className="material-symbols-outlined text-[18px] text-amber-600 shrink-0 mt-0.5">info</span>
-                <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
-                  Your API key is sent directly to the server and never stored in the browser. Use a{' '}
-                  <strong>{mode === 'live' ? 'live' : 'test'}</strong> key with{' '}
-                  <code className="bg-amber-100 dark:bg-amber-900/50 px-1 rounded">write</code> scope.
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold text-slate-900 dark:text-white">API Key</label>
-                <input
-                  type="password"
-                  value={manualApiKey}
-                  onChange={(e) => setManualApiKey(e.target.value)}
-                  placeholder={mode === 'live' ? 'sk_live_…' : 'sk_test_…'}
-                  autoComplete="off"
-                  className="w-full px-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-mono"
-                />
-              </div>
-
-              {!loadingKeys && apiKeysList.length > 0 && (
-                <div className="space-y-1.5">
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Your {mode} API keys (enter the full key above):
-                  </p>
-                  <div className="space-y-1">
-                    {apiKeysList.map((k) => (
-                      <div key={k.id} className="px-3 py-1.5 bg-slate-50 dark:bg-slate-800 rounded-lg text-xs font-mono text-slate-600 dark:text-slate-400">
-                        {k.prefix}••••••••
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-
           {/* ════════ SUCCESS ════════════════════════════════════════════════ */}
           {step === 'success' && createdLink && (
             <>
@@ -674,7 +588,7 @@ export default function CreatePaymentLinkModal({
                 </button>
               )}
 
-              {step === 3 ? (
+              {step === 2 ? (
                 <button
                   type="button"
                   onClick={handleSubmit}
