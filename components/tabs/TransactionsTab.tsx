@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useMode } from '@/lib/mode-context';
 import { useCurrency } from '@/lib/currency-context';
-import { transactions as transactionsApi, refunds as refundsApi, Transaction, merchant as merchantApi, DashboardStats } from '@/lib/api';
+import { transactions as transactionsApi, refunds as refundsApi, Transaction, merchant as merchantApi, DashboardStats, RefundLimits } from '@/lib/api';
 import TransactionDetailModal from '../TransactionDetailModal';
 import { ArrowUpDown, ChevronUp, ChevronDown, Search, X, Download, TrendingUp, CheckCircle, Clock } from 'lucide-react';
 
@@ -41,6 +41,8 @@ export default function TransactionsTab({ limit = 25, showViewAll = true }: Tran
   const [isSubmittingRefund, setIsSubmittingRefund] = useState(false);
   const [refundMessage, setRefundMessage] = useState<string | null>(null);
   const [refundError, setRefundError] = useState<string | null>(null);
+  const [refundLimits, setRefundLimits] = useState<RefundLimits | null>(null);
+  const [refundLimitsError, setRefundLimitsError] = useState<string | null>(null);
 
   // Debounce search
   useEffect(() => {
@@ -133,6 +135,13 @@ export default function TransactionsTab({ limit = 25, showViewAll = true }: Tran
     setRefundBankAccountName('');
     setRefundMessage(null);
     setRefundError(null);
+    setRefundLimits(null);
+    setRefundLimitsError(null);
+
+    refundsApi
+      .getLimitsForPayment(tx.id)
+      .then((limits) => setRefundLimits(limits))
+      .catch((error) => setRefundLimitsError(error instanceof Error ? error.message : 'Failed to load refundable limit'));
   };
 
   const closeRefundModal = () => {
@@ -144,6 +153,8 @@ export default function TransactionsTab({ limit = 25, showViewAll = true }: Tran
     setRefundBankAccountName('');
     setRefundMessage(null);
     setRefundError(null);
+    setRefundLimits(null);
+    setRefundLimitsError(null);
   };
 
   const submitQuickRefund = async () => {
@@ -648,6 +659,14 @@ export default function TransactionsTab({ limit = 25, showViewAll = true }: Tran
             <p className="text-xs text-slate-500 dark:text-slate-400">
               Payment {refundTarget.id.slice(0, 8)}... ({formatAmountFull(refundTarget.amount_usd)})
             </p>
+            {refundLimits && (
+              <p className="text-xs text-slate-600 dark:text-slate-300">
+                Max refundable (net remaining): <span className="font-semibold">${refundLimits.remaining_refundable_usd.toFixed(6)}</span>
+              </p>
+            )}
+            {refundLimitsError && (
+              <p className="text-xs text-rose-600 dark:text-rose-400">{refundLimitsError}</p>
+            )}
 
             <div className="flex gap-2">
               <input

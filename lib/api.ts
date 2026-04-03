@@ -125,6 +125,16 @@ export interface Refund {
   completed_at: string | null;
 }
 
+export interface RefundLimits {
+  payment_id: string;
+  gross_amount_usd: number;
+  settled_amount_usd: number | null;
+  fallback_net_amount_usd: number;
+  completed_refunded_usd: number;
+  remaining_refundable_usd: number;
+  fee_rate: number;
+}
+
 export interface Dispute {
   id: string;
   payment_id: string;
@@ -677,6 +687,10 @@ export const refunds = {
 
   get: async (id: string): Promise<Refund> => {
     return apiCall(`/api/v1/merchants/me/refunds/${id}`);
+  },
+
+  getLimitsForPayment: async (paymentId: string): Promise<RefundLimits> => {
+    return apiCall(`/api/v1/merchants/me/payments/${paymentId}/refund-limits`);
   },
 
   createForPayment: async (

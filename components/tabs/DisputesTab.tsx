@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { disputes as disputesApi, Dispute } from '@/lib/api';
+import { disputes as disputesApi, Dispute, refunds as refundsApi, RefundLimits } from '@/lib/api';
 
 export default function DisputesTab() {
   const [disputes, setDisputes] = useState<Dispute[]>([]);
@@ -20,6 +20,8 @@ export default function DisputesTab() {
   const [isSubmittingRefund, setIsSubmittingRefund] = useState(false);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [refundLimits, setRefundLimits] = useState<RefundLimits | null>(null);
+  const [refundLimitsError, setRefundLimitsError] = useState<string | null>(null);
 
   const load = async () => {
     setIsLoading(true);
@@ -36,6 +38,24 @@ export default function DisputesTab() {
   useEffect(() => {
     load();
   }, [status]);
+
+  useEffect(() => {
+    if (!activeDispute) {
+      setRefundLimits(null);
+      setRefundLimitsError(null);
+      return;
+    }
+
+    setRefundLimits(null);
+    setRefundLimitsError(null);
+
+    refundsApi
+      .getLimitsForPayment(activeDispute.payment_id)
+      .then((limits) => setRefundLimits(limits))
+      .catch((error) =>
+        setRefundLimitsError(error instanceof Error ? error.message : 'Failed to load refundable limit')
+      );
+  }, [activeDispute]);
 
   const submitResponse = async () => {
     if (!activeDispute) return;
@@ -175,6 +195,14 @@ export default function DisputesTab() {
 
             <div className="space-y-2">
               <p className="text-xs text-slate-500 dark:text-slate-400">Issue refund and resolve dispute</p>
+              {refundLimits && (
+                <p className="text-xs text-slate-600 dark:text-slate-300">
+                  Max refundable (net remaining): <span className="font-semibold">${refundLimits.remaining_refundable_usd.toFixed(6)}</span>
+                </p>
+              )}
+              {refundLimitsError && (
+                <p className="text-xs text-rose-600 dark:text-rose-400">{refundLimitsError}</p>
+              )}
               <div className="flex gap-2">
                 <input
                   value={refundAmount}

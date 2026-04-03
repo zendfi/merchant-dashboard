@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { refunds as refundsApi, Refund } from '@/lib/api';
+import { refunds as refundsApi, Refund, RefundLimits } from '@/lib/api';
 
 function getFailureReason(refund: Refund): string | null {
   const errorValue = refund.metadata?.error;
@@ -29,6 +29,9 @@ export default function RefundsTab() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formMessage, setFormMessage] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const [refundLimits, setRefundLimits] = useState<RefundLimits | null>(null);
+  const [isLoadingLimits, setIsLoadingLimits] = useState(false);
+  const [limitsError, setLimitsError] = useState<string | null>(null);
 
   const load = async () => {
     setIsLoading(true);
@@ -45,6 +48,30 @@ export default function RefundsTab() {
   useEffect(() => {
     load();
   }, [status]);
+
+  useEffect(() => {
+    const trimmedPaymentId = paymentId.trim();
+    setRefundLimits(null);
+    setLimitsError(null);
+
+    if (!trimmedPaymentId) {
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsLoadingLimits(true);
+      try {
+        const limits = await refundsApi.getLimitsForPayment(trimmedPaymentId);
+        setRefundLimits(limits);
+      } catch (error) {
+        setLimitsError(error instanceof Error ? error.message : 'Failed to load refundable limit');
+      } finally {
+        setIsLoadingLimits(false);
+      }
+    }, 350);
+
+    return () => clearTimeout(timer);
+  }, [paymentId]);
 
   const submitRefund = async () => {
     setFormMessage(null);
@@ -139,6 +166,13 @@ export default function RefundsTab() {
             <option value="ngn">NGN</option>
           </select>
         </div>
+        {isLoadingLimits && <p className="text-xs text-slate-500 dark:text-slate-400">Calculating max refundable (net)...</p>}
+        {refundLimits && (
+          <p className="text-xs text-slate-600 dark:text-slate-300">
+            Max refundable (net remaining): <span className="font-semibold">${refundLimits.remaining_refundable_usd.toFixed(6)}</span>
+          </p>
+        )}
+        {limitsError && <p className="text-xs text-rose-600 dark:text-rose-400">{limitsError}</p>}
         {amountCurrency === 'ngn' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <select
