@@ -160,8 +160,9 @@ export default function TransactionsTab({ limit = 25, showViewAll = true }: Tran
   const submitQuickRefund = async () => {
     if (!refundTarget) return;
 
+    const isAmountlessNgnBankRefund = refundCurrency === 'ngn' && refundDestination === 'bank_account';
     const parsedAmount = Number(refundAmount);
-    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+    if (!isAmountlessNgnBankRefund && (!Number.isFinite(parsedAmount) || parsedAmount <= 0)) {
       setRefundError('Enter a valid refund amount greater than 0.');
       return;
     }
@@ -184,7 +185,7 @@ export default function TransactionsTab({ limit = 25, showViewAll = true }: Tran
     try {
       await refundsApi.createForPayment(refundTarget.id, {
         amount_usd: refundCurrency === 'usd' ? parsedAmount : undefined,
-        amount_ngn: refundCurrency === 'ngn' ? parsedAmount : undefined,
+        amount_ngn: refundCurrency === 'ngn' && refundDestination !== 'bank_account' ? parsedAmount : undefined,
         refund_destination: refundCurrency === 'ngn' ? refundDestination : 'wallet',
         bank_id:
           refundCurrency === 'ngn' && refundDestination === 'bank_account'
@@ -669,15 +670,6 @@ export default function TransactionsTab({ limit = 25, showViewAll = true }: Tran
             )}
 
             <div className="flex gap-2">
-              <input
-                value={refundAmount}
-                onChange={(e) => setRefundAmount(e.target.value)}
-                type="number"
-                min="0"
-                step="0.000001"
-                className="flex-1 px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-[#0f0f1a]"
-                placeholder={refundCurrency === 'usd' ? 'Amount (USD)' : 'Amount (NGN)'}
-              />
               <select
                 value={refundCurrency}
                 onChange={(e) => {
@@ -692,6 +684,21 @@ export default function TransactionsTab({ limit = 25, showViewAll = true }: Tran
                 <option value="usd">USD</option>
                 <option value="ngn">NGN</option>
               </select>
+              {!(refundCurrency === 'ngn' && refundDestination === 'bank_account') ? (
+                <input
+                  value={refundAmount}
+                  onChange={(e) => setRefundAmount(e.target.value)}
+                  type="number"
+                  min="0"
+                  step="0.000001"
+                  className="flex-1 px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-[#0f0f1a]"
+                  placeholder={refundCurrency === 'usd' ? 'Amount (USD)' : 'Amount (NGN)'}
+                />
+              ) : (
+                <div className="flex-1 px-3 py-2 text-xs border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-[#0f0f1a] text-slate-600 dark:text-slate-300">
+                  Amount is auto-derived from payment and net-refundable balance.
+                </div>
+              )}
             </div>
 
             {refundCurrency === 'ngn' && (
