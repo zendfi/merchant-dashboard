@@ -175,8 +175,12 @@ function ShopDetail({
   const [copied, setCopied] = useState(false);
   const [showCustomise, setShowCustomise] = useState(false);
   const [savingCustomise, setSavingCustomise] = useState(false);
+  const [uploadingHero, setUploadingHero] = useState(false);
   // Customise form state (initialised from shop)
   const [welcomeMsg, setWelcomeMsg] = useState(initialShop.welcome_message || '');
+  const [heroImageUrl, setHeroImageUrl] = useState(initialShop.hero_image_url || '');
+  const [heroImageFit, setHeroImageFit] = useState<'cover' | 'contain'>(initialShop.hero_image_fit || 'cover');
+  const [heroImagePosition, setHeroImagePosition] = useState<'center' | 'top' | 'bottom' | 'left' | 'right'>(initialShop.hero_image_position || 'center');
   const [about, setAbout] = useState(initialShop.about || '');
   const [contactEmail, setContactEmail] = useState(initialShop.contact_email || '');
   const [twitterUrl, setTwitterUrl] = useState(initialShop.twitter_url || '');
@@ -218,6 +222,9 @@ function ShopDetail({
     try {
       const updated = await shopsApi.update(shop.id, {
         welcome_message: welcomeMsg.trim() || undefined,
+        hero_image_url: heroImageUrl.trim() || undefined,
+        hero_image_fit: heroImageFit,
+        hero_image_position: heroImagePosition,
         about: about.trim() || undefined,
         contact_email: contactEmail.trim() || undefined,
         twitter_url: twitterUrl.trim() || undefined,
@@ -236,6 +243,30 @@ function ShopDetail({
       showNotification('Failed to save', undefined, 'error');
     } finally {
       setSavingCustomise(false);
+    }
+  };
+
+  const handleHeroUpload = async (file: File) => {
+    setUploadingHero(true);
+    try {
+      const { upload_url, public_url } = await shopsApi.getUploadUrl({
+        shop_id: shop.id,
+        filename: file.name,
+        mime_type: file.type,
+        file_size: file.size,
+      });
+      const res = await fetch(upload_url, {
+        method: 'PUT',
+        headers: { 'Content-Type': file.type },
+        body: file,
+      });
+      if (!res.ok) throw new Error('Upload failed');
+      setHeroImageUrl(public_url);
+      showNotification('Hero image uploaded', undefined, 'success');
+    } catch {
+      showNotification('Hero image upload failed', undefined, 'error');
+    } finally {
+      setUploadingHero(false);
     }
   };
 
@@ -376,6 +407,94 @@ function ShopDetail({
                 maxLength={120}
                 className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 transition"
               />
+            </div>
+
+            {/* Hero image setup */}
+            <div className="space-y-3 p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/40">
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">
+                  Hero Background Image
+                </label>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  Recommended size: 2400x1400px, under 3MB. PNG/JPG/WebP. If empty, storefront uses your theme color.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <label className="px-3 py-2 rounded-lg text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 cursor-pointer hover:border-primary/40 transition">
+                  {uploadingHero ? 'Uploading…' : 'Upload Hero Image'}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    disabled={uploadingHero}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) void handleHeroUpload(file);
+                      e.target.value = '';
+                    }}
+                  />
+                </label>
+                {heroImageUrl && (
+                  <button
+                    type="button"
+                    onClick={() => setHeroImageUrl('')}
+                    className="px-3 py-2 rounded-lg text-xs font-semibold text-rose-600 bg-rose-50 dark:bg-rose-900/20"
+                  >
+                    Remove Image
+                  </button>
+                )}
+              </div>
+
+              <input
+                type="url"
+                value={heroImageUrl}
+                onChange={(e) => setHeroImageUrl(e.target.value)}
+                placeholder="Or paste a hosted image URL"
+                className="w-full px-3 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30 transition"
+              />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">Scaling</label>
+                  <select
+                    value={heroImageFit}
+                    onChange={(e) => setHeroImageFit(e.target.value as 'cover' | 'contain')}
+                    className="w-full px-3 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm"
+                  >
+                    <option value="cover">Cover (fills area)</option>
+                    <option value="contain">Contain (entire image visible)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">Focus Position</label>
+                  <select
+                    value={heroImagePosition}
+                    onChange={(e) => setHeroImagePosition(e.target.value as 'center' | 'top' | 'bottom' | 'left' | 'right')}
+                    className="w-full px-3 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm"
+                  >
+                    <option value="center">Center</option>
+                    <option value="top">Top</option>
+                    <option value="bottom">Bottom</option>
+                    <option value="left">Left</option>
+                    <option value="right">Right</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="h-28 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900 relative">
+                {heroImageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={heroImageUrl}
+                    alt="Hero preview"
+                    className="w-full h-full"
+                    style={{ objectFit: heroImageFit, objectPosition: heroImagePosition }}
+                  />
+                ) : (
+                  <div className="absolute inset-0" style={{ backgroundColor: shop.theme_color }} />
+                )}
+              </div>
             </div>
 
             {/* About */}

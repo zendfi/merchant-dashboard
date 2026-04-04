@@ -1359,6 +1359,9 @@ export interface Shop {
   theme_color: string;
   is_live: boolean;
   welcome_message?: string | null;
+  hero_image_url?: string | null;
+  hero_image_fit?: "cover" | "contain";
+  hero_image_position?: "center" | "top" | "bottom" | "left" | "right";
   about?: string | null;
   contact_email?: string | null;
   twitter_url?: string | null;
@@ -1441,6 +1444,9 @@ export interface UpdateShopRequest {
   theme_color?: string;
   is_live?: boolean;
   welcome_message?: string;
+  hero_image_url?: string;
+  hero_image_fit?: "cover" | "contain";
+  hero_image_position?: "center" | "top" | "bottom" | "left" | "right";
   about?: string;
   contact_email?: string;
   twitter_url?: string;
