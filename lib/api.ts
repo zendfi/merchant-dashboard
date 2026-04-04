@@ -1404,7 +1404,29 @@ export interface ShopProduct {
   onramp: boolean;
   collect_customer_info: boolean;
   amount_ngn?: number | null;
+  preferences?: ProductPreferenceDefinition[];
   created_at: string;
+}
+
+export interface ProductPreferenceOption {
+  id?: string;
+  value: string;
+  label: string;
+  upcharge_usd?: number;
+  display_order?: number;
+  is_active?: boolean;
+}
+
+export interface ProductPreferenceDefinition {
+  id?: string;
+  key: string;
+  label: string;
+  type: "select" | "text" | "number" | "boolean";
+  required?: boolean;
+  constraints_json?: Record<string, unknown>;
+  display_order?: number;
+  is_active?: boolean;
+  options?: ProductPreferenceOption[];
 }
 
 export interface CreateShopRequest {
@@ -1454,6 +1476,7 @@ export interface CreateProductRequest {
   collect_customer_info?: boolean;
   payer_service_charge?: boolean;
   amount_ngn?: number;
+  preferences?: ProductPreferenceDefinition[];
 }
 
 export interface UpdateProductRequest {
@@ -1470,6 +1493,7 @@ export interface UpdateProductRequest {
   collect_customer_info?: boolean;
   payer_service_charge?: boolean;
   amount_ngn?: number;
+  preferences?: ProductPreferenceDefinition[];
 }
 
 export interface ShopDetailResponse {

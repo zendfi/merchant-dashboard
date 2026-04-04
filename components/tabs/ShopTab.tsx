@@ -29,11 +29,13 @@ function formatPrice(price: number, token: string) {
 function ProductCard({
   product,
   themeColor,
+  onEdit,
   onDelete,
   onToggleActive,
 }: {
   product: ShopProduct;
   themeColor: string;
+  onEdit: () => void;
   onDelete: () => void;
   onToggleActive: () => void;
 }) {
@@ -78,6 +80,14 @@ function ProductCard({
             {menuOpen && (
               <div className="absolute right-0 top-10 w-40 bg-white/95 dark:bg-[#1e1e30]/95 backdrop-blur-xl border border-slate-200/80 dark:border-slate-700/80 rounded-xl shadow-2xl overflow-hidden z-20 origin-top-right animate-in fade-in zoom-in-95 duration-200">
                 <button
+                  onClick={() => { onEdit(); setMenuOpen(false); }}
+                  className="w-full px-3 py-2.5 text-left text-[13px] font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100/80 dark:hover:bg-slate-800/80 flex items-center gap-2.5 transition-colors"
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: 16 }}>edit</span>
+                  Edit Product
+                </button>
+                <div className="h-px w-full bg-slate-100 dark:bg-slate-800 mx-auto max-w-[90%]" />
+                <button
                   onClick={() => { onToggleActive(); setMenuOpen(false); }}
                   className="w-full px-3 py-2.5 text-left text-[13px] font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100/80 dark:hover:bg-slate-800/80 flex items-center gap-2.5 transition-colors"
                 >
@@ -117,9 +127,16 @@ function ProductCard({
         </h4>
 
         <div className="mt-auto pt-3 flex items-end justify-between gap-2">
-          <p className="text-[16px] font-extrabold tracking-tight drop-shadow-sm" style={{ color: themeColor }}>
-            {formatPrice(product.price_usd, product.token)}
-          </p>
+          <div className="flex flex-col gap-1">
+            <p className="text-[16px] font-extrabold tracking-tight drop-shadow-sm" style={{ color: themeColor }}>
+              {formatPrice(product.price_usd, product.token)}
+            </p>
+            {(product.preferences?.length ?? 0) > 0 && (
+              <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">
+                {product.preferences?.length} preference fields
+              </span>
+            )}
+          </div>
 
           {product.quantity_type === 'limited' ? (
             <span className="shrink-0 inline-flex items-center justify-center px-2 py-1 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200/50 dark:border-slate-700/50 text-[10px] font-bold text-slate-600 dark:text-slate-400">
@@ -153,6 +170,7 @@ function ShopDetail({
   const [products, setProducts] = useState<ShopProduct[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [showCreateProduct, setShowCreateProduct] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<ShopProduct | null>(null);
   const [togglingLive, setTogglingLive] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showCustomise, setShowCustomise] = useState(false);
@@ -264,6 +282,20 @@ function ShopDetail({
           shopId={shop.id}
           onClose={() => setShowCreateProduct(false)}
           onCreated={handleProductCreated}
+        />
+      )}
+
+      {editingProduct && (
+        <CreateProductModal
+          shopId={shop.id}
+          initialProduct={editingProduct}
+          onClose={() => setEditingProduct(null)}
+          onCreated={handleProductCreated}
+          onUpdated={(updated) => {
+            setProducts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+            setEditingProduct(null);
+            showNotification('Product updated', undefined, 'success');
+          }}
         />
       )}
 
@@ -533,6 +565,7 @@ function ShopDetail({
               key={product.id}
               product={product}
               themeColor={shop.theme_color}
+              onEdit={() => setEditingProduct(product)}
               onDelete={() => handleDeleteProduct(product)}
               onToggleActive={() => handleToggleProductActive(product)}
             />

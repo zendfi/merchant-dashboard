@@ -1,17 +1,35 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { shops as shopsApi, CreateProductRequest, ShopProduct } from '@/lib/api';
+import {
+  shops as shopsApi,
+  CreateProductRequest,
+  ProductPreferenceDefinition,
+  ShopProduct,
+} from '@/lib/api';
 
 interface CreateProductModalProps {
   shopId: string;
   onClose: () => void;
   onCreated: (product: ShopProduct) => void;
+  initialProduct?: ShopProduct | null;
+  onUpdated?: (product: ShopProduct) => void;
 }
 
 const TOKENS = ['USDC', 'USDT', 'SOL'];
 
 type Step = 1 | 2 | 3;
+
+interface PreferenceDraft {
+  key: string;
+  label: string;
+  type: 'select' | 'text' | 'number' | 'boolean';
+  required: boolean;
+  optionsText: string;
+  maxLength: string;
+  min: string;
+  max: string;
+}
 
 function Toggle({ checked, onChange }: { checked: boolean; onChange: () => void }) {
   return (
@@ -29,8 +47,9 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: () => void 
   );
 }
 
-export default function CreateProductModal({ shopId, onClose, onCreated }: CreateProductModalProps) {
+export default function CreateProductModal({ shopId, onClose, onCreated, initialProduct, onUpdated }: CreateProductModalProps) {
   const [step, setStep] = useState<Step>(1);
+  const isEditMode = !!initialProduct;
 
   // Step 1
   const [name, setName] = useState('');
@@ -53,11 +72,40 @@ export default function CreateProductModal({ shopId, onClose, onCreated }: Creat
   // Step 3 — media
   const [mediaUrls, setMediaUrls] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [preferences, setPreferences] = useState<PreferenceDraft[]>([]);
 
   // Shared
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!initialProduct) return;
+    setName(initialProduct.name || '');
+    setDescription(initialProduct.description || '');
+    setOnramp(initialProduct.onramp);
+    setPriceUsd(initialProduct.price_usd ? String(initialProduct.price_usd) : '');
+    setPriceNgn(initialProduct.amount_ngn ? String(initialProduct.amount_ngn) : '');
+    setToken(initialProduct.token || 'USDC');
+    setQuantityType(initialProduct.quantity_type || 'unlimited');
+    setQuantityAvailable(initialProduct.quantity_available ? String(initialProduct.quantity_available) : '');
+    setCollectCustomerInfo(initialProduct.collect_customer_info);
+    setMediaUrls(initialProduct.media_urls || []);
+    setPreferences(
+      (initialProduct.preferences || []).map((pref) => ({
+        key: pref.key,
+        label: pref.label,
+        type: pref.type,
+        required: !!pref.required,
+        optionsText: (pref.options || [])
+          .map((opt) => `${opt.label}|${opt.upcharge_usd ?? 0}`)
+          .join(', '),
+        maxLength: typeof pref.constraints_json?.max_length === 'number' ? String(pref.constraints_json.max_length) : '',
+        min: typeof pref.constraints_json?.min === 'number' ? String(pref.constraints_json.min) : '',
+        max: typeof pref.constraints_json?.max === 'number' ? String(pref.constraints_json.max) : '',
+      })),
+    );
+  }, [initialProduct]);
 
   // Fetch NGN→USD exchange rate
   const loadExchangeRate = useCallback(async () => {
@@ -119,6 +167,41 @@ export default function CreateProductModal({ shopId, onClose, onCreated }: Creat
         finalPriceUsd = parseFloat(priceUsd);
       }
 
+      const parsedPreferences: ProductPreferenceDefinition[] = preferences.map((pref, idx) => {
+        const constraints: Record<string, unknown> = {};
+        if (pref.type === 'text' && pref.maxLength) constraints.max_length = parseInt(pref.maxLength, 10);
+        if (pref.type === 'number' && pref.min) constraints.min = parseFloat(pref.min);
+        if (pref.type === 'number' && pref.max) constraints.max = parseFloat(pref.max);
+
+        const options = pref.type === 'select'
+          ? pref.optionsText
+              .split(',')
+              .map((entry) => entry.trim())
+              .filter(Boolean)
+              .map((entry, optionIndex) => {
+                const [labelValue, upchargeValue] = entry.split('|').map((v) => v.trim());
+                return {
+                  value: labelValue.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, ''),
+                  label: labelValue,
+                  upcharge_usd: upchargeValue ? parseFloat(upchargeValue) : 0,
+                  display_order: optionIndex,
+                  is_active: true,
+                };
+              })
+          : undefined;
+
+        return {
+          key: pref.key.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_'),
+          label: pref.label.trim(),
+          type: pref.type,
+          required: pref.required,
+          constraints_json: constraints,
+          display_order: idx,
+          is_active: true,
+          options,
+        };
+      });
+
       const req: CreateProductRequest = {
         name: name.trim(),
         description: description.trim() || undefined,
@@ -131,11 +214,17 @@ export default function CreateProductModal({ shopId, onClose, onCreated }: Creat
         collect_customer_info: collectCustomerInfo,
         payer_service_charge: onramp ? payerServiceCharge : false,
         amount_ngn: onramp && priceNgn ? parseFloat(priceNgn) : undefined,
+        preferences: parsedPreferences.length > 0 ? parsedPreferences : undefined,
       };
-      const product = await shopsApi.createProduct(shopId, req);
-      onCreated(product);
+      if (isEditMode && initialProduct) {
+        const updated = await shopsApi.updateProduct(shopId, initialProduct.id, req);
+        onUpdated?.(updated);
+      } else {
+        const product = await shopsApi.createProduct(shopId, req);
+        onCreated(product);
+      }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to create product');
+      setError(err instanceof Error ? err.message : `Failed to ${isEditMode ? 'update' : 'create'} product`);
     } finally {
       setLoading(false);
     }
@@ -158,7 +247,7 @@ export default function CreateProductModal({ shopId, onClose, onCreated }: Creat
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-6 pb-4">
           <div>
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white">Add Product</h2>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white">{isEditMode ? 'Edit Product' : 'Add Product'}</h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Step {step} of 3</p>
           </div>
           <button
@@ -432,6 +521,115 @@ export default function CreateProductModal({ shopId, onClose, onCreated }: Creat
                 <p className="text-xs text-slate-400">Up to 5 images · JPG, PNG, WebP · Max 10MB each</p>
               </div>
 
+              <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                    Product Preferences <span className="normal-case font-normal">(optional)</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPreferences((prev) => [
+                        ...prev,
+                        {
+                          key: '',
+                          label: '',
+                          type: 'select',
+                          required: false,
+                          optionsText: '',
+                          maxLength: '',
+                          min: '',
+                          max: '',
+                        },
+                      ])
+                    }
+                    className="text-xs font-semibold text-primary"
+                  >
+                    + Add
+                  </button>
+                </div>
+
+                <div className="space-y-3 max-h-52 overflow-y-auto pr-1">
+                  {preferences.map((pref, idx) => (
+                    <div key={idx} className="rounded-xl border border-slate-200 dark:border-slate-700 p-3 bg-slate-50/60 dark:bg-slate-800/40 space-y-2">
+                      <div className="grid grid-cols-2 gap-2">
+                        <input
+                          value={pref.key}
+                          onChange={(e) => setPreferences((prev) => prev.map((p, i) => i === idx ? { ...p, key: e.target.value } : p))}
+                          placeholder="key (e.g. size)"
+                          className="px-3 py-2 rounded-lg text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+                        />
+                        <input
+                          value={pref.label}
+                          onChange={(e) => setPreferences((prev) => prev.map((p, i) => i === idx ? { ...p, label: e.target.value } : p))}
+                          placeholder="Label"
+                          className="px-3 py-2 rounded-lg text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+                        />
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 items-center">
+                        <select
+                          value={pref.type}
+                          onChange={(e) => setPreferences((prev) => prev.map((p, i) => i === idx ? { ...p, type: e.target.value as PreferenceDraft['type'] } : p))}
+                          className="px-3 py-2 rounded-lg text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+                        >
+                          <option value="select">Select</option>
+                          <option value="text">Text</option>
+                          <option value="number">Number</option>
+                          <option value="boolean">Boolean</option>
+                        </select>
+                        <label className="text-xs inline-flex items-center gap-1 text-slate-600 dark:text-slate-300">
+                          <input
+                            type="checkbox"
+                            checked={pref.required}
+                            onChange={(e) => setPreferences((prev) => prev.map((p, i) => i === idx ? { ...p, required: e.target.checked } : p))}
+                          />
+                          Required
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setPreferences((prev) => prev.filter((_, i) => i !== idx))}
+                          className="text-xs text-rose-500 justify-self-end"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                      {pref.type === 'select' && (
+                        <input
+                          value={pref.optionsText}
+                          onChange={(e) => setPreferences((prev) => prev.map((p, i) => i === idx ? { ...p, optionsText: e.target.value } : p))}
+                          placeholder="Options: small|0, medium|2, large|5"
+                          className="w-full px-3 py-2 rounded-lg text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+                        />
+                      )}
+                      {pref.type === 'text' && (
+                        <input
+                          value={pref.maxLength}
+                          onChange={(e) => setPreferences((prev) => prev.map((p, i) => i === idx ? { ...p, maxLength: e.target.value } : p))}
+                          placeholder="Max length (optional)"
+                          className="w-full px-3 py-2 rounded-lg text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+                        />
+                      )}
+                      {pref.type === 'number' && (
+                        <div className="grid grid-cols-2 gap-2">
+                          <input
+                            value={pref.min}
+                            onChange={(e) => setPreferences((prev) => prev.map((p, i) => i === idx ? { ...p, min: e.target.value } : p))}
+                            placeholder="Min"
+                            className="px-3 py-2 rounded-lg text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+                          />
+                          <input
+                            value={pref.max}
+                            onChange={(e) => setPreferences((prev) => prev.map((p, i) => i === idx ? { ...p, max: e.target.value } : p))}
+                            placeholder="Max"
+                            className="px-3 py-2 rounded-lg text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               {error && (
                 <p className="text-xs text-red-500 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg">{error}</p>
               )}
@@ -448,7 +646,7 @@ export default function CreateProductModal({ shopId, onClose, onCreated }: Creat
                   onClick={handleSubmit}
                   className="flex-[2] py-3.5 rounded-xl bg-primary text-white font-semibold text-sm transition hover:bg-primary/90 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  {loading ? 'Adding…' : 'Add Product'}
+                  {loading ? (isEditMode ? 'Saving…' : 'Adding…') : (isEditMode ? 'Save Changes' : 'Add Product')}
                 </button>
               </div>
             </>
