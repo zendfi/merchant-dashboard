@@ -20,15 +20,40 @@ const TOKENS = ['USDC', 'USDT', 'SOL'];
 
 type Step = 1 | 2 | 3;
 
+interface PreferenceOptionDraft {
+  label: string;
+  value: string;
+  upchargeUsd: string;
+}
+
 interface PreferenceDraft {
   key: string;
   label: string;
-  type: 'select' | 'text' | 'number' | 'boolean';
+  type: 'select' | 'dropdown' | 'text' | 'number' | 'boolean';
   required: boolean;
-  optionsText: string;
+  options: PreferenceOptionDraft[];
   maxLength: string;
   min: string;
   max: string;
+}
+
+function toOptionValue(raw: string): string {
+  return raw.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+}
+
+function moveOption(
+  options: PreferenceOptionDraft[],
+  fromIndex: number,
+  toIndex: number,
+): PreferenceOptionDraft[] {
+  if (fromIndex === toIndex) return options;
+  if (fromIndex < 0 || toIndex < 0 || fromIndex >= options.length || toIndex >= options.length) {
+    return options;
+  }
+  const next = [...options];
+  const [item] = next.splice(fromIndex, 1);
+  next.splice(toIndex, 0, item);
+  return next;
 }
 
 function Toggle({ checked, onChange }: { checked: boolean; onChange: () => void }) {
@@ -97,9 +122,11 @@ export default function CreateProductModal({ shopId, onClose, onCreated, initial
         label: pref.label,
         type: pref.type,
         required: !!pref.required,
-        optionsText: (pref.options || [])
-          .map((opt) => `${opt.label}|${opt.upcharge_usd ?? 0}`)
-          .join(', '),
+        options: (pref.options || []).map((opt) => ({
+          label: opt.label,
+          value: opt.value,
+          upchargeUsd: String(opt.upcharge_usd ?? 0),
+        })),
         maxLength: typeof pref.constraints_json?.max_length === 'number' ? String(pref.constraints_json.max_length) : '',
         min: typeof pref.constraints_json?.min === 'number' ? String(pref.constraints_json.min) : '',
         max: typeof pref.constraints_json?.max === 'number' ? String(pref.constraints_json.max) : '',
@@ -173,27 +200,46 @@ export default function CreateProductModal({ shopId, onClose, onCreated, initial
         if (pref.type === 'number' && pref.min) constraints.min = parseFloat(pref.min);
         if (pref.type === 'number' && pref.max) constraints.max = parseFloat(pref.max);
 
-        const options = pref.type === 'select'
-          ? pref.optionsText
-              .split(',')
-              .map((entry) => entry.trim())
-              .filter(Boolean)
-              .map((entry, optionIndex) => {
-                const [labelValue, upchargeValue] = entry.split('|').map((v) => v.trim());
-                return {
-                  value: labelValue.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, ''),
-                  label: labelValue,
-                  upcharge_usd: upchargeValue ? parseFloat(upchargeValue) : 0,
-                  display_order: optionIndex,
-                  is_active: true,
-                };
-              })
-          : undefined;
+        const normalizedType = pref.type === 'dropdown' ? 'select' : pref.type;
+
+        let options;
+        if (normalizedType === 'select') {
+          const seenValues = new Set<string>();
+          const cleaned = pref.options
+            .map((opt, optionIndex) => {
+              const label = opt.label.trim();
+              const value = (opt.value.trim() || toOptionValue(label));
+              if (!label || !value) return null;
+
+              const upcharge = opt.upchargeUsd.trim() ? parseFloat(opt.upchargeUsd) : 0;
+              if (!Number.isFinite(upcharge) || upcharge < 0) {
+                throw new Error(`Preference "${pref.label || pref.key}" has an invalid upcharge value`);
+              }
+              if (seenValues.has(value)) {
+                throw new Error(`Preference "${pref.label || pref.key}" has duplicate option values`);
+              }
+              seenValues.add(value);
+
+              return {
+                value,
+                label,
+                upcharge_usd: upcharge,
+                display_order: optionIndex,
+                is_active: true,
+              };
+            })
+            .filter((opt): opt is NonNullable<typeof opt> => !!opt);
+
+          if (cleaned.length === 0) {
+            throw new Error(`Preference "${pref.label || pref.key}" needs at least one option`);
+          }
+          options = cleaned;
+        }
 
         return {
           key: pref.key.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_'),
           label: pref.label.trim(),
-          type: pref.type,
+          type: normalizedType,
           required: pref.required,
           constraints_json: constraints,
           display_order: idx,
@@ -536,7 +582,7 @@ export default function CreateProductModal({ shopId, onClose, onCreated, initial
                           label: '',
                           type: 'select',
                           required: false,
-                          optionsText: '',
+                          options: [{ label: '', value: '', upchargeUsd: '0' }],
                           maxLength: '',
                           min: '',
                           max: '',
@@ -569,10 +615,18 @@ export default function CreateProductModal({ shopId, onClose, onCreated, initial
                       <div className="grid grid-cols-3 gap-2 items-center">
                         <select
                           value={pref.type}
-                          onChange={(e) => setPreferences((prev) => prev.map((p, i) => i === idx ? { ...p, type: e.target.value as PreferenceDraft['type'] } : p))}
+                          onChange={(e) => setPreferences((prev) => prev.map((p, i) => {
+                            if (i !== idx) return p;
+                            const nextType = e.target.value as PreferenceDraft['type'];
+                            if ((nextType === 'select' || nextType === 'dropdown') && p.options.length === 0) {
+                              return { ...p, type: nextType, options: [{ label: '', value: '', upchargeUsd: '0' }] };
+                            }
+                            return { ...p, type: nextType };
+                          }))}
                           className="px-3 py-2 rounded-lg text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
                         >
                           <option value="select">Select</option>
+                          <option value="dropdown">Dropdown</option>
                           <option value="text">Text</option>
                           <option value="number">Number</option>
                           <option value="boolean">Boolean</option>
@@ -593,13 +647,99 @@ export default function CreateProductModal({ shopId, onClose, onCreated, initial
                           Remove
                         </button>
                       </div>
-                      {pref.type === 'select' && (
-                        <input
-                          value={pref.optionsText}
-                          onChange={(e) => setPreferences((prev) => prev.map((p, i) => i === idx ? { ...p, optionsText: e.target.value } : p))}
-                          placeholder="Options: small|0, medium|2, large|5"
-                          className="w-full px-3 py-2 rounded-lg text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
-                        />
+                      {(pref.type === 'select' || pref.type === 'dropdown') && (
+                        <div className="space-y-2 rounded-lg border border-slate-200 dark:border-slate-700 p-2 bg-white dark:bg-slate-900">
+                          <div className="flex items-center justify-between">
+                            <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Options</p>
+                            <button
+                              type="button"
+                              onClick={() => setPreferences((prev) => prev.map((p, i) => i === idx ? { ...p, options: [...p.options, { label: '', value: '', upchargeUsd: '0' }] } : p))}
+                              className="text-[11px] font-semibold text-primary"
+                            >
+                              + Add option
+                            </button>
+                          </div>
+                          <div className="space-y-2">
+                            {pref.options.map((opt, optionIdx) => (
+                              <div
+                                key={optionIdx}
+                                draggable
+                                onDragStart={(e) => {
+                                  e.dataTransfer.effectAllowed = 'move';
+                                  e.dataTransfer.setData('text/plain', String(optionIdx));
+                                }}
+                                onDragOver={(e) => {
+                                  e.preventDefault();
+                                  e.dataTransfer.dropEffect = 'move';
+                                }}
+                                onDrop={(e) => {
+                                  e.preventDefault();
+                                  const from = Number(e.dataTransfer.getData('text/plain'));
+                                  if (Number.isNaN(from)) return;
+                                  setPreferences((prev) => prev.map((p, i) => {
+                                    if (i !== idx) return p;
+                                    return { ...p, options: moveOption(p.options, from, optionIdx) };
+                                  }));
+                                }}
+                                className="grid grid-cols-12 gap-1.5 items-center cursor-grab active:cursor-grabbing"
+                                title="Drag to reorder"
+                              >
+                                <span className="col-span-1 text-slate-400 text-xs text-center" aria-hidden="true">::</span>
+                                <input
+                                  value={opt.label}
+                                  onChange={(e) => setPreferences((prev) => prev.map((p, i) => {
+                                    if (i !== idx) return p;
+                                    return {
+                                      ...p,
+                                      options: p.options.map((o, oi) => oi === optionIdx ? { ...o, label: e.target.value } : o),
+                                    };
+                                  }))}
+                                  placeholder="Label"
+                                  className="col-span-3 px-2 py-1.5 rounded-md text-[11px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+                                />
+                                <input
+                                  value={opt.value}
+                                  onChange={(e) => setPreferences((prev) => prev.map((p, i) => {
+                                    if (i !== idx) return p;
+                                    return {
+                                      ...p,
+                                      options: p.options.map((o, oi) => oi === optionIdx ? { ...o, value: e.target.value } : o),
+                                    };
+                                  }))}
+                                  placeholder="value"
+                                  className="col-span-4 px-2 py-1.5 rounded-md text-[11px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+                                />
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  value={opt.upchargeUsd}
+                                  onChange={(e) => setPreferences((prev) => prev.map((p, i) => {
+                                    if (i !== idx) return p;
+                                    return {
+                                      ...p,
+                                      options: p.options.map((o, oi) => oi === optionIdx ? { ...o, upchargeUsd: e.target.value } : o),
+                                    };
+                                  }))}
+                                  placeholder="+USD"
+                                  className="col-span-3 px-2 py-1.5 rounded-md text-[11px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => setPreferences((prev) => prev.map((p, i) => {
+                                    if (i !== idx) return p;
+                                    return { ...p, options: p.options.filter((_, oi) => oi !== optionIdx) };
+                                  }))}
+                                  className="col-span-1 text-rose-500 text-[11px]"
+                                  aria-label="Remove option"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                          <p className="text-[10px] text-slate-400">Drag rows by :: to reorder. If value is empty, it is auto-generated from label.</p>
+                        </div>
                       )}
                       {pref.type === 'text' && (
                         <input
