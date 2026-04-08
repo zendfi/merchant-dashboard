@@ -1386,6 +1386,16 @@ export interface Shop {
   created_at: string;
   updated_at: string;
   product_count?: number;
+  total_visits?: number;
+  visits_last_7d?: number;
+  unique_visitors_last_30d?: number;
+}
+
+export interface ShopVisitStats {
+  total_visits: number;
+  visits_last_7d: number;
+  visits_last_30d: number;
+  unique_visitors_last_30d: number;
 }
 
 export interface ShopProduct {
@@ -1408,7 +1418,17 @@ export interface ShopProduct {
   collect_customer_info: boolean;
   amount_ngn?: number | null;
   preferences?: ProductPreferenceDefinition[];
+  related_products?: ProductRelationship[];
   created_at: string;
+}
+
+export type ProductRelationshipType = "upsell" | "cross_sell" | "bundle";
+
+export interface ProductRelationship {
+  id?: string;
+  related_product_id: string;
+  relationship_type: ProductRelationshipType;
+  display_order?: number;
 }
 
 export interface ProductPreferenceOption {
@@ -1483,6 +1503,7 @@ export interface CreateProductRequest {
   payer_service_charge?: boolean;
   amount_ngn?: number;
   preferences?: ProductPreferenceDefinition[];
+  related_products?: ProductRelationship[];
 }
 
 export interface UpdateProductRequest {
@@ -1500,11 +1521,13 @@ export interface UpdateProductRequest {
   payer_service_charge?: boolean;
   amount_ngn?: number;
   preferences?: ProductPreferenceDefinition[];
+  related_products?: ProductRelationship[];
 }
 
 export interface ShopDetailResponse {
   shop: Shop;
   products: ShopProduct[];
+  visit_stats?: ShopVisitStats;
 }
 
 export interface MediaUploadUrlResponse {
@@ -1530,6 +1553,10 @@ export const shops = {
 
   get: async (id: string): Promise<ShopDetailResponse> => {
     return apiCall(`/api/v1/merchants/me/shops/${id}`);
+  },
+
+  getVisitStats: async (id: string): Promise<ShopVisitStats> => {
+    return apiCall(`/api/v1/merchants/me/shops/${id}/visits`);
   },
 
   update: async (id: string, req: UpdateShopRequest): Promise<Shop> => {

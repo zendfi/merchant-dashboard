@@ -5,6 +5,7 @@ import {
   shops as shopsApi,
   CreateProductRequest,
   ProductPreferenceDefinition,
+  ProductRelationshipType,
   ShopProduct,
 } from '@/lib/api';
 
@@ -20,40 +21,25 @@ const TOKENS = ['USDC', 'USDT', 'SOL'];
 
 type Step = 1 | 2 | 3;
 
-interface PreferenceOptionDraft {
+interface PreferenceDraft {
   label: string;
-  value: string;
-  upchargeUsd: string;
+  required: boolean;
+  optionsText: string;
 }
 
-interface PreferenceDraft {
-  key: string;
-  label: string;
-  type: 'select' | 'dropdown' | 'text' | 'number' | 'boolean';
-  required: boolean;
-  options: PreferenceOptionDraft[];
-  maxLength: string;
-  min: string;
-  max: string;
+interface RelatedProductDraft {
+  related_product_id: string;
+  relationship_type: ProductRelationshipType;
 }
+
+const RELATIONSHIP_TYPES: Array<{ label: string; value: ProductRelationshipType }> = [
+  { label: 'Upsell', value: 'upsell' },
+  { label: 'Cross-sell', value: 'cross_sell' },
+  { label: 'Bundle', value: 'bundle' },
+];
 
 function toOptionValue(raw: string): string {
   return raw.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
-}
-
-function moveOption(
-  options: PreferenceOptionDraft[],
-  fromIndex: number,
-  toIndex: number,
-): PreferenceOptionDraft[] {
-  if (fromIndex === toIndex) return options;
-  if (fromIndex < 0 || toIndex < 0 || fromIndex >= options.length || toIndex >= options.length) {
-    return options;
-  }
-  const next = [...options];
-  const [item] = next.splice(fromIndex, 1);
-  next.splice(toIndex, 0, item);
-  return next;
 }
 
 function Toggle({ checked, onChange }: { checked: boolean; onChange: () => void }) {
@@ -98,6 +84,9 @@ export default function CreateProductModal({ shopId, onClose, onCreated, initial
   const [mediaUrls, setMediaUrls] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [preferences, setPreferences] = useState<PreferenceDraft[]>([]);
+  const [relatedProducts, setRelatedProducts] = useState<RelatedProductDraft[]>([]);
+  const [availableProducts, setAvailableProducts] = useState<ShopProduct[]>([]);
+  const [loadingRelatedProducts, setLoadingRelatedProducts] = useState(false);
 
   // Shared
   const [loading, setLoading] = useState(false);
@@ -118,21 +107,48 @@ export default function CreateProductModal({ shopId, onClose, onCreated, initial
     setMediaUrls(initialProduct.media_urls || []);
     setPreferences(
       (initialProduct.preferences || []).map((pref) => ({
-        key: pref.key,
         label: pref.label,
-        type: pref.type,
         required: !!pref.required,
-        options: (pref.options || []).map((opt) => ({
-          label: opt.label,
-          value: opt.value,
-          upchargeUsd: String(opt.upcharge_usd ?? 0),
-        })),
-        maxLength: typeof pref.constraints_json?.max_length === 'number' ? String(pref.constraints_json.max_length) : '',
-        min: typeof pref.constraints_json?.min === 'number' ? String(pref.constraints_json.min) : '',
-        max: typeof pref.constraints_json?.max === 'number' ? String(pref.constraints_json.max) : '',
+        optionsText: (pref.options || []).map((opt) => opt.label).join(', '),
       })),
     );
+    setRelatedProducts(
+      (initialProduct.related_products || [])
+        .slice()
+        .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
+        .map((rel) => ({
+          related_product_id: rel.related_product_id,
+          relationship_type: rel.relationship_type,
+        })),
+    );
   }, [initialProduct]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadProducts = async () => {
+      setLoadingRelatedProducts(true);
+      try {
+        const detail = await shopsApi.get(shopId);
+        if (!cancelled) {
+          setAvailableProducts(detail.products || []);
+        }
+      } catch {
+        if (!cancelled) {
+          setAvailableProducts([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingRelatedProducts(false);
+        }
+      }
+    };
+
+    loadProducts();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [shopId]);
 
   // Fetch NGN→USD exchange rate
   const loadExchangeRate = useCallback(async () => {
@@ -195,56 +211,44 @@ export default function CreateProductModal({ shopId, onClose, onCreated, initial
       }
 
       const parsedPreferences: ProductPreferenceDefinition[] = preferences.map((pref, idx) => {
-        const constraints: Record<string, unknown> = {};
-        if (pref.type === 'text' && pref.maxLength) constraints.max_length = parseInt(pref.maxLength, 10);
-        if (pref.type === 'number' && pref.min) constraints.min = parseFloat(pref.min);
-        if (pref.type === 'number' && pref.max) constraints.max = parseFloat(pref.max);
+        const label = pref.label.trim();
+        const options = pref.optionsText
+          .split(',')
+          .map((opt) => opt.trim())
+          .filter((opt) => opt.length > 0);
 
-        const normalizedType = pref.type === 'dropdown' ? 'select' : pref.type;
-
-        let options;
-        if (normalizedType === 'select') {
-          const seenValues = new Set<string>();
-          const cleaned = pref.options
-            .map((opt, optionIndex) => {
-              const label = opt.label.trim();
-              const value = (opt.value.trim() || toOptionValue(label));
-              if (!label || !value) return null;
-
-              const upcharge = opt.upchargeUsd.trim() ? parseFloat(opt.upchargeUsd) : 0;
-              if (!Number.isFinite(upcharge) || upcharge < 0) {
-                throw new Error(`Preference "${pref.label || pref.key}" has an invalid upcharge value`);
-              }
-              if (seenValues.has(value)) {
-                throw new Error(`Preference "${pref.label || pref.key}" has duplicate option values`);
-              }
-              seenValues.add(value);
-
-              return {
-                value,
-                label,
-                upcharge_usd: upcharge,
-                display_order: optionIndex,
-                is_active: true,
-              };
-            })
-            .filter((opt): opt is NonNullable<typeof opt> => !!opt);
-
-          if (cleaned.length === 0) {
-            throw new Error(`Preference "${pref.label || pref.key}" needs at least one option`);
-          }
-          options = cleaned;
+        if (!label) {
+          throw new Error('Each preference needs a label (e.g. Size, Color)');
+        }
+        if (options.length === 0) {
+          throw new Error(`Preference "${label}" needs at least one option`);
         }
 
+        const seen = new Set<string>();
+        const mapped = options.map((optionLabel, optionIndex) => {
+          const value = toOptionValue(optionLabel);
+          if (seen.has(value)) {
+            throw new Error(`Preference "${label}" has duplicate options`);
+          }
+          seen.add(value);
+          return {
+            value,
+            label: optionLabel,
+            upcharge_usd: 0,
+            display_order: optionIndex,
+            is_active: true,
+          };
+        });
+
         return {
-          key: pref.key.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_'),
-          label: pref.label.trim(),
-          type: normalizedType,
+          key: toOptionValue(label),
+          label,
+          type: 'select',
           required: pref.required,
-          constraints_json: constraints,
+          constraints_json: {},
           display_order: idx,
           is_active: true,
-          options,
+          options: mapped,
         };
       });
 
@@ -261,6 +265,13 @@ export default function CreateProductModal({ shopId, onClose, onCreated, initial
         payer_service_charge: onramp ? payerServiceCharge : false,
         amount_ngn: onramp && priceNgn ? parseFloat(priceNgn) : undefined,
         preferences: parsedPreferences.length > 0 ? parsedPreferences : undefined,
+        related_products: relatedProducts.length > 0
+          ? relatedProducts.map((relation, index) => ({
+            related_product_id: relation.related_product_id,
+            relationship_type: relation.relationship_type,
+            display_order: index,
+          }))
+          : undefined,
       };
       if (isEditMode && initialProduct) {
         const updated = await shopsApi.updateProduct(shopId, initialProduct.id, req);
@@ -286,6 +297,12 @@ export default function CreateProductModal({ shopId, onClose, onCreated, initial
     if (quantityType === 'limited' && (!quantityAvailable || parseInt(quantityAvailable) <= 0)) return false;
     return true;
   })();
+
+  const selectableRelatedProducts = availableProducts.filter((product) => {
+    if (!product.is_active) return false;
+    if (isEditMode && initialProduct && product.id === initialProduct.id) return false;
+    return true;
+  });
 
   return (
     <div className="fixed inset-0 z-[300] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-4">
@@ -768,6 +785,87 @@ export default function CreateProductModal({ shopId, onClose, onCreated, initial
                     </div>
                   ))}
                 </div>
+              </div>
+
+              <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                    Related Products <span className="normal-case font-normal">(optional)</span>
+                  </label>
+                  <button
+                    type="button"
+                    disabled={loadingRelatedProducts || selectableRelatedProducts.length === 0}
+                    onClick={() =>
+                      setRelatedProducts((prev) => {
+                        const selected = new Set(prev.map((relation) => relation.related_product_id));
+                        const candidate = selectableRelatedProducts.find((product) => !selected.has(product.id));
+                        if (!candidate) return prev;
+                        return [
+                          ...prev,
+                          {
+                            related_product_id: candidate.id,
+                            relationship_type: 'cross_sell',
+                          },
+                        ];
+                      })
+                    }
+                    className="text-xs font-semibold text-primary disabled:opacity-40"
+                  >
+                    + Add
+                  </button>
+                </div>
+
+                {loadingRelatedProducts ? (
+                  <p className="text-xs text-slate-400">Loading products...</p>
+                ) : selectableRelatedProducts.length === 0 ? (
+                  <p className="text-xs text-slate-400">No other active products are available to relate yet.</p>
+                ) : relatedProducts.length === 0 ? (
+                  <p className="text-xs text-slate-400">Suggest complementary products on storefront PDPs.</p>
+                ) : (
+                  <div className="space-y-2 max-h-44 overflow-y-auto pr-1">
+                    {relatedProducts.map((relation, idx) => {
+                      const selectedIds = new Set(
+                        relatedProducts
+                          .filter((_, relationIndex) => relationIndex !== idx)
+                          .map((item) => item.related_product_id),
+                      );
+                      const options = selectableRelatedProducts.filter(
+                        (product) => product.id === relation.related_product_id || !selectedIds.has(product.id),
+                      );
+
+                      return (
+                        <div key={`${relation.related_product_id}-${idx}`} className="rounded-xl border border-slate-200 dark:border-slate-700 p-2 bg-slate-50/60 dark:bg-slate-800/40 grid grid-cols-12 gap-2 items-center">
+                          <select
+                            value={relation.related_product_id}
+                            onChange={(e) => setRelatedProducts((prev) => prev.map((item, itemIdx) => itemIdx === idx ? { ...item, related_product_id: e.target.value } : item))}
+                            className="col-span-7 px-3 py-2 rounded-lg text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+                          >
+                            {options.map((product) => (
+                              <option key={product.id} value={product.id}>{product.name}</option>
+                            ))}
+                          </select>
+                          <select
+                            value={relation.relationship_type}
+                            onChange={(e) => setRelatedProducts((prev) => prev.map((item, itemIdx) => itemIdx === idx ? { ...item, relationship_type: e.target.value as ProductRelationshipType } : item))}
+                            className="col-span-4 px-3 py-2 rounded-lg text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+                          >
+                            {RELATIONSHIP_TYPES.map((type) => (
+                              <option key={type.value} value={type.value}>{type.label}</option>
+                            ))}
+                          </select>
+                          <button
+                            type="button"
+                            onClick={() => setRelatedProducts((prev) => prev.filter((_, relationIndex) => relationIndex !== idx))}
+                            className="col-span-1 text-rose-500 text-[11px]"
+                            aria-label="Remove related product"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               {error && (

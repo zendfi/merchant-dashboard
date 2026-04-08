@@ -6,6 +6,7 @@ import {
   shops as shopsApi,
   Shop,
   ShopProduct,
+  ShopVisitStats,
 } from '@/lib/api';
 import CreateShopModal from '@/components/CreateShopModal';
 import CreateProductModal from '@/components/CreateProductModal';
@@ -176,6 +177,7 @@ function ShopDetail({
   const [showCustomise, setShowCustomise] = useState(false);
   const [savingCustomise, setSavingCustomise] = useState(false);
   const [uploadingHero, setUploadingHero] = useState(false);
+  const [visitStats, setVisitStats] = useState<ShopVisitStats | null>(null);
   // Customise form state (initialised from shop)
   const [welcomeMsg, setWelcomeMsg] = useState(initialShop.welcome_message || '');
   const [heroImageUrl, setHeroImageUrl] = useState(initialShop.hero_image_url || '');
@@ -196,6 +198,12 @@ function ShopDetail({
     try {
       const detail = await shopsApi.get(shop.id);
       setProducts(detail.products);
+      if (detail.visit_stats) {
+        setVisitStats(detail.visit_stats);
+      } else {
+        const stats = await shopsApi.getVisitStats(shop.id);
+        setVisitStats(stats);
+      }
     } finally {
       setLoadingProducts(false);
     }
@@ -373,6 +381,23 @@ function ShopDetail({
           {copied ? 'Copied!' : 'Copy'}
         </button>
       </div>
+
+      {visitStats && (
+        <div className="mb-4 grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <div className="rounded-xl border border-slate-200/70 dark:border-slate-700/60 bg-white dark:bg-slate-900 p-3">
+            <p className="text-[11px] uppercase tracking-wide text-slate-500">Total visits</p>
+            <p className="text-lg font-bold text-slate-900 dark:text-white">{visitStats.total_visits.toLocaleString()}</p>
+          </div>
+          <div className="rounded-xl border border-slate-200/70 dark:border-slate-700/60 bg-white dark:bg-slate-900 p-3">
+            <p className="text-[11px] uppercase tracking-wide text-slate-500">Last 7 days</p>
+            <p className="text-lg font-bold text-slate-900 dark:text-white">{visitStats.visits_last_7d.toLocaleString()}</p>
+          </div>
+          <div className="rounded-xl border border-slate-200/70 dark:border-slate-700/60 bg-white dark:bg-slate-900 p-3">
+            <p className="text-[11px] uppercase tracking-wide text-slate-500">Unique (30d)</p>
+            <p className="text-lg font-bold text-slate-900 dark:text-white">{visitStats.unique_visitors_last_30d.toLocaleString()}</p>
+          </div>
+        </div>
+      )}
 
       {/* ── Customise Section ── */}
       <div className="mb-5 rounded-2xl border border-slate-200/70 dark:border-slate-700/50 overflow-hidden">
@@ -745,6 +770,9 @@ function ShopCard({
           <p className="text-xs text-slate-400 truncate mt-0.5">{shop.slug}.{SHOP_BASE}</p>
           <p className="text-xs text-slate-400 mt-1">
             {shop.product_count ?? 0} product{(shop.product_count ?? 0) !== 1 ? 's' : ''}
+          </p>
+          <p className="text-xs text-slate-400 mt-0.5">
+            {(shop.total_visits ?? 0).toLocaleString()} visits
           </p>
         </div>
 
