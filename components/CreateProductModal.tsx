@@ -19,7 +19,7 @@ interface CreateProductModalProps {
 
 const TOKENS = ['USDC', 'USDT', 'SOL'];
 
-type Step = 1 | 2 | 3;
+type Step = 1 | 2 | 3 | 4;
 
 interface PreferenceDraft {
   label: string;
@@ -311,7 +311,7 @@ export default function CreateProductModal({ shopId, onClose, onCreated, initial
         <div className="flex items-center justify-between px-6 pt-6 pb-4">
           <div>
             <h2 className="text-lg font-bold text-slate-900 dark:text-white">{isEditMode ? 'Edit Product' : 'Add Product'}</h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Step {step} of 3</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Step {step} of 4</p>
           </div>
           <button
             onClick={onClose}
@@ -323,7 +323,7 @@ export default function CreateProductModal({ shopId, onClose, onCreated, initial
 
         {/* Step Indicator */}
         <div className="flex gap-1 px-6 mb-5">
-          {([1, 2, 3] as Step[]).map((s) => (
+          {([1, 2, 3, 4] as Step[]).map((s) => (
             <div
               key={s}
               className={`h-1 flex-1 rounded-full transition-colors ${s <= step ? 'bg-primary' : 'bg-slate-200 dark:bg-slate-700'
@@ -531,7 +531,7 @@ export default function CreateProductModal({ shopId, onClose, onCreated, initial
             </>
           )}
 
-          {/* Step 3: Media */}
+          {/* Step 3: Media & Related Products */}
           {step === 3 && (
             <>
               <div>
@@ -582,209 +582,6 @@ export default function CreateProductModal({ shopId, onClose, onCreated, initial
                   }}
                 />
                 <p className="text-xs text-slate-400">Up to 5 images · JPG, PNG, WebP · Max 10MB each</p>
-              </div>
-
-              <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
-                <div className="flex items-center justify-between mb-2">
-                  <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                    Product Preferences <span className="normal-case font-normal">(optional)</span>
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setPreferences((prev) => [
-                        ...prev,
-                        {
-                          key: '',
-                          label: '',
-                          type: 'select',
-                          required: false,
-                          options: [{ label: '', value: '', upchargeUsd: '0' }],
-                          maxLength: '',
-                          min: '',
-                          max: '',
-                        },
-                      ])
-                    }
-                    className="text-xs font-semibold text-primary"
-                  >
-                    + Add
-                  </button>
-                </div>
-
-                <div className="space-y-3 max-h-52 overflow-y-auto pr-1">
-                  {preferences.map((pref, idx) => (
-                    <div key={idx} className="rounded-xl border border-slate-200 dark:border-slate-700 p-3 bg-slate-50/60 dark:bg-slate-800/40 space-y-2">
-                      <div className="grid grid-cols-2 gap-2">
-                        <input
-                          value={pref.key}
-                          onChange={(e) => setPreferences((prev) => prev.map((p, i) => i === idx ? { ...p, key: e.target.value } : p))}
-                          placeholder="key (e.g. size)"
-                          className="px-3 py-2 rounded-lg text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
-                        />
-                        <input
-                          value={pref.label}
-                          onChange={(e) => setPreferences((prev) => prev.map((p, i) => i === idx ? { ...p, label: e.target.value } : p))}
-                          placeholder="Label"
-                          className="px-3 py-2 rounded-lg text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
-                        />
-                      </div>
-                      <div className="grid grid-cols-3 gap-2 items-center">
-                        <select
-                          value={pref.type}
-                          onChange={(e) => setPreferences((prev) => prev.map((p, i) => {
-                            if (i !== idx) return p;
-                            const nextType = e.target.value as PreferenceDraft['type'];
-                            if ((nextType === 'select' || nextType === 'dropdown') && p.options.length === 0) {
-                              return { ...p, type: nextType, options: [{ label: '', value: '', upchargeUsd: '0' }] };
-                            }
-                            return { ...p, type: nextType };
-                          }))}
-                          className="px-3 py-2 rounded-lg text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
-                        >
-                          <option value="select">Select</option>
-                          <option value="dropdown">Dropdown</option>
-                          <option value="text">Text</option>
-                          <option value="number">Number</option>
-                          <option value="boolean">Boolean</option>
-                        </select>
-                        <label className="text-xs inline-flex items-center gap-1 text-slate-600 dark:text-slate-300">
-                          <input
-                            type="checkbox"
-                            checked={pref.required}
-                            onChange={(e) => setPreferences((prev) => prev.map((p, i) => i === idx ? { ...p, required: e.target.checked } : p))}
-                          />
-                          Required
-                        </label>
-                        <button
-                          type="button"
-                          onClick={() => setPreferences((prev) => prev.filter((_, i) => i !== idx))}
-                          className="text-xs text-rose-500 justify-self-end"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                      {(pref.type === 'select' || pref.type === 'dropdown') && (
-                        <div className="space-y-2 rounded-lg border border-slate-200 dark:border-slate-700 p-2 bg-white dark:bg-slate-900">
-                          <div className="flex items-center justify-between">
-                            <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Options</p>
-                            <button
-                              type="button"
-                              onClick={() => setPreferences((prev) => prev.map((p, i) => i === idx ? { ...p, options: [...p.options, { label: '', value: '', upchargeUsd: '0' }] } : p))}
-                              className="text-[11px] font-semibold text-primary"
-                            >
-                              + Add option
-                            </button>
-                          </div>
-                          <div className="space-y-2">
-                            {pref.options.map((opt, optionIdx) => (
-                              <div
-                                key={optionIdx}
-                                draggable
-                                onDragStart={(e) => {
-                                  e.dataTransfer.effectAllowed = 'move';
-                                  e.dataTransfer.setData('text/plain', String(optionIdx));
-                                }}
-                                onDragOver={(e) => {
-                                  e.preventDefault();
-                                  e.dataTransfer.dropEffect = 'move';
-                                }}
-                                onDrop={(e) => {
-                                  e.preventDefault();
-                                  const from = Number(e.dataTransfer.getData('text/plain'));
-                                  if (Number.isNaN(from)) return;
-                                  setPreferences((prev) => prev.map((p, i) => {
-                                    if (i !== idx) return p;
-                                    return { ...p, options: moveOption(p.options, from, optionIdx) };
-                                  }));
-                                }}
-                                className="grid grid-cols-12 gap-1.5 items-center cursor-grab active:cursor-grabbing"
-                                title="Drag to reorder"
-                              >
-                                <span className="col-span-1 text-slate-400 text-xs text-center" aria-hidden="true">::</span>
-                                <input
-                                  value={opt.label}
-                                  onChange={(e) => setPreferences((prev) => prev.map((p, i) => {
-                                    if (i !== idx) return p;
-                                    return {
-                                      ...p,
-                                      options: p.options.map((o, oi) => oi === optionIdx ? { ...o, label: e.target.value } : o),
-                                    };
-                                  }))}
-                                  placeholder="Label"
-                                  className="col-span-3 px-2 py-1.5 rounded-md text-[11px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
-                                />
-                                <input
-                                  value={opt.value}
-                                  onChange={(e) => setPreferences((prev) => prev.map((p, i) => {
-                                    if (i !== idx) return p;
-                                    return {
-                                      ...p,
-                                      options: p.options.map((o, oi) => oi === optionIdx ? { ...o, value: e.target.value } : o),
-                                    };
-                                  }))}
-                                  placeholder="value"
-                                  className="col-span-4 px-2 py-1.5 rounded-md text-[11px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
-                                />
-                                <input
-                                  type="number"
-                                  min="0"
-                                  step="0.01"
-                                  value={opt.upchargeUsd}
-                                  onChange={(e) => setPreferences((prev) => prev.map((p, i) => {
-                                    if (i !== idx) return p;
-                                    return {
-                                      ...p,
-                                      options: p.options.map((o, oi) => oi === optionIdx ? { ...o, upchargeUsd: e.target.value } : o),
-                                    };
-                                  }))}
-                                  placeholder="+USD"
-                                  className="col-span-3 px-2 py-1.5 rounded-md text-[11px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => setPreferences((prev) => prev.map((p, i) => {
-                                    if (i !== idx) return p;
-                                    return { ...p, options: p.options.filter((_, oi) => oi !== optionIdx) };
-                                  }))}
-                                  className="col-span-1 text-rose-500 text-[11px]"
-                                  aria-label="Remove option"
-                                >
-                                  ×
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                          <p className="text-[10px] text-slate-400">Drag rows by :: to reorder. If value is empty, it is auto-generated from label.</p>
-                        </div>
-                      )}
-                      {pref.type === 'text' && (
-                        <input
-                          value={pref.maxLength}
-                          onChange={(e) => setPreferences((prev) => prev.map((p, i) => i === idx ? { ...p, maxLength: e.target.value } : p))}
-                          placeholder="Max length (optional)"
-                          className="w-full px-3 py-2 rounded-lg text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
-                        />
-                      )}
-                      {pref.type === 'number' && (
-                        <div className="grid grid-cols-2 gap-2">
-                          <input
-                            value={pref.min}
-                            onChange={(e) => setPreferences((prev) => prev.map((p, i) => i === idx ? { ...p, min: e.target.value } : p))}
-                            placeholder="Min"
-                            className="px-3 py-2 rounded-lg text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
-                          />
-                          <input
-                            value={pref.max}
-                            onChange={(e) => setPreferences((prev) => prev.map((p, i) => i === idx ? { ...p, max: e.target.value } : p))}
-                            placeholder="Max"
-                            className="px-3 py-2 rounded-lg text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
-                          />
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
               </div>
 
               <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
@@ -868,13 +665,106 @@ export default function CreateProductModal({ shopId, onClose, onCreated, initial
                 )}
               </div>
 
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setStep(2)}
+                  className="flex-1 py-3.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-semibold text-sm transition hover:bg-slate-50 dark:hover:bg-slate-800"
+                >
+                  ← Back
+                </button>
+                <button
+                  onClick={() => setStep(4)}
+                  className="flex-[2] py-3.5 rounded-xl bg-primary text-white font-semibold text-sm transition hover:bg-primary/90 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  Next →
+                </button>
+              </div>
+            </>
+          )}
+
+          {/* Step 4: Preferences */}
+          {step === 4 && (
+            <>
+              <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/40 p-3">
+                <p className="text-sm font-semibold text-slate-900 dark:text-white">Help shoppers choose quickly</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Create simple options like Size, Color, or Plan. Separate choices with commas.</p>
+                <p className="text-[11px] text-slate-400 mt-1">Example: Label = Size, Options = Small, Medium, Large</p>
+              </div>
+
+              <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                    Product Preferences <span className="normal-case font-normal">(optional)</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPreferences((prev) => [
+                        ...prev,
+                        {
+                          label: '',
+                          required: false,
+                          optionsText: '',
+                        },
+                      ])
+                    }
+                    className="text-xs font-semibold text-primary"
+                  >
+                    + Add
+                  </button>
+                </div>
+
+                {preferences.length === 0 ? (
+                  <p className="text-xs text-slate-400">No preferences yet. Add one if customers need to pick variants.</p>
+                ) : (
+                  <div className="space-y-3 max-h-56 overflow-y-auto pr-1">
+                    {preferences.map((pref, idx) => (
+                      <div key={idx} className="rounded-xl border border-slate-200 dark:border-slate-700 p-3 bg-slate-50/60 dark:bg-slate-800/40 space-y-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <input
+                            value={pref.label}
+                            onChange={(e) => setPreferences((prev) => prev.map((p, i) => i === idx ? { ...p, label: e.target.value } : p))}
+                            placeholder="Label (e.g. Size)"
+                            className="px-3 py-2 rounded-lg text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+                          />
+                          <input
+                            value={pref.optionsText}
+                            onChange={(e) => setPreferences((prev) => prev.map((p, i) => i === idx ? { ...p, optionsText: e.target.value } : p))}
+                            placeholder="Options (e.g. Small, Medium, Large)"
+                            className="px-3 py-2 rounded-lg text-xs border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+                          />
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs inline-flex items-center gap-1 text-slate-600 dark:text-slate-300">
+                            <input
+                              type="checkbox"
+                              checked={pref.required}
+                              onChange={(e) => setPreferences((prev) => prev.map((p, i) => i === idx ? { ...p, required: e.target.checked } : p))}
+                            />
+                            Required selection
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => setPreferences((prev) => prev.filter((_, i) => i !== idx))}
+                            className="text-xs text-rose-500"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               {error && (
                 <p className="text-xs text-red-500 bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg">{error}</p>
               )}
 
               <div className="flex gap-2">
                 <button
-                  onClick={() => setStep(2)}
+                  onClick={() => setStep(3)}
                   className="flex-1 py-3.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-semibold text-sm transition hover:bg-slate-50 dark:hover:bg-slate-800"
                 >
                   ← Back
