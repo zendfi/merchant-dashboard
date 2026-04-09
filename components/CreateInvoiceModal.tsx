@@ -396,7 +396,7 @@ export default function CreateInvoiceModal({ isOpen, onClose, mode }: Props) {
                   {/* Onramp Toggle */}
                   <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl mt-2">
                     <div>
-                      <p className="text-sm font-medium text-slate-900 dark:text-white">Enable Fiat Onramp</p>
+                      <p className="text-sm font-medium text-slate-900 dark:text-white">Enable Naira Payments</p>
                       <p className="text-xs text-slate-500 mt-0.5">Pay via NGN bank transfer</p>
                     </div>
                     <Toggle checked={onramp} onChange={() => {
