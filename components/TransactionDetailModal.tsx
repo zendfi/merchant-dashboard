@@ -98,25 +98,25 @@ export default function TransactionDetailModal({
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
       case 'confirmed':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
       case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300';
       case 'failed':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-800 dark:bg-slate-800 dark:text-slate-200';
     }
   };
 
   return createPortal(
     <div className="fixed inset-0 bg-black/75 backdrop-blur-md flex items-center justify-center z-[99999] p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white dark:bg-slate-900 rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-700">
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
-          <h2 className="text-base sm:text-xl font-semibold text-gray-900">Transaction Details</h2>
+        <div className="sticky top-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-b border-gray-200 dark:border-slate-700 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+          <h2 className="text-base sm:text-xl font-semibold text-gray-900 dark:text-slate-100">Transaction Details</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-400 hover:text-gray-600 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
           >
             <X size={24} />
           </button>
@@ -127,14 +127,14 @@ export default function TransactionDetailModal({
           {/* Transaction ID and Status */}
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-500 mb-1">
+              <label className="block text-sm font-medium text-gray-500 dark:text-slate-400 mb-1">
                 Transaction ID
               </label>
               <div className="flex items-center gap-2">
-                <span className="font-mono text-sm text-gray-900">{transaction.id}</span>
+                <span className="font-mono text-sm text-gray-900 dark:text-slate-100">{transaction.id}</span>
                 <button
                   onClick={() => copyToClipboard(transaction.id)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-gray-400 hover:text-gray-600 dark:text-slate-400 dark:hover:text-slate-200"
                 >
                   <Copy size={16} />
                 </button>
@@ -143,17 +143,17 @@ export default function TransactionDetailModal({
             <div className="flex items-center gap-2 flex-wrap justify-end">
               {/* Payment source badge */}
               {transaction.is_onramp ? (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
                   Onramp
                 </span>
               ) : (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
                   Solana Pay
                 </span>
               )}
               {/* Flagged badge */}
               {(transaction.flagged_for_review || flagSuccess) && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300">
                   <Flag size={11} />
                   Flagged
                 </span>
@@ -171,45 +171,45 @@ export default function TransactionDetailModal({
           {/* Amount and Token */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-500 mb-1">Amount</label>
-              <p className="text-2xl font-bold text-gray-900">
+              <label className="block text-sm font-medium text-gray-500 dark:text-slate-400 mb-1">Amount</label>
+              <p className="text-2xl font-bold text-gray-900 dark:text-slate-100">
                 {formatAmount(transaction.amount_usd)}
               </p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-500 mb-1">Token</label>
-              <p className="text-lg font-medium text-gray-900">{transaction.token}</p>
+              <label className="block text-sm font-medium text-gray-500 dark:text-slate-400 mb-1">Token</label>
+              <p className="text-lg font-medium text-gray-900 dark:text-slate-100">{transaction.token}</p>
             </div>
           </div>
 
           {/* Customer Information */}
           {(transaction.customer_wallet || transaction.customer_email || transaction.customer_name) && (
-            <div className="border border-gray-200 rounded-lg p-4 space-y-3">
-              <h3 className="text-sm font-semibold text-gray-900">Customer Information</h3>
+            <div className="border border-gray-200 dark:border-slate-700 rounded-lg p-4 space-y-3">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-slate-100">Customer Information</h3>
               {transaction.customer_name && (
                 <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">Name</label>
-                  <p className="text-sm text-gray-900">{transaction.customer_name}</p>
+                  <label className="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">Name</label>
+                  <p className="text-sm text-gray-900 dark:text-slate-100">{transaction.customer_name}</p>
                 </div>
               )}
               {transaction.customer_email && (
                 <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">Email</label>
-                  <p className="text-sm text-gray-900">{transaction.customer_email}</p>
+                  <label className="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">Email</label>
+                  <p className="text-sm text-gray-900 dark:text-slate-100">{transaction.customer_email}</p>
                 </div>
               )}
               {transaction.customer_wallet && (
                 <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">
+                  <label className="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">
                     Wallet Address
                   </label>
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs text-gray-900 break-all">
+                    <span className="font-mono text-xs text-gray-900 dark:text-slate-100 break-all">
                       {transaction.customer_wallet}
                     </span>
                     <button
                       onClick={() => copyToClipboard(transaction.customer_wallet!)}
-                      className="text-gray-400 hover:text-gray-600 flex-shrink-0"
+                      className="text-gray-400 hover:text-gray-600 dark:text-slate-400 dark:hover:text-slate-200 flex-shrink-0"
                     >
                       <Copy size={14} />
                     </button>
@@ -222,16 +222,16 @@ export default function TransactionDetailModal({
           {/* Transaction Signature */}
           {transaction.transaction_signature && (
             <div>
-              <label className="block text-sm font-medium text-gray-500 mb-1">
+              <label className="block text-sm font-medium text-gray-500 dark:text-slate-400 mb-1">
                 Transaction Signature
               </label>
               <div className="flex items-center gap-2">
-                <span className="font-mono text-xs text-gray-900 break-all">
+                <span className="font-mono text-xs text-gray-900 dark:text-slate-100 break-all">
                   {transaction.transaction_signature}
                 </span>
                 <button
                   onClick={() => copyToClipboard(transaction.transaction_signature!)}
-                  className="text-gray-400 hover:text-gray-600 flex-shrink-0"
+                  className="text-gray-400 hover:text-gray-600 dark:text-slate-400 dark:hover:text-slate-200 flex-shrink-0"
                 >
                   <Copy size={14} />
                 </button>
@@ -250,15 +250,15 @@ export default function TransactionDetailModal({
           {/* Timestamps */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-500 mb-1">Created At</label>
-              <p className="text-sm text-gray-900">{formatDate(transaction.created_at)}</p>
+              <label className="block text-sm font-medium text-gray-500 dark:text-slate-400 mb-1">Created At</label>
+              <p className="text-sm text-gray-900 dark:text-slate-100">{formatDate(transaction.created_at)}</p>
             </div>
             {transaction.reconciled_at && (
               <div>
-                <label className="block text-sm font-medium text-gray-500 mb-1">
+                <label className="block text-sm font-medium text-gray-500 dark:text-slate-400 mb-1">
                   Reconciled At
                 </label>
-                <p className="text-sm text-gray-900">{formatDate(transaction.reconciled_at)}</p>
+                <p className="text-sm text-gray-900 dark:text-slate-100">{formatDate(transaction.reconciled_at)}</p>
               </div>
             )}
           </div>
@@ -266,23 +266,23 @@ export default function TransactionDetailModal({
           {/* Metadata */}
           {transaction.metadata && Object.keys(transaction.metadata).length > 0 && (
             <div>
-              <label className="block text-sm font-medium text-gray-500 mb-2">Metadata</label>
-              <pre className="bg-gray-50 border border-gray-200 rounded p-3 text-xs font-mono overflow-x-auto">
+              <label className="block text-sm font-medium text-gray-500 dark:text-slate-400 mb-2">Metadata</label>
+              <pre className="bg-gray-50 border border-gray-200 dark:bg-slate-800 dark:border-slate-700 rounded p-3 text-xs font-mono overflow-x-auto text-gray-900 dark:text-slate-100">
                 {JSON.stringify(transaction.metadata, null, 2)}
               </pre>
             </div>
           )}
 
           {/* Reconciliation Section */}
-          <div className="border-t border-gray-200 pt-6 space-y-4">
-            <h3 className="text-sm font-semibold text-gray-900">Reconciliation</h3>
+          <div className="border-t border-gray-200 dark:border-slate-700 pt-6 space-y-4">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-slate-100">Reconciliation</h3>
             
             {/* Reconciled Toggle */}
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setReconciled(!reconciled)}
-                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                  reconciled ? 'bg-blue-600' : 'bg-gray-200'
+                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-900 ${
+                  reconciled ? 'bg-blue-600' : 'bg-gray-200 dark:bg-slate-600'
                 }`}
               >
                 <span
@@ -291,47 +291,47 @@ export default function TransactionDetailModal({
                   }`}
                 />
               </button>
-              <label className="text-sm font-medium text-gray-900">
+              <label className="text-sm font-medium text-gray-900 dark:text-slate-100">
                 {reconciled ? 'Reconciled' : 'Not Reconciled'}
               </label>
             </div>
 
             {/* Internal Notes */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                 Internal Notes
               </label>
               <textarea
                 value={internalNotes}
                 onChange={(e) => setInternalNotes(e.target.value)}
                 rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 placeholder:text-gray-400 dark:placeholder:text-slate-500"
                 placeholder="Add internal notes about this transaction..."
               />
             </div>
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-md p-3">
-              <p className="text-sm text-red-800">{error}</p>
+            <div className="bg-red-50 border border-red-200 dark:bg-red-900/20 dark:border-red-800/40 rounded-md p-3">
+              <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
             </div>
           )}
 
           {/* ── Flag for Review ─────────────────────────────────────────── */}
           {transaction.status !== 'confirmed' && (
-            <div className="border border-orange-200 rounded-lg p-4 bg-orange-50 space-y-3">
+            <div className="border border-orange-200 dark:border-orange-800/40 rounded-lg p-4 bg-orange-50 dark:bg-orange-900/20 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <AlertTriangle size={16} className="text-orange-600" />
-                  <h3 className="text-sm font-semibold text-orange-900">
+                  <AlertTriangle size={16} className="text-orange-600 dark:text-orange-300" />
+                  <h3 className="text-sm font-semibold text-orange-900 dark:text-orange-200">
                     Payment stuck or not settling?
                   </h3>
                 </div>
                 {(transaction.flagged_for_review || flagSuccess) && (
-                  <span className="text-xs text-orange-700 font-medium">Already flagged ✓</span>
+                  <span className="text-xs text-orange-700 dark:text-orange-300 font-medium">Already flagged ✓</span>
                 )}
               </div>
-              <p className="text-xs text-orange-700">
+              <p className="text-xs text-orange-700 dark:text-orange-300">
                 If this payment appears stuck, flag it for admin review. Our team will check the
                 on-chain status and manually trigger settlement if needed.
               </p>
@@ -345,7 +345,7 @@ export default function TransactionDetailModal({
                         rows={2}
                         maxLength={500}
                         placeholder="Optional: describe the issue (e.g. 'Customer confirmed payment on their end 20 mins ago, still pending')"
-                        className="w-full px-3 py-2 text-xs border border-orange-300 rounded-md focus:ring-orange-500 focus:border-orange-500 bg-white"
+                        className="w-full px-3 py-2 text-xs border border-orange-300 dark:border-orange-700 rounded-md focus:ring-orange-500 focus:border-orange-500 bg-white dark:bg-slate-800 text-gray-900 dark:text-slate-100 placeholder:text-gray-400 dark:placeholder:text-slate-500"
                       />
                       <div className="flex gap-2">
                         <button
@@ -362,7 +362,7 @@ export default function TransactionDetailModal({
                         </button>
                         <button
                           onClick={() => setShowFlagInput(false)}
-                          className="px-3 py-1.5 text-xs font-medium text-orange-700 hover:text-orange-900 transition-colors"
+                          className="px-3 py-1.5 text-xs font-medium text-orange-700 hover:text-orange-900 dark:text-orange-300 dark:hover:text-orange-200 transition-colors"
                         >
                           Cancel
                         </button>
@@ -371,7 +371,7 @@ export default function TransactionDetailModal({
                   ) : (
                     <button
                       onClick={() => setShowFlagInput(true)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-orange-700 border border-orange-400 rounded-md hover:bg-orange-100 transition-colors"
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-orange-700 dark:text-orange-300 border border-orange-400 dark:border-orange-700 rounded-md hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors"
                     >
                       <Flag size={12} />
                       Flag for Review
@@ -380,7 +380,7 @@ export default function TransactionDetailModal({
                 </>
               )}
               {flagSuccess && !transaction.flagged_for_review && (
-                <p className="text-xs text-green-700 font-medium">
+                <p className="text-xs text-green-700 dark:text-green-300 font-medium">
                   ✓ Flagged successfully. Admin will review shortly.
                 </p>
               )}
@@ -389,10 +389,10 @@ export default function TransactionDetailModal({
         </div>
 
         {/* Footer */}
-        <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4 flex items-center justify-end gap-3">
+        <div className="sticky bottom-0 bg-gray-50 dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700 px-6 py-4 flex items-center justify-end gap-3">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-md hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
           >
             Cancel
           </button>
