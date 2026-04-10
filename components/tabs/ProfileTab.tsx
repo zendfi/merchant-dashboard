@@ -13,7 +13,12 @@ interface ProfileTabProps {
 export default function ProfileTab({ onSwitchTab, onModalToggle }: ProfileTabProps) {
   const { merchant, isLoading } = useMerchant();
   const { currency, toggleCurrency, exchangeRate, isLoadingRate } = useCurrency();
-  const { showDeveloperOptions, toggleDeveloperOptions } = useDeveloperOptions();
+  const {
+    showDeveloperOptions,
+    showTerminalTab,
+    toggleDeveloperOptions,
+    toggleTerminalTabVisibility,
+  } = useDeveloperOptions();
 
   if (isLoading) {
     return (
@@ -203,6 +208,31 @@ export default function ProfileTab({ onSwitchTab, onModalToggle }: ProfileTabPro
             >
               <span
                 className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform shadow ${showDeveloperOptions ? 'translate-x-5' : 'translate-x-0'
+                  }`}
+              />
+            </button>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-[#13131f] p-5 rounded-xl border border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-[20px] text-primary">point_of_sale</span>
+              <strong className="text-slate-900 dark:text-white">Terminal Tab</strong>
+            </div>
+            <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+              Show or hide Terminal in dashboard navigation
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={toggleTerminalTabVisibility}
+              className={`relative w-11 h-6 rounded-full transition-colors ${showTerminalTab ? 'bg-primary' : 'bg-slate-200 dark:bg-slate-700'
+                }`}
+            >
+              <span
+                className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform shadow ${showTerminalTab ? 'translate-x-5' : 'translate-x-0'
                   }`}
               />
             </button>

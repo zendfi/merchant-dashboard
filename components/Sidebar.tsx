@@ -55,7 +55,7 @@ export default function Sidebar({
   onClose,
 }: SidebarProps) {
   const { merchant } = useMerchant();
-  const { showDeveloperOptions } = useDeveloperOptions();
+  const { showDeveloperOptions, showTerminalTab } = useDeveloperOptions();
 
   // Close sidebar on escape key
   useEffect(() => {
@@ -118,6 +118,9 @@ export default function Sidebar({
               (item.id === "api-keys" || item.id === "webhooks") &&
               !showDeveloperOptions
             ) {
+              return null;
+            }
+            if (item.id === "terminal" && !showTerminalTab) {
               return null;
             }
             return (
