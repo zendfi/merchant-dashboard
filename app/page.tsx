@@ -7,6 +7,7 @@ import { MerchantProvider, useMerchant } from "@/lib/merchant-context";
 import { NotificationProvider } from "@/lib/notifications";
 import { CurrencyProvider } from "@/lib/currency-context";
 import { DeveloperOptionsProvider } from "@/lib/developer-options-context";
+import { useDeveloperOptions } from "@/lib/developer-options-context";
 import Header from "@/components/Header";
 import Sidebar from "@/components/Sidebar";
 import MobileBottomNav from "@/components/MobileBottomNav";
@@ -31,6 +32,7 @@ import SubAccountsTab from "@/components/tabs/SubAccountsTab";
 function DashboardContent() {
   const router = useRouter();
   const { merchant, isLoading, error } = useMerchant();
+  const { showTerminalTab } = useDeveloperOptions();
   const [activeTab, setActiveTab] = useState("overview");
   const [showWalletModal, setShowWalletModal] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -58,6 +60,14 @@ function DashboardContent() {
       return () => clearTimeout(fadeTimer);
     }
   }, [isLoading]);
+
+  // If terminal gets hidden while active, move user to overview immediately.
+  useEffect(() => {
+    if (!showTerminalTab && activeTab === "terminal") {
+      setActiveTab("overview");
+      setHeaderHidden(false);
+    }
+  }, [showTerminalTab, activeTab]);
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
@@ -99,7 +109,7 @@ function DashboardContent() {
       case "shop":
         return <ShopTab />;
       case "terminal":
-        return <TerminalTab />;
+        return showTerminalTab ? <TerminalTab /> : <OverviewTab onViewAllTransactions={() => setActiveTab("transactions")} />;
       case "payment-links":
         return <PaymentLinksTab onModalToggle={setHeaderHidden} />;
       case "invoices":
