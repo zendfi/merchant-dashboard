@@ -1,0 +1,137 @@
+384e1e7 dev update
+fdc5fbb applied options context to terminal
+974b3c1 dev update
+15363ed updated
+6f6cccb update
+a08bb61 dev update
+6b5647f dev update
+244ddfc added dropdown selection
+9fe9569 dev update
+1dfc7f2 dev update
+ab35bdb merchant dashboard update
+7d7cbb9 payment link creation update
+1e3d48f update
+b8b1df9 sub account update
+be061c6 dev update
+24f48f2 dev update
+10d39ca dev update
+497cd0b dev update
+adc4311 dev update
+177ecfa dev update
+3f68383 dev update
+74eea8b dev update
+c6d2dfe removed new tags
+92481a0 dev update
+39293bb dev update
+6d38738 dev update
+373cd73 dev update
+bb7203b dev update
+6a1569e fix: terminal frontend audit fixes
+9749a95 feat: kiosk mode page + QR code + kiosk URL in terminal header
+f2eafe9 dev update
+3078fa7 dev update
+97ceabb terminal update
+1dfece0 dev update
+422479f dev update
+9c1c47a terminal
+2c957f5 dev update
+4f8cd8d dark mode
+914c141 minot update
+55f0bc0 improved mobile optimisations
+cc86b38 feat: Implement core merchant dashboard application with API client, contexts, and UI components.
+145d545 dev update: revert fix
+ee48d9e dev update
+eb71062 dev update
+18767ba shop updates
+346dff0 feat(shops): onramp + collect customer info in CreateProductModal (step 4)
+7b4362d feat: Shop tab — manage stores, products, R2 media upload
+0ec394d dev update
+a10edc2 dev update
+0b2f509 update
+d9faa9b prev history on wallet modals
+3c60c74 feat: add Earn position summary row to WalletModal
+065f10b fix: apply createPortal fix to API key copy modal
+7beea7e improved create payment link modal
+5345dca implemented the earn feature
+877022b dev update
+fe7f782 fix: stop calling onModalToggle in PaymentLinksTab and DangerZone
+78a88e0 fix: use z-[99999] for PaymentLinkDetailModal and DangerZone modals
+bdcf874 dev update: modal fixes
+0cc46ca feat: add Payment Links tab
+0121074 fix: restore New Payment button in TransactionsTab header
+d04fbf1 feat: redesign TransactionsTab to match Customers tab style
+2fcb54b feat: export CSV + error/retry state + fix chart threshold in customer detail modal
+f9f2244 fix: render customer detail modal via portal to fix backdrop covering header
+ef73d7e dev update
+152028c dev update
+146b66c dev update
+69904e1 dev update
+ba23661 feat: collect_customer_info toggle on payment link creation
+a66bfe3 dev update
+fe7165a dev update
+c9b1f32 dev update
+583fd71 dev update
+6f6c102 fix: use camelCase offRampRate field from PAJ rates response (was falling back to hardcoded 1450)
+0e93c79 msg update
+ede36e8 fix: service charge rate 3% → 2.1%
+e665623 feat: add payer_service_charge toggle to payment link creation modal
+c537276 dev update
+78e6f4a status update
+8decb1b dev update
+949559e dev update
+c5a07ce dev update
+6abb4b0 dev
+5375f08 dev update
+bee466a dev update
+b9c32b8 dev update
+b8435be dev update
+1482571 dev update
+344d818 dev update
+d7f9791 dev update
+4b836f1 dev update
+bc5e049 dev update
+8551e5e dev update
+40bf1a6 dev update
+9074f2a support button and feedback button added
+99a30f6 dev update
+434d7ca dev update
+9dda5ad onramp input validation
+6a983da temp skip linting
+3589c57 dev update
+4b7eeba dev update
+10a3fc3 dev update
+b77a819 dev update
+471515d dev update
+692ecb8 dev update
+cbf2989 feat: Integrate CurrencyProvider and enhance currency display across components
+7b43c5b feat: Enhance OverviewTab with improved volume chart rendering and no data message
+18cc658 feat: Improve volume chart display in OverviewTab with no data message and enhanced bar styling
+443703b feat: Enhance TransactionsTab with pagination, filtering, and CSV export functionality
+c398c16 feat: enhance WebhookModal UI and improve notification system
+19d8c97 feat: enhance setup page with improved UI and functionality
+9b826db feat: Update styles and animations in globals.css, adjust Tailwind config for dark mode, and refine CORS headers in next.config.mjs
+2ccfdeb spinner correction in loading page
+4986b96 feat: Send amount_ngn when creating payment links via NGN calculator
+0d61bbc chore: Clarify that PAJ handles rate conversion in NGN calculator
+7a73808 update: non-mpc wallets cannot use automatic withdrawals, so we'd provide instructions on the specific amount to send, the Paj deposit address, the step-by-step instructions, and the recipient bank details for reference along with the Order ID for tracking
+79b784b wallet modal update
+fe0e405 added mobile responsiveness and improved error handling for the merchant offramp rates loading
+a1afda3 update: changed minimum withdrawable amount to /usr/bin/bash.5
+0ed08cc feat: completed onramp integration
+359aaf1 fixed ngn calc issue
+c9eb626 added a password creation step
+7670a94 fixed the signup
+d11e80e added a collapisble calculator for live exchange rates powered by live Paj rates
+34b13de added SessionKey and SessionKeyStats interfaces to api module, also added the sessionKeys.list() API function ... the SessionKeysTab nw feches session keys on mount, display the stats card, shw each session key with status batch, the agent name, spending limit progress bar and session wallets, user wallet, agent ID etc
+4104348 switched tailwind class to inline styles so the toast will definitely render
+7aca847 improved toast notification design
+2f30841 improved graph
+2d580ca auth for payment link creation fix
+b062813 fixed login response type mismatch, also fixed the login page error and added authentication check to the dashboard
+e38d22a dev update
+542bbd2 dev update
+26da194 dev-update
+df15315 dependency version update
+6e2e5de added the create payment link button to the merchant dashboard
+0f3de62 dev
+6ee06d2 dev-update

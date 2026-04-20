@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { wallet as walletApi } from '@/lib/api';
+import { useMerchant } from '@/lib/merchant-context';
 import { useNotification } from '@/lib/notifications';
 import { getPasskeySignature, PasskeySignature } from '@/lib/webauthn';
 
@@ -14,6 +15,7 @@ interface DangerZoneProps {
 }
 
 export default function DangerZone({ onModalToggle }: DangerZoneProps = {}) {
+  const { merchant } = useMerchant();
   const { showNotification } = useNotification();
   const [showModal, setShowModal] = useState(false);
   const [currentStep, setCurrentStep] = useState<Step>(1);
@@ -24,7 +26,18 @@ export default function DangerZone({ onModalToggle }: DangerZoneProps = {}) {
   const [countdown, setCountdown] = useState(60);
   const [passkeySignature, setPasskeySignature] = useState<PasskeySignature | null>(null);
 
+  const exportEnabled = merchant?.wallet_type === 'mpc';
+
   const openModal = () => {
+    if (!exportEnabled) {
+      showNotification(
+        'Export Disabled',
+        'Private key export is unavailable for external settlement wallets.',
+        'warning'
+      );
+      return;
+    }
+
     setShowModal(true);
     setCurrentStep(1);
     setConfirmChecked(false);
@@ -117,18 +130,28 @@ export default function DangerZone({ onModalToggle }: DangerZoneProps = {}) {
           <div className="flex-1">
             <h3 className="text-base font-semibold text-slate-900 dark:text-white mb-2">Export Private Key</h3>
             <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed mb-4">
-              Export your wallet&apos;s private key for backup or migration. This grants
-              permanent access to your funds.{' '}
-              <strong className="text-rose-500">
-                Anyone with this key can steal your funds.
-              </strong>
+              {exportEnabled ? (
+                <>
+                  Export your wallet&apos;s private key for backup or migration. This grants
+                  permanent access to your funds.{' '}
+                  <strong className="text-rose-500">
+                    Anyone with this key can steal your funds.
+                  </strong>
+                </>
+              ) : (
+                <>
+                  Private key export is disabled because your settlement wallet preference is set to an external wallet.
+                  Switch back to an MPC wallet to re-enable private key export.
+                </>
+              )}
             </p>
             <button
               onClick={openModal}
-              className="inline-flex items-center gap-2 bg-rose-500 text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-rose-600 transition-colors"
+              disabled={!exportEnabled}
+              className="inline-flex items-center gap-2 bg-rose-500 text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-rose-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <span className="material-symbols-outlined text-[18px]">key</span>
-              Export Private Key
+              {exportEnabled ? 'Export Private Key' : 'Export Disabled'}
             </button>
           </div>
         </div>

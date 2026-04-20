@@ -15,6 +15,26 @@ export interface MerchantProfile {
   webhook_url?: string | null;
 }
 
+export interface MerchantSettings {
+  name: string;
+  email: string;
+  business_address: string | null;
+  wallet_address: string;
+  wallet_type: string | null;
+  settlement_preference: string | null;
+  private_key_export_enabled: boolean;
+}
+
+export interface UpdateSettlementWalletPreferenceResponse {
+  message: string;
+  wallet_preference: string;
+  wallet_address: string;
+  private_key_export_enabled: boolean;
+  mpc_wallet_removed: boolean;
+  session_keys_revoked: boolean;
+  warning: string;
+}
+
 export interface MerchantAuthResponse {
   success: boolean;
   merchant: MerchantProfile;
@@ -488,6 +508,53 @@ export const merchant = {
     // Add cache-busting parameter to ensure fresh data
     const timestamp = Date.now();
     return apiCall(`/api/v1/merchants/me?_t=${timestamp}`);
+  },
+
+  // Get editable merchant settings for profile updates
+  getSettings: async (): Promise<MerchantSettings> => {
+    return apiCall("/api/v1/merchants/me/settings");
+  },
+
+  // Update merchant business name
+  updateName: async (
+    name: string
+  ): Promise<{ message: string; name: string }> => {
+    return apiCall("/api/v1/merchants/me/name", {
+      method: "PATCH",
+      body: JSON.stringify({ name }),
+    });
+  },
+
+  // Update merchant business address
+  updateAddress: async (
+    businessAddress: string
+  ): Promise<{ message: string; business_address: string }> => {
+    return apiCall("/api/v1/merchants/me/address", {
+      method: "PATCH",
+      body: JSON.stringify({ business_address: businessAddress }),
+    });
+  },
+
+  // Update merchant email (includes deliverability checks)
+  updateEmail: async (
+    email: string
+  ): Promise<{ message: string; email: string }> => {
+    return apiCall("/api/v1/merchants/me/email", {
+      method: "PATCH",
+      body: JSON.stringify({ email }),
+    });
+  },
+
+  // Switch settlement wallet preference to external wallet
+  updateSettlementWalletPreference: async (params: {
+    wallet_address: string;
+    wallet_preference?: "external";
+    acknowledge_wallet_change_risk: boolean;
+  }): Promise<UpdateSettlementWalletPreferenceResponse> => {
+    return apiCall("/api/v1/merchants/me/settlement-wallet", {
+      method: "PATCH",
+      body: JSON.stringify(params),
+    });
   },
 
   // Get dashboard stats
