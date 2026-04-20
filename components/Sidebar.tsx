@@ -21,21 +21,55 @@ interface NavItem {
   badge?: string;
 }
 
-const mainNavItems: NavItem[] = [
-  { id: "overview", label: "Overview", icon: "dashboard" },
-  { id: "transactions", label: "Transactions", icon: "payments" },
-  { id: "refunds", label: "Refunds", icon: "currency_exchange" },
-  { id: "disputes", label: "Disputes", icon: "gavel" },
-  { id: "terminal", label: "Terminal", icon: "point_of_sale" },
-  { id: "earn", label: "Earn", icon: "savings" },
-  { id: "shop", label: "Shop", icon: "storefront" },
-  { id: "payment-links", label: "Payment Links", icon: "link" },
-  { id: "invoices", label: "Invoices", icon: "receipt_long" },
-  { id: "customers", label: "Customers", icon: "group" },
-  { id: "subaccounts", label: "Sub Accounts", icon: "account_tree" },
-  { id: "api-keys", label: "API Keys", icon: "vpn_key" },
-  { id: "webhooks", label: "Webhooks", icon: "webhook" },
-  { id: "support", label: "Live Support", icon: "support_agent" },
+interface NavGroup {
+  id: string;
+  label: string;
+  items: NavItem[];
+}
+
+const navGroups: NavGroup[] = [
+  {
+    id: "core",
+    label: "Core",
+    items: [
+      { id: "overview", label: "Overview", icon: "dashboard" },
+      { id: "transactions", label: "Transactions", icon: "payments" },
+      { id: "refunds", label: "Refunds", icon: "currency_exchange" },
+      { id: "disputes", label: "Disputes", icon: "gavel" },
+    ],
+  },
+  {
+    id: "sales",
+    label: "Sales Channels",
+    items: [
+      { id: "terminal", label: "Terminal", icon: "point_of_sale" },
+      { id: "payment-links", label: "Payment Links", icon: "link" },
+      { id: "invoices", label: "Invoices", icon: "receipt_long" },
+      { id: "shop", label: "Shop", icon: "storefront" },
+    ],
+  },
+  {
+    id: "growth",
+    label: "Growth & Customers",
+    items: [
+      { id: "customers", label: "Customers", icon: "group" },
+      { id: "subaccounts", label: "Sub Accounts", icon: "account_tree" },
+      { id: "earn", label: "Earn", icon: "savings" },
+    ],
+  },
+  {
+    id: "developers",
+    label: "Developers",
+    items: [
+      { id: "api-keys", label: "API Keys", icon: "vpn_key" },
+      { id: "webhooks", label: "Webhooks", icon: "webhook" },
+    ],
+  },
+  {
+    id: "help",
+    label: "Help",
+    items: [{ id: "support", label: "Live Support", icon: "support_agent" }],
+  },
 ];
 
 const settingsNavItems: NavItem[] = [
@@ -56,6 +90,26 @@ export default function Sidebar({
 }: SidebarProps) {
   const { merchant } = useMerchant();
   const { showDeveloperOptions, showTerminalTab } = useDeveloperOptions();
+
+  const isNavItemVisible = (item: NavItem) => {
+    if (
+      (item.id === "api-keys" || item.id === "webhooks") &&
+      !showDeveloperOptions
+    ) {
+      return false;
+    }
+    if (item.id === "terminal" && !showTerminalTab) {
+      return false;
+    }
+    return true;
+  };
+
+  const visibleNavGroups = navGroups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter(isNavItemVisible),
+    }))
+    .filter((group) => group.items.length > 0);
 
   // Close sidebar on escape key
   useEffect(() => {
@@ -112,59 +166,61 @@ export default function Sidebar({
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-4 flex flex-col gap-1 overflow-y-auto py-4">
-          {mainNavItems.map((item) => {
-            if (
-              (item.id === "api-keys" || item.id === "webhooks") &&
-              !showDeveloperOptions
-            ) {
-              return null;
-            }
-            if (item.id === "terminal" && !showTerminalTab) {
-              return null;
-            }
-            return (
-              <button
-                key={item.id}
-                onClick={() => {
-                  onTabChange(item.id);
-                  onClose();
-                }}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg w-full text-left transition-all duration-250 group ${
-                  activeTab === item.id
-                    ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-purple-300 shadow-xs"
-                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white"
-                }`}
-              >
-                <span
-                  className="material-symbols-outlined group-hover:scale-110 transition-transform text-[22px]"
-                  style={
-                    activeTab === item.id
-                      ? { fontVariationSettings: "'FILL' 1" }
-                      : {}
-                  }
-                >
-                  {item.icon}
-                </span>
-                <span
-                  className={`text-[14px] flex-1 ${
-                    activeTab === item.id ? "font-semibold" : "font-medium"
-                  }`}
-                >
-                  {item.label}
-                </span>
-                {item.badge && activeTab !== item.id && (
-                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400 leading-none">
-                    {item.badge}
-                  </span>
-                )}
-              </button>
-            );
-          })}
+        <nav className="flex-1 px-4 overflow-y-auto py-4">
+          <div className="space-y-5">
+            {visibleNavGroups.map((group) => (
+              <div key={group.id} className="space-y-1">
+                <p className="px-4 pb-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">
+                  {group.label}
+                </p>
+
+                {group.items.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => {
+                      onTabChange(item.id);
+                      onClose();
+                    }}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-lg w-full text-left transition-all duration-250 group ${
+                      activeTab === item.id
+                        ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-purple-300 shadow-xs"
+                        : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white"
+                    }`}
+                  >
+                    <span
+                      className="material-symbols-outlined group-hover:scale-110 transition-transform text-[22px]"
+                      style={
+                        activeTab === item.id
+                          ? { fontVariationSettings: "'FILL' 1" }
+                          : {}
+                      }
+                    >
+                      {item.icon}
+                    </span>
+                    <span
+                      className={`text-[14px] flex-1 ${
+                        activeTab === item.id ? "font-semibold" : "font-medium"
+                      }`}
+                    >
+                      {item.label}
+                    </span>
+                    {item.badge && activeTab !== item.id && (
+                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400 leading-none">
+                        {item.badge}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            ))}
+          </div>
         </nav>
 
         {/* Bottom Section */}
-        <div className="p-4">
+        <div className="p-4 border-t border-slate-100 dark:border-slate-800">
+          <p className="px-4 pb-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">
+            Account
+          </p>
           {settingsNavItems.map((item) => {
             if (item.action) {
               return (
