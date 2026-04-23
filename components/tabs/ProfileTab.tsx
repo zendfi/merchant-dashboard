@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { merchant as merchantApi, MerchantSettings } from '@/lib/api';
+import { merchant as merchantApi, MerchantSettings, BridgeKycStatus } from '@/lib/api';
 import { useMerchant } from '@/lib/merchant-context';
 import { useCurrency } from '@/lib/currency-context';
 import { useDeveloperOptions } from '@/lib/developer-options-context';
@@ -31,6 +31,13 @@ export default function ProfileTab({ onSwitchTab, onModalToggle }: ProfileTabPro
   const [businessName, setBusinessName] = useState('');
   const [businessEmail, setBusinessEmail] = useState('');
   const [businessAddress, setBusinessAddress] = useState('');
+  const [merchantUserName, setMerchantUserName] = useState('');
+  const [usernameAvailability, setUsernameAvailability] = useState<null | { candidate: string; available: boolean }>(null);
+  const [isCheckingUsername, setIsCheckingUsername] = useState(false);
+  const [isSavingUsername, setIsSavingUsername] = useState(false);
+  const [bridgeKyc, setBridgeKyc] = useState<BridgeKycStatus | null>(null);
+  const [isBridgeLoading, setIsBridgeLoading] = useState(false);
+  const [isStartingBridgeKyc, setIsStartingBridgeKyc] = useState(false);
   const [settlementWalletAddress, setSettlementWalletAddress] = useState('');
   const [walletRiskAcknowledged, setWalletRiskAcknowledged] = useState(false);
 
@@ -44,6 +51,7 @@ export default function ProfileTab({ onSwitchTab, onModalToggle }: ProfileTabPro
       setBusinessName(data.name || merchant.name || '');
       setBusinessEmail(data.email || merchant.email || '');
       setBusinessAddress(data.business_address || '');
+      setMerchantUserName(data.merchant_user_name || merchant.merchant_user_name || '');
       setSettlementWalletAddress(data.wallet_address || merchant.wallet_address || '');
     } catch (error) {
       showNotification(
@@ -60,6 +68,7 @@ export default function ProfileTab({ onSwitchTab, onModalToggle }: ProfileTabPro
     if (!merchant) return;
     setBusinessName(merchant.name || '');
     setBusinessEmail(merchant.email || '');
+    setMerchantUserName(merchant.merchant_user_name || '');
     setSettlementWalletAddress(merchant.wallet_address || '');
   }, [merchant]);
 
@@ -68,9 +77,112 @@ export default function ProfileTab({ onSwitchTab, onModalToggle }: ProfileTabPro
     void loadSettings();
   }, [merchant?.id, loadSettings]);
 
+  const loadBridgeKyc = useCallback(async () => {
+    if (!merchant) return;
+    setIsBridgeLoading(true);
+    try {
+      const data = await merchantApi.getBridgeKycStatus();
+      setBridgeKyc(data.kyc);
+    } catch (error) {
+      showNotification(
+        'Failed to Load Bridge KYC',
+        error instanceof Error ? error.message : 'Could not load Bridge KYC status',
+        'error'
+      );
+    } finally {
+      setIsBridgeLoading(false);
+    }
+  }, [merchant, showNotification]);
+
+  useEffect(() => {
+    if (!merchant?.id) return;
+    void loadBridgeKyc();
+  }, [merchant?.id, loadBridgeKyc]);
+
   const refreshProfileData = async () => {
     await refreshMerchant();
     await loadSettings();
+    await loadBridgeKyc();
+  };
+
+  const handleCheckUsernameAvailability = async () => {
+    const candidate = merchantUserName.trim().toLowerCase();
+    if (!candidate) {
+      setUsernameAvailability(null);
+      return;
+    }
+
+    setIsCheckingUsername(true);
+    try {
+      const result = await merchantApi.getUsernameAvailability(candidate);
+      setUsernameAvailability(result);
+    } catch (error) {
+      showNotification(
+        'Username Check Failed',
+        error instanceof Error ? error.message : 'Could not verify username availability',
+        'error'
+      );
+    } finally {
+      setIsCheckingUsername(false);
+    }
+  };
+
+  const handleSaveUsername = async () => {
+    const candidate = merchantUserName.trim().toLowerCase();
+    if (!candidate) {
+      showNotification('Invalid Username', 'Username is required', 'error');
+      return;
+    }
+
+    setIsSavingUsername(true);
+    try {
+      const result = await merchantApi.updateUsername(candidate);
+      showNotification(
+        'Username Updated',
+        `Public link updated to ${result.public_link_url}`,
+        'success'
+      );
+      await refreshProfileData();
+    } catch (error) {
+      showNotification(
+        'Failed to Update Username',
+        error instanceof Error ? error.message : 'Could not update username',
+        'error'
+      );
+    } finally {
+      setIsSavingUsername(false);
+    }
+  };
+
+  const handleStartOrResumeBridgeKyc = async (skipForNow: boolean) => {
+    setIsStartingBridgeKyc(true);
+    try {
+      const data = await merchantApi.startBridgeKyc({ skip_for_now: skipForNow });
+      setBridgeKyc(data.kyc);
+
+      if (skipForNow) {
+        showNotification(
+          'KYC Deferred',
+          'Bridge features remain blocked until KYC is approved.',
+          'warning'
+        );
+        return;
+      }
+
+      if (data.kyc.latest_kyc_link) {
+        window.open(data.kyc.latest_kyc_link, '_blank', 'noopener,noreferrer');
+      }
+
+      showNotification('Bridge KYC Started', 'Complete KYC in the opened Bridge page.', 'success');
+    } catch (error) {
+      showNotification(
+        'Bridge KYC Failed',
+        error instanceof Error ? error.message : 'Could not start Bridge KYC',
+        'error'
+      );
+    } finally {
+      setIsStartingBridgeKyc(false);
+    }
   };
 
   const handleUpdateName = async () => {
@@ -225,6 +337,18 @@ export default function ProfileTab({ onSwitchTab, onModalToggle }: ProfileTabPro
             </p>
           </div>
 
+          <div className="bg-white dark:bg-[#13131f] p-5 rounded-xl border border-slate-100 dark:border-slate-800 sm:col-span-2">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              Public Link
+            </span>
+            <p className="text-slate-900 dark:text-white mt-1 break-all font-mono text-sm">
+              {settings?.public_link_url || merchant?.public_link_url || 'Not set'}
+            </p>
+            <p className="text-slate-500 dark:text-slate-400 mt-2 text-xs break-all">
+              Request template: {settings?.request_link_template || 'Not available'}
+            </p>
+          </div>
+
           <div className="bg-white dark:bg-[#13131f] p-5 rounded-xl border border-slate-100 dark:border-slate-800">
             <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               Account ID
@@ -246,6 +370,114 @@ export default function ProfileTab({ onSwitchTab, onModalToggle }: ProfileTabPro
                 : 'N/A'}
             </p>
           </div>
+        </div>
+      </div>
+
+      {/* Username & Public Link */}
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Public Username</h2>
+
+        <div className="bg-white dark:bg-[#13131f] p-5 rounded-xl border border-slate-100 dark:border-slate-800 space-y-3">
+          <label className="block text-sm font-semibold text-slate-900 dark:text-white">Username (zdfi.me/username)</label>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <input
+              type="text"
+              value={merchantUserName}
+              onChange={(e) => setMerchantUserName(e.target.value)}
+              className="w-full p-3 px-4 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+              placeholder="your-brand-name"
+            />
+            <button
+              type="button"
+              onClick={handleCheckUsernameAvailability}
+              disabled={isCheckingUsername}
+              className="px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50"
+            >
+              {isCheckingUsername ? 'Checking...' : 'Check'}
+            </button>
+            <button
+              type="button"
+              onClick={handleSaveUsername}
+              disabled={isSavingUsername}
+              className="px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary/90 disabled:opacity-50"
+            >
+              {isSavingUsername ? 'Saving...' : 'Save Username'}
+            </button>
+          </div>
+          {usernameAvailability && (
+            <p className={`text-xs ${usernameAvailability.available ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+              {usernameAvailability.available
+                ? `${usernameAvailability.candidate} is available`
+                : `${usernameAvailability.candidate} is already taken`}
+            </p>
+          )}
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Your public links: {settings?.public_link_url || merchant?.public_link_url || 'not set'}
+          </p>
+        </div>
+      </div>
+
+      {/* Bridge KYC */}
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Bridge KYC</h2>
+
+        <div className="bg-white dark:bg-[#13131f] p-5 rounded-xl border border-slate-100 dark:border-slate-800 space-y-3">
+          {isBridgeLoading ? (
+            <p className="text-sm text-slate-500 dark:text-slate-400">Loading Bridge KYC status...</p>
+          ) : (
+            <>
+              <div className="flex items-center gap-2">
+                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${bridgeKyc?.is_approved ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'}`}>
+                  {bridgeKyc?.is_approved ? 'Approved' : 'Pending / Required'}
+                </span>
+                {bridgeKyc?.bridge_features_blocked && (
+                  <span className="text-xs text-rose-600 dark:text-rose-400 font-semibold">
+                    Bridge features blocked
+                  </span>
+                )}
+              </div>
+
+              <p className="text-xs text-slate-500 dark:text-slate-400 break-all">
+                Bridge customer ID: {bridgeKyc?.bridge_customer_id || 'Not created yet'}
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                KYC status: {bridgeKyc?.kyc_status || 'unknown'} | TOS status: {bridgeKyc?.tos_status || 'unknown'}
+              </p>
+
+              <div className="flex flex-wrap gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => handleStartOrResumeBridgeKyc(false)}
+                  disabled={isStartingBridgeKyc}
+                  className="px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary/90 disabled:opacity-50"
+                >
+                  {isStartingBridgeKyc ? 'Starting...' : 'Start / Resume KYC'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleStartOrResumeBridgeKyc(true)}
+                  disabled={isStartingBridgeKyc}
+                  className="px-4 py-2.5 border border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 rounded-xl text-sm font-semibold hover:bg-amber-50 dark:hover:bg-amber-900/20 disabled:opacity-50"
+                >
+                  Skip for now
+                </button>
+                {bridgeKyc?.latest_kyc_link && (
+                  <a
+                    href={bridgeKyc.latest_kyc_link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
+                  >
+                    Open Latest KYC Link
+                  </a>
+                )}
+              </div>
+
+              <p className="text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
+                You can skip KYC during onboarding, but any Bridge-related flow remains blocked until approval.
+              </p>
+            </>
+          )}
         </div>
       </div>
 

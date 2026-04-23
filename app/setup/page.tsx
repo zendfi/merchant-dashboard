@@ -15,6 +15,15 @@ interface ApiKeys {
   live: string;
 }
 
+interface BridgeKycOnboarding {
+  status?: {
+    latest_kyc_link?: string | null;
+    bridge_features_blocked?: boolean;
+  };
+  warning?: string;
+  can_skip_for_now?: boolean;
+}
+
 const STEPS = [
   { key: 'info', label: 'Account', icon: 'person' },
   { key: 'passkey', label: 'Passkey', icon: 'fingerprint' },
@@ -40,6 +49,7 @@ export default function SetupPage() {
   const [webauthnSupported, setWebauthnSupported] = useState(true);
   const [merchantId, setMerchantId] = useState<string>('');
   const [apiKeys, setApiKeys] = useState<ApiKeys | null>(null);
+  const [bridgeKyc, setBridgeKyc] = useState<BridgeKycOnboarding | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   useEffect(() => {
@@ -102,6 +112,7 @@ export default function SetupPage() {
 
       setMerchantId(merchantId);
       setApiKeys(keys);
+      setBridgeKyc(data.bridge_kyc || null);
       setSuccess('Account created! Now let\'s set up your passkey.');
       setCurrentStep('passkey');
     } catch (err) {
@@ -398,6 +409,23 @@ export default function SetupPage() {
             {/* Step 2: Passkey Setup */}
             {currentStep === 'passkey' && (
               <div className="space-y-5">
+                <div className="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 p-4">
+                  <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">Bridge KYC (optional now, required later)</p>
+                  <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                    {bridgeKyc?.warning || 'You can continue onboarding without KYC for now, but Bridge-related features stay blocked until KYC is approved.'}
+                  </p>
+                  {bridgeKyc?.status?.latest_kyc_link && (
+                    <a
+                      href={bridgeKyc.status.latest_kyc_link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex mt-3 text-xs font-semibold text-primary hover:underline"
+                    >
+                      Start or Resume Bridge KYC
+                    </a>
+                  )}
+                </div>
+
                 <div className="text-center">
                   <div className="size-16 mx-auto mb-4 bg-primary/10 dark:bg-primary/20 rounded-2xl flex items-center justify-center">
                     <span className="material-symbols-outlined text-primary text-3xl">fingerprint</span>

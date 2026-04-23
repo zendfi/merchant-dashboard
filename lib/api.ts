@@ -8,6 +8,8 @@ export interface MerchantProfile {
   id: string;
   name: string;
   email: string;
+  merchant_user_name?: string | null;
+  public_link_url?: string | null;
   wallet_address: string;
   wallet_type: string | null;
   has_passkey: boolean;
@@ -18,11 +20,25 @@ export interface MerchantProfile {
 export interface MerchantSettings {
   name: string;
   email: string;
+  merchant_user_name?: string | null;
+  public_link_url?: string | null;
+  request_link_template?: string | null;
   business_address: string | null;
   wallet_address: string;
   wallet_type: string | null;
   settlement_preference: string | null;
   private_key_export_enabled: boolean;
+}
+
+export interface BridgeKycStatus {
+  bridge_customer_id: string | null;
+  kyc_status: string | null;
+  tos_status: string | null;
+  latest_kyc_link: string | null;
+  kyc_required: boolean;
+  kyc_skipped: boolean;
+  is_approved: boolean;
+  bridge_features_blocked: boolean;
 }
 
 export interface UpdateSettlementWalletPreferenceResponse {
@@ -565,6 +581,54 @@ export const merchant = {
   // Get dashboard analytics
   getAnalytics: async (): Promise<DashboardAnalytics> => {
     return apiCall("/api/v1/merchants/me/analytics");
+  },
+
+  getUsernameAvailability: async (
+    candidate: string
+  ): Promise<{ candidate: string; available: boolean }> => {
+    return apiCall(
+      `/api/v1/merchants/usernames/${encodeURIComponent(candidate)}/availability`
+    );
+  },
+
+  reserveUsername: async (
+    merchantUserName: string
+  ): Promise<{
+    merchant_user_name: string;
+    public_link_url: string;
+    request_link_template: string;
+  }> => {
+    return apiCall("/api/v1/merchants/me/username/reserve", {
+      method: "POST",
+      body: JSON.stringify({ merchant_user_name: merchantUserName }),
+    });
+  },
+
+  updateUsername: async (
+    merchantUserName: string
+  ): Promise<{
+    merchant_user_name: string;
+    public_link_url: string;
+    request_link_template: string;
+  }> => {
+    return apiCall("/api/v1/merchants/me/username", {
+      method: "PATCH",
+      body: JSON.stringify({ merchant_user_name: merchantUserName }),
+    });
+  },
+
+  getBridgeKycStatus: async (): Promise<{ kyc: BridgeKycStatus }> => {
+    return apiCall("/api/v1/merchants/me/bridge/kyc-status");
+  },
+
+  startBridgeKyc: async (params?: {
+    skip_for_now?: boolean;
+    redirect_uri?: string;
+  }): Promise<{ kyc: BridgeKycStatus; warning?: string }> => {
+    return apiCall("/api/v1/merchants/me/bridge/kyc/start", {
+      method: "POST",
+      body: JSON.stringify(params ?? {}),
+    });
   },
 };
 
