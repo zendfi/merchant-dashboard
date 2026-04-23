@@ -32,6 +32,9 @@ export default function PaymentLinkDetailModal({ link, isOpen, onClose }: Paymen
   const [dailyCounts, setDailyCounts] = useState<PaymentLinkDailyCount[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [countryCode, setCountryCode] = useState('US');
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewData, setPreviewData] = useState<Awaited<ReturnType<typeof paymentLinksApi.prepareRequestTransfer>> | null>(null);
 
   const loadTransactions = useCallback(async () => {
     if (!link) return;
@@ -74,6 +77,22 @@ export default function PaymentLinkDetailModal({ link, isOpen, onClose }: Paymen
       // fallback
     }
   };
+
+  const loadPreview = useCallback(async () => {
+    if (!link) return;
+    setPreviewLoading(true);
+    try {
+      const data = await paymentLinksApi.prepareRequestTransfer(link.id, {
+        country_code: countryCode.trim().toUpperCase() || 'US',
+      });
+      setPreviewData(data);
+    } catch (err) {
+      console.error('Failed to load routing preview:', err);
+      setPreviewData(null);
+    } finally {
+      setPreviewLoading(false);
+    }
+  }, [countryCode, link]);
 
   if (!isOpen || !link) return null;
 
@@ -214,6 +233,64 @@ export default function PaymentLinkDetailModal({ link, isOpen, onClose }: Paymen
                 </div>
               </div>
             ))}
+          </div>
+
+          <div className="px-6 pb-5">
+            <div className="bg-white dark:bg-[#13131f] rounded-xl border border-slate-100 dark:border-slate-800 p-4">
+              <div className="flex flex-col sm:flex-row sm:items-end gap-3 sm:gap-4">
+                <div className="flex-1">
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-1">Geo Routing Preview</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Preview the provider and instruction payload for a country before sharing the link.</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    value={countryCode}
+                    onChange={(e) => setCountryCode(e.target.value.toUpperCase())}
+                    maxLength={2}
+                    placeholder="US"
+                    className="w-20 px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-white uppercase"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => { void loadPreview(); }}
+                    className="px-3 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90"
+                  >
+                    Preview
+                  </button>
+                </div>
+              </div>
+              <div className="mt-4">
+                {previewLoading ? (
+                  <div className="text-sm text-slate-500 dark:text-slate-400">Loading preview...</div>
+                ) : previewData?.local_payment_option ? (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                      <div className="rounded-lg bg-slate-50 dark:bg-white/[0.03] p-3">
+                        <div className="text-slate-500 dark:text-slate-400">Provider</div>
+                        <div className="font-semibold text-slate-900 dark:text-white mt-1">{previewData.local_payment_option.provider}</div>
+                      </div>
+                      <div className="rounded-lg bg-slate-50 dark:bg-white/[0.03] p-3">
+                        <div className="text-slate-500 dark:text-slate-400">Rail</div>
+                        <div className="font-semibold text-slate-900 dark:text-white mt-1">{previewData.local_payment_option.rail}</div>
+                      </div>
+                      <div className="rounded-lg bg-slate-50 dark:bg-white/[0.03] p-3">
+                        <div className="text-slate-500 dark:text-slate-400">Amount</div>
+                        <div className="font-semibold text-slate-900 dark:text-white mt-1">{previewData.local_payment_option.local_amount.toLocaleString(undefined, { maximumFractionDigits: 2 })} {previewData.local_payment_option.local_currency}</div>
+                      </div>
+                      <div className="rounded-lg bg-slate-50 dark:bg-white/[0.03] p-3">
+                        <div className="text-slate-500 dark:text-slate-400">Status</div>
+                        <div className="font-semibold text-slate-900 dark:text-white mt-1">{previewData.prepare_status || previewData.local_payment_option.payment_details?.instruction_status || 'previewed'}</div>
+                      </div>
+                    </div>
+                    <pre className="overflow-x-auto rounded-xl bg-slate-50 dark:bg-slate-900 p-3 text-[11px] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+{JSON.stringify(previewData.local_payment_option.payment_details ?? previewData.local_payment_option, null, 2)}
+                    </pre>
+                  </div>
+                ) : (
+                  <div className="text-sm text-slate-400 dark:text-slate-500">No preview loaded yet.</div>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Chart */}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { merchant as merchantApi, MerchantSettings, BridgeKycStatus } from '@/lib/api';
+import { merchant as merchantApi, MerchantSettings, BridgeKycStatus, BridgeDefaultVirtualAccountResponse, BridgeSavedOfframpAccount } from '@/lib/api';
 import { useMerchant } from '@/lib/merchant-context';
 import { useCurrency } from '@/lib/currency-context';
 import { useDeveloperOptions } from '@/lib/developer-options-context';
@@ -38,6 +38,17 @@ export default function ProfileTab({ onSwitchTab, onModalToggle }: ProfileTabPro
   const [bridgeKyc, setBridgeKyc] = useState<BridgeKycStatus | null>(null);
   const [isBridgeLoading, setIsBridgeLoading] = useState(false);
   const [isStartingBridgeKyc, setIsStartingBridgeKyc] = useState(false);
+  const [bridgeDefaultVa, setBridgeDefaultVa] = useState<BridgeDefaultVirtualAccountResponse | null>(null);
+  const [bridgeSavedAccounts, setBridgeSavedAccounts] = useState<BridgeSavedOfframpAccount[]>([]);
+  const [isBridgeAccountsLoading, setIsBridgeAccountsLoading] = useState(false);
+  const [isEnsuringBridgeVa, setIsEnsuringBridgeVa] = useState(false);
+  const [isCreatingSavedAccount, setIsCreatingSavedAccount] = useState(false);
+  const [savedAccountLabel, setSavedAccountLabel] = useState('');
+  const [savedAccountOwnerName, setSavedAccountOwnerName] = useState('');
+  const [savedAccountType, setSavedAccountType] = useState('individual');
+  const [savedAccountCurrency, setSavedAccountCurrency] = useState('USD');
+  const [savedAccountBankName, setSavedAccountBankName] = useState('');
+  const [savedAccountDetailsJson, setSavedAccountDetailsJson] = useState('{\n  "account": {\n    "number": ""\n  }\n}');
   const [settlementWalletAddress, setSettlementWalletAddress] = useState('');
   const [walletRiskAcknowledged, setWalletRiskAcknowledged] = useState(false);
 
@@ -94,15 +105,127 @@ export default function ProfileTab({ onSwitchTab, onModalToggle }: ProfileTabPro
     }
   }, [merchant, showNotification]);
 
+  const loadBridgeAccounts = useCallback(async () => {
+    if (!merchant) return;
+    setIsBridgeAccountsLoading(true);
+    try {
+      const [defaultVa, savedAccounts] = await Promise.allSettled([
+        merchantApi.ensureBridgeDefaultVirtualAccount(),
+        merchantApi.listBridgeSavedOfframpAccounts(),
+      ]);
+
+      if (defaultVa.status === 'fulfilled') {
+        setBridgeDefaultVa(defaultVa.value);
+      }
+
+      if (savedAccounts.status === 'fulfilled') {
+        setBridgeSavedAccounts(savedAccounts.value.data || []);
+      }
+    } catch (error) {
+      showNotification(
+        'Failed to Load Bridge Accounts',
+        error instanceof Error ? error.message : 'Could not load Bridge off-ramp accounts',
+        'error'
+      );
+    } finally {
+      setIsBridgeAccountsLoading(false);
+    }
+  }, [merchant, showNotification]);
+
+  const handleEnsureBridgeDefaultVa = async () => {
+    setIsEnsuringBridgeVa(true);
+    try {
+      const data = await merchantApi.ensureBridgeDefaultVirtualAccount({ force_refresh: false });
+      setBridgeDefaultVa(data);
+      showNotification('Bridge default VA ready', `Default virtual account ${data.virtual_account_id} is ${data.status}.`, 'success');
+      await loadBridgeAccounts();
+    } catch (error) {
+      showNotification(
+        'Failed to Ensure Bridge VA',
+        error instanceof Error ? error.message : 'Could not ensure default Bridge virtual account',
+        'error'
+      );
+    } finally {
+      setIsEnsuringBridgeVa(false);
+    }
+  };
+
+  const handleCreateSavedAccount = async () => {
+    if (!savedAccountLabel.trim() || !savedAccountOwnerName.trim() || !savedAccountCurrency.trim()) {
+      showNotification('Missing Fields', 'Label, owner name, and currency are required.', 'error');
+      return;
+    }
+
+    let parsedDetails: Record<string, unknown> = {};
+    try {
+      parsedDetails = JSON.parse(savedAccountDetailsJson);
+    } catch {
+      showNotification('Invalid JSON', 'Saved account details must be valid JSON.', 'error');
+      return;
+    }
+
+    setIsCreatingSavedAccount(true);
+    try {
+      const payload = {
+        label: savedAccountLabel.trim(),
+        external_account: {
+          account_owner_name: savedAccountOwnerName.trim(),
+          account_type: savedAccountType.trim(),
+          currency: savedAccountCurrency.trim().toUpperCase(),
+          bank_name: savedAccountBankName.trim() || undefined,
+          ...parsedDetails,
+        },
+      };
+
+      await merchantApi.createBridgeSavedOfframpAccount(payload);
+      showNotification('Saved account created', 'Bridge saved offramp account has been created.', 'success');
+      setSavedAccountLabel('');
+      setSavedAccountOwnerName('');
+      setSavedAccountType('individual');
+      setSavedAccountCurrency('USD');
+      setSavedAccountBankName('');
+      setSavedAccountDetailsJson('{\n  "account": {\n    "number": ""\n  }\n}');
+      await loadBridgeAccounts();
+    } catch (error) {
+      showNotification(
+        'Failed to Create Saved Account',
+        error instanceof Error ? error.message : 'Could not create Bridge saved off-ramp account',
+        'error'
+      );
+    } finally {
+      setIsCreatingSavedAccount(false);
+    }
+  };
+
+  const handleDeleteSavedAccount = async (savedAccountId: string) => {
+    try {
+      await merchantApi.deleteBridgeSavedOfframpAccount(savedAccountId);
+      showNotification('Saved account removed', 'Bridge saved off-ramp account deleted.', 'success');
+      await loadBridgeAccounts();
+    } catch (error) {
+      showNotification(
+        'Failed to Delete Saved Account',
+        error instanceof Error ? error.message : 'Could not delete Bridge saved off-ramp account',
+        'error'
+      );
+    }
+  };
+
   useEffect(() => {
     if (!merchant?.id) return;
     void loadBridgeKyc();
   }, [merchant?.id, loadBridgeKyc]);
 
+  useEffect(() => {
+    if (!merchant?.id) return;
+    void loadBridgeAccounts();
+  }, [merchant?.id, loadBridgeAccounts]);
+
   const refreshProfileData = async () => {
     await refreshMerchant();
     await loadSettings();
     await loadBridgeKyc();
+    await loadBridgeAccounts();
   };
 
   const handleCheckUsernameAvailability = async () => {
@@ -478,6 +601,99 @@ export default function ProfileTab({ onSwitchTab, onModalToggle }: ProfileTabPro
               </p>
             </>
           )}
+        </div>
+      </div>
+
+      {/* Bridge Offramp */}
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Bridge Offramp</h2>
+
+        <div className="bg-white dark:bg-[#13131f] p-5 rounded-xl border border-slate-100 dark:border-slate-800 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-slate-900 dark:text-white">Default virtual account</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Provision or refresh the merchant default Bridge VA used for payment links and settlement previews.</p>
+            </div>
+            <button
+              type="button"
+              onClick={handleEnsureBridgeDefaultVa}
+              disabled={isEnsuringBridgeVa || !bridgeKyc?.is_approved}
+              className="px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary/90 disabled:opacity-50"
+            >
+              {isEnsuringBridgeVa ? 'Ensuring...' : 'Ensure default VA'}
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+            <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-3 bg-slate-50 dark:bg-slate-800/40">
+              <div className="text-xs text-slate-500 dark:text-slate-400">Bridge customer</div>
+              <div className="mt-1 font-mono text-xs break-all text-slate-900 dark:text-white">{bridgeDefaultVa?.bridge_customer_id || bridgeKyc?.bridge_customer_id || 'Not ready'}</div>
+            </div>
+            <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-3 bg-slate-50 dark:bg-slate-800/40">
+              <div className="text-xs text-slate-500 dark:text-slate-400">Virtual account</div>
+              <div className="mt-1 font-mono text-xs break-all text-slate-900 dark:text-white">{bridgeDefaultVa?.virtual_account_id || 'Not ready'}</div>
+            </div>
+            <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-3 bg-slate-50 dark:bg-slate-800/40">
+              <div className="text-xs text-slate-500 dark:text-slate-400">Destination</div>
+              <div className="mt-1 text-slate-900 dark:text-white">{bridgeDefaultVa ? `${bridgeDefaultVa.destination.payment_rail} / ${bridgeDefaultVa.destination.currency}` : 'Not ready'}</div>
+            </div>
+          </div>
+
+          <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+            <div>
+              <p className="text-sm font-semibold text-slate-900 dark:text-white">Saved off-ramp accounts</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Create and manage liquidation-backed accounts for recurring Bridge off-ramp destinations.</p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3">
+              {bridgeSavedAccounts.length === 0 ? (
+                <div className="text-sm text-slate-500 dark:text-slate-400 rounded-xl border border-dashed border-slate-200 dark:border-slate-700 p-4">
+                  {isBridgeAccountsLoading ? 'Loading saved accounts...' : 'No saved accounts yet.'}
+                </div>
+              ) : (
+                bridgeSavedAccounts.map((account) => (
+                  <div key={account.saved_account_id} className="rounded-xl border border-slate-200 dark:border-slate-700 p-4 bg-slate-50 dark:bg-slate-800/40 space-y-2">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-semibold text-slate-900 dark:text-white">{account.label}</p>
+                          {account.is_default && <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 font-semibold">Default</span>}
+                          {!account.active && <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300 font-semibold">Inactive</span>}
+                        </div>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 break-all">{account.bridge_external_account_id}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteSavedAccount(account.saved_account_id)}
+                        className="text-xs font-semibold text-rose-600 dark:text-rose-400 hover:underline"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                    <pre className="overflow-x-auto rounded-lg bg-white dark:bg-slate-900 p-3 text-[11px] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">{JSON.stringify(account.display_bank_details, null, 2)}</pre>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-4 space-y-3 bg-white dark:bg-slate-800/40">
+              <div>
+                <p className="text-sm font-semibold text-slate-900 dark:text-white">Create saved account</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Use a raw JSON details payload for Bridge-specific bank rails while the UI stays lightweight.</p>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <input value={savedAccountLabel} onChange={(e) => setSavedAccountLabel(e.target.value)} placeholder="Label" className="w-full px-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-white" />
+                <input value={savedAccountOwnerName} onChange={(e) => setSavedAccountOwnerName(e.target.value)} placeholder="Account owner name" className="w-full px-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-white" />
+                <input value={savedAccountType} onChange={(e) => setSavedAccountType(e.target.value)} placeholder="Account type" className="w-full px-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-white" />
+                <input value={savedAccountCurrency} onChange={(e) => setSavedAccountCurrency(e.target.value)} placeholder="Currency" className="w-full px-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-white" />
+                <input value={savedAccountBankName} onChange={(e) => setSavedAccountBankName(e.target.value)} placeholder="Bank name" className="w-full px-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-white sm:col-span-2" />
+              </div>
+              <textarea value={savedAccountDetailsJson} onChange={(e) => setSavedAccountDetailsJson(e.target.value)} rows={6} className="w-full px-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-mono bg-white dark:bg-slate-900 text-slate-900 dark:text-white" />
+              <button type="button" onClick={handleCreateSavedAccount} disabled={isCreatingSavedAccount} className="px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary/90 disabled:opacity-50">
+                {isCreatingSavedAccount ? 'Creating...' : 'Create saved account'}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 

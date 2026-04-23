@@ -35,10 +35,63 @@ export interface BridgeKycStatus {
   kyc_status: string | null;
   tos_status: string | null;
   latest_kyc_link: string | null;
+  last_checked_at?: string | null;
+  last_kyc_status_synced_at?: string | null;
   kyc_required: boolean;
   kyc_skipped: boolean;
   is_approved: boolean;
   bridge_features_blocked: boolean;
+}
+
+export interface BridgeDefaultVirtualAccountResponse {
+  bridge_customer_id: string;
+  virtual_account_id: string;
+  status: string;
+  destination: {
+    payment_rail: string;
+    currency: string;
+    address: string;
+  };
+  bridge_virtual_account?: Record<string, unknown>;
+}
+
+export interface BridgeSavedOfframpAccount {
+  saved_account_id: string;
+  merchant_id: string;
+  bridge_customer_id: string;
+  bridge_external_account_id: string;
+  bridge_liquidation_address_id: string | null;
+  label: string;
+  display_bank_details: Record<string, unknown>;
+  is_default: boolean;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BridgeSavedOfframpAccountsResponse {
+  count: number;
+  data: BridgeSavedOfframpAccount[];
+}
+
+export interface PrepareRequestLinkTransferResponse {
+  link_kind: string;
+  merchant_id?: string;
+  merchant_user_name?: string;
+  payment_link_id: string;
+  request_link_id?: string | null;
+  prepare_status?: string | null;
+  local_payment_option: {
+    country_code: string;
+    provider: string;
+    rail: string;
+    local_currency: string;
+    local_amount: number;
+    fx_rate: number;
+    quote_source: string;
+    quote_generated_at: string;
+    payment_details?: Record<string, unknown> | null;
+  };
 }
 
 export interface UpdateSettlementWalletPreferenceResponse {
@@ -246,6 +299,9 @@ export interface PaymentLink {
   onramp: boolean;
   payer_service_charge: boolean;
   collect_customer_info: boolean;
+  bridge_virtual_account_id?: string | null;
+  bridge_customer_id?: string | null;
+  bridge_va_binding_mode?: string | null;
   customer_data?: {
     email: string;
     name?: string;
@@ -301,6 +357,8 @@ export interface CreatePaymentLinkRequest {
   payer_service_charge?: boolean;
   /** If true, checkout shows an expanded form collecting name, phone, company & billing address */
   collect_customer_info?: boolean;
+  bridge_va_binding_mode?: 'merchant_default' | 'link_specific';
+  bridge_virtual_account_id?: string | null;
   /**
    * Optional pre-filled customer object.  When present:
    * - checkout skips the info-collection step ("Continue to Pay" CTA)
@@ -619,6 +677,44 @@ export const merchant = {
 
   getBridgeKycStatus: async (): Promise<{ kyc: BridgeKycStatus }> => {
     return apiCall("/api/v1/merchants/me/bridge/kyc-status");
+  },
+
+  ensureBridgeDefaultVirtualAccount: async (params?: {
+    force_refresh?: boolean;
+  }): Promise<BridgeDefaultVirtualAccountResponse> => {
+    return apiCall("/api/v1/merchants/me/bridge/default-virtual-account/ensure", {
+      method: "POST",
+      body: JSON.stringify(params ?? {}),
+    });
+  },
+
+  listBridgeSavedOfframpAccounts: async (): Promise<BridgeSavedOfframpAccountsResponse> => {
+    return apiCall("/api/v1/merchants/me/bridge/saved-offramp-accounts");
+  },
+
+  createBridgeSavedOfframpAccount: async (data: Record<string, unknown>): Promise<BridgeSavedOfframpAccount> => {
+    return apiCall("/api/v1/merchants/me/bridge/saved-offramp-accounts", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+
+  updateBridgeSavedOfframpAccount: async (
+    savedAccountId: string,
+    data: Record<string, unknown>
+  ): Promise<BridgeSavedOfframpAccount> => {
+    return apiCall(`/api/v1/merchants/me/bridge/saved-offramp-accounts/${savedAccountId}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+  },
+
+  deleteBridgeSavedOfframpAccount: async (
+    savedAccountId: string
+  ): Promise<{ saved_account_id: string; deleted: boolean; bridge_external_account_deleted: boolean; bridge_liquidation_address_deleted: boolean }> => {
+    return apiCall(`/api/v1/merchants/me/bridge/saved-offramp-accounts/${savedAccountId}`, {
+      method: "DELETE",
+    });
   },
 
   startBridgeKyc: async (params?: {
@@ -1241,6 +1337,27 @@ export const paymentLinks = {
       endpoint
     );
     return data.links;
+  },
+
+  prepareRequestTransfer: async (
+    linkId: string,
+    data: { country_code?: string; force_refresh?: boolean } = {}
+  ): Promise<PrepareRequestLinkTransferResponse> => {
+    return apiCall(`/api/v1/payment-links/${linkId}/request-transfer/prepare`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+
+  preparePublicRequestTransfer: async (
+    merchantUserName: string,
+    requestLinkId: string,
+    data: { country_code?: string; force_refresh?: boolean } = {}
+  ): Promise<PrepareRequestLinkTransferResponse> => {
+    return apiCall(`/api/public/request-links/${merchantUserName}/${requestLinkId}/prepare-transfer`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
   },
 
   // List payment links

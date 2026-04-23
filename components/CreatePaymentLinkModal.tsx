@@ -69,6 +69,8 @@ export default function CreatePaymentLinkModal({
   const [expiresIn, setExpiresIn] = useState('');
   const [payerServiceCharge, setPayerServiceCharge] = useState(true);
   const [collectCustomerInfo, setCollectCustomerInfo] = useState(false);
+  const [bridgeVaBindingMode, setBridgeVaBindingMode] = useState<'merchant_default' | 'link_specific' | ''>('');
+  const [bridgeVirtualAccountId, setBridgeVirtualAccountId] = useState('');
 
   // ── Shared ────────────────────────────────────────────────────────────────
   const [isLoading, setIsLoading] = useState(false);
@@ -107,6 +109,8 @@ export default function CreatePaymentLinkModal({
       setExpiresIn('');
       setPayerServiceCharge(true);
       setCollectCustomerInfo(false);
+      setBridgeVaBindingMode('');
+      setBridgeVirtualAccountId('');
       setError('');
       setCreatedLink(null);
     }
@@ -167,6 +171,8 @@ export default function CreatePaymentLinkModal({
         onramp,
         payer_service_charge: onramp ? payerServiceCharge : false,
         collect_customer_info: collectCustomerInfo,
+        ...(bridgeVaBindingMode && { bridge_va_binding_mode: bridgeVaBindingMode }),
+        ...(bridgeVirtualAccountId.trim() && { bridge_virtual_account_id: bridgeVirtualAccountId.trim() }),
         ...(description.trim() && { description: description.trim() }),
         ...(maxUses && { max_uses: parseInt(maxUses, 10) }),
         ...(expiresIn && { expires_at: new Date(Date.now() + parseInt(expiresIn, 10) * 60 * 60 * 1000).toISOString() }),
@@ -204,6 +210,8 @@ export default function CreatePaymentLinkModal({
     setShowCalculator(false);
     setPayerServiceCharge(true);
     setCollectCustomerInfo(false);
+    setBridgeVaBindingMode('');
+    setBridgeVirtualAccountId('');
     setError('');
   };
 
@@ -447,6 +455,41 @@ export default function CreatePaymentLinkModal({
                     <Toggle checked={payerServiceCharge} onChange={() => setPayerServiceCharge(!payerServiceCharge)} />
                   </div>
                 )}
+
+                <div className="space-y-2.5 p-4 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800/40">
+                  <div>
+                    <p className="text-sm font-medium text-slate-900 dark:text-white">Bridge VA binding</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Choose whether this link should use the merchant default Bridge VA or a specific one.</p>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    {([['', 'Auto'], ['merchant_default', 'Merchant default'], ['link_specific', 'Link specific']] as const).map(([modeOption, label]) => (
+                      <button
+                        key={modeOption || 'auto'}
+                        type="button"
+                        onClick={() => setBridgeVaBindingMode(modeOption)}
+                        className={`px-3 py-2 rounded-lg text-xs font-semibold border transition-colors ${
+                          bridgeVaBindingMode === modeOption
+                            ? 'border-primary bg-primary text-white'
+                            : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5'
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  {bridgeVaBindingMode === 'link_specific' && (
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Bridge virtual account ID</label>
+                      <input
+                        type="text"
+                        value={bridgeVirtualAccountId}
+                        onChange={(e) => setBridgeVirtualAccountId(e.target.value)}
+                        placeholder="va_xxx"
+                        className="w-full px-3 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl space-y-2 text-sm">
@@ -465,6 +508,18 @@ export default function CreatePaymentLinkModal({
                     {onramp ? 'Enabled' : 'Disabled'}
                   </span>
                 </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-slate-500 dark:text-slate-400">Bridge VA</span>
+                  <span className="font-semibold text-slate-900 dark:text-white text-right">
+                    {bridgeVaBindingMode ? bridgeVaBindingMode.replace('_', ' ') : 'Auto'}
+                  </span>
+                </div>
+                {bridgeVirtualAccountId.trim() && (
+                  <div className="flex justify-between gap-4">
+                    <span className="text-slate-500 dark:text-slate-400">VA ID</span>
+                    <span className="font-mono text-xs text-slate-900 dark:text-white text-right break-all">{bridgeVirtualAccountId.trim()}</span>
+                  </div>
+                )}
               </div>
             </>
           )}
@@ -526,6 +581,20 @@ export default function CreatePaymentLinkModal({
                     <span className="text-slate-500 dark:text-slate-400 shrink-0">Description</span>
                     <span className="text-slate-900 dark:text-white text-right">{createdLink.description}</span>
                   </div>
+                )}
+                {(createdLink.bridge_va_binding_mode || createdLink.bridge_virtual_account_id) && (
+                  <>
+                    <div className="flex justify-between gap-4">
+                      <span className="text-slate-500 dark:text-slate-400 shrink-0">Bridge VA</span>
+                      <span className="text-slate-900 dark:text-white text-right">{createdLink.bridge_va_binding_mode || 'auto'}</span>
+                    </div>
+                    {createdLink.bridge_virtual_account_id && (
+                      <div className="flex justify-between gap-4">
+                        <span className="text-slate-500 dark:text-slate-400 shrink-0">VA ID</span>
+                        <span className="text-slate-900 dark:text-white text-right font-mono text-xs break-all">{createdLink.bridge_virtual_account_id}</span>
+                      </div>
+                    )}
+                  </>
                 )}
                 <div className="flex justify-between">
                   <span className="text-slate-500 dark:text-slate-400">Max Uses</span>
