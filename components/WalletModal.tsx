@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useMode } from '@/lib/mode-context';
-import { wallet as walletApi, earn as earnApi, transactions as txApi, WalletInfo, EarnPosition, Transaction, offramp, PajBank, BankAccountDetails, OfframpOrder } from '@/lib/api';
+import { wallet as walletApi, earn as earnApi, transactions as txApi, WalletInfo, EarnPosition, Transaction, offramp, PajBank, BankAccountDetails, OfframpOrder, BridgeSavedOfframpAccount, OfframpPrepareResponse, merchant as merchantApi } from '@/lib/api';
 import { useNotification } from '@/lib/notifications';
 import { getPasskeySignature } from '@/lib/webauthn';
 
@@ -13,7 +13,8 @@ interface WalletModalProps {
 }
 
 type WalletView = 'main' | 'send' | 'receive' | 'bank-withdrawal' | 'history';
-type BankStep = 'amount' | 'email' | 'otp' | 'bank' | 'account' | 'confirm' | 'processing' | 'manual-transfer' | 'success';
+type BankStep = 'amount' | 'email' | 'otp' | 'bank' | 'account' | 'confirm' | 'processing' | 'manual-transfer' | 'success' | 'bridge-routing' | 'bridge-prepare';
+type OfframpProvider = 'paj' | 'bridge';
 
 function formatRelativeTime(dateStr: string): string {
   const date = new Date(dateStr);
@@ -28,6 +29,24 @@ function formatRelativeTime(dateStr: string): string {
   if (diffDays === 1) return 'Yesterday';
   if (diffDays < 7) return `${diffDays}d ago`;
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function inferCountryCodeFromBrowser(): string {
+  if (typeof window === 'undefined') return 'NG';
+
+  const locales = [
+    navigator.language,
+    ...(navigator.languages || []),
+  ].filter(Boolean);
+
+  for (const locale of locales) {
+    const match = locale.match(/[-_]([A-Za-z]{2})$/);
+    if (match?.[1]) {
+      return match[1].toUpperCase();
+    }
+  }
+
+  return 'NG';
 }
 
 const TOKEN_LOGOS: Record<string, string> = {
@@ -73,6 +92,11 @@ export default function WalletModal({ isOpen, onClose, onNavigateToEarn }: Walle
   const [bankSearch, setBankSearch] = useState('');
   const [accountDetails, setAccountDetails] = useState<BankAccountDetails | null>(null);
   const [order, setOrder] = useState<OfframpOrder | null>(null);
+  const [offrampProvider, setOfframpProvider] = useState<OfframpProvider>('paj');
+  const [withdrawCountryCode, setWithdrawCountryCode] = useState('NG');
+  const [bridgeSavedAccounts, setBridgeSavedAccounts] = useState<BridgeSavedOfframpAccount[]>([]);
+  const [selectedBridgeSavedAccountId, setSelectedBridgeSavedAccountId] = useState('');
+  const [bridgePrepareResponse, setBridgePrepareResponse] = useState<OfframpPrepareResponse | null>(null);
   const [exchangeRate, setExchangeRate] = useState<number>(0);
   const [txSignature, setTxSignature] = useState('');
   const [explorerUrl, setExplorerUrl] = useState('');
@@ -89,6 +113,20 @@ export default function WalletModal({ isOpen, onClose, onNavigateToEarn }: Walle
   useEffect(() => {
     if (currentView === 'bank-withdrawal') {
       loadRates();
+      setWithdrawCountryCode(inferCountryCodeFromBrowser());
+      merchantApi
+        .listBridgeSavedOfframpAccounts()
+        .then((result) => {
+          setBridgeSavedAccounts(result.data || []);
+          const defaultSaved = (result.data || []).find((entry) => entry.is_default && entry.active)
+            || (result.data || []).find((entry) => entry.active)
+            || null;
+          setSelectedBridgeSavedAccountId(defaultSaved?.saved_account_id || '');
+        })
+        .catch(() => {
+          setBridgeSavedAccounts([]);
+          setSelectedBridgeSavedAccountId('');
+        });
     }
   }, [currentView]);
 
@@ -102,6 +140,10 @@ export default function WalletModal({ isOpen, onClose, onNavigateToEarn }: Walle
       setAddressCopied(false);
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    setOfframpProvider(withdrawCountryCode === 'NG' ? 'paj' : 'bridge');
+  }, [withdrawCountryCode]);
 
   const loadWalletInfo = async () => {
     setIsLoading(true);
@@ -159,6 +201,10 @@ export default function WalletModal({ isOpen, onClose, onNavigateToEarn }: Walle
     setBankSearch('');
     setAccountDetails(null);
     setOrder(null);
+    setOfframpProvider('paj');
+    setBridgePrepareResponse(null);
+    setBridgeSavedAccounts([]);
+    setSelectedBridgeSavedAccountId('');
     setTxSignature('');
     setExplorerUrl('');
   };
@@ -248,11 +294,50 @@ export default function WalletModal({ isOpen, onClose, onNavigateToEarn }: Walle
     return banks.find(b => b.id === selectedBankId);
   }, [banks, selectedBankId]);
 
-  const handleBankAmountSubmit = () => {
+  const handleBankAmountSubmit = async () => {
     const numAmount = parseFloat(bankAmount);
     if (!numAmount || numAmount <= 0) { showNotification('Error', 'Please enter a valid amount', 'error'); return; }
     if (numAmount > (walletData?.usdc_balance || 0)) { showNotification('Error', 'Insufficient USDC balance', 'error'); return; }
     if (numAmount < 0.5) { showNotification('Error', 'Minimum withdrawal is 0.5 USDC', 'error'); return; }
+
+    if (withdrawCountryCode !== 'NG') {
+      const selectedSavedAccount = selectedBridgeSavedAccountId || undefined;
+      if (!selectedSavedAccount) {
+        setBankStep('bridge-routing');
+        showNotification('Saved Account Required', 'Create or select a saved offramp account to use Bridge withdrawal outside NG.', 'error');
+        return;
+      }
+
+      setOfframpProvider('bridge');
+      setBankIsLoading(true);
+      try {
+        const prepare = await offramp.prepare({
+          country_code: withdrawCountryCode,
+          amount: numAmount.toFixed(2),
+          source: {
+            payment_rail: 'solana',
+            currency: 'usdc',
+          },
+          destination: {
+            payment_rail: 'ach',
+            currency: 'usd',
+          },
+          saved_offramp_account_id: selectedSavedAccount,
+        });
+
+        setBridgePrepareResponse(prepare);
+        setBankStep('bridge-prepare');
+        showNotification('Bridge Offramp Prepared', 'Deposit instructions are ready for this withdrawal.', 'success');
+      } catch (error) {
+        setOfframpProvider('paj');
+        showNotification('Error', error instanceof Error ? error.message : 'Failed to prepare Bridge withdrawal', 'error');
+      } finally {
+        setBankIsLoading(false);
+      }
+      return;
+    }
+
+    setOfframpProvider('paj');
     setBankStep('email');
   };
 
@@ -541,7 +626,7 @@ export default function WalletModal({ isOpen, onClose, onNavigateToEarn }: Walle
                   className="w-full mt-3 p-2.5 rounded-xl font-semibold text-[13px] cursor-pointer transition-all flex items-center justify-center gap-1.5 bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 hover:-translate-y-px hover:shadow-md hover:shadow-emerald-600/20"
                 >
                   <span className="material-symbols-outlined text-[18px]">account_balance</span>
-                  Withdraw to Bank (NGN)
+                  Withdraw to Bank
                 </button>
               )}
 
@@ -833,7 +918,7 @@ export default function WalletModal({ isOpen, onClose, onNavigateToEarn }: Walle
                     </button>
                   )}
                   <h2 className="text-base font-bold text-slate-900 dark:text-white m-0">Withdraw to Bank</h2>
-                  <span className="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase">NGN</span>
+                  <span className="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase">{withdrawCountryCode}</span>
                 </div>
                 {bankStep !== 'processing' && (
                   <button
@@ -866,6 +951,46 @@ export default function WalletModal({ isOpen, onClose, onNavigateToEarn }: Walle
               {/* Amount Step */}
               {bankStep === 'amount' && (
                 <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-900 dark:text-white mb-2">Destination Country</label>
+                    <select
+                      value={withdrawCountryCode}
+                      onChange={(e) => setWithdrawCountryCode(e.target.value.toUpperCase())}
+                      className="w-full p-3 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-white dark:bg-[#13131f] text-slate-900 dark:text-white transition-all focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                    >
+                      {['NG', 'US', 'GB', 'DE', 'FR', 'ES', 'BR', 'CO', 'CA'].map((country) => (
+                        <option key={country} value={country}>{country}</option>
+                      ))}
+                    </select>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+                      {withdrawCountryCode === 'NG' ? 'NG uses Paj offramp.' : 'Non-NG routes through Bridge offramp.'}
+                    </p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                      Selected route: {offrampProvider.toUpperCase()}
+                    </p>
+                  </div>
+
+                  {withdrawCountryCode !== 'NG' && (
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-900 dark:text-white mb-2">Saved Offramp Account</label>
+                      <select
+                        value={selectedBridgeSavedAccountId}
+                        onChange={(e) => setSelectedBridgeSavedAccountId(e.target.value)}
+                        className="w-full p-3 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-white dark:bg-[#13131f] text-slate-900 dark:text-white transition-all focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                      >
+                        <option value="">Select saved account</option>
+                        {bridgeSavedAccounts.filter((entry) => entry.active).map((entry) => (
+                          <option key={entry.saved_account_id} value={entry.saved_account_id}>
+                            {entry.label}{entry.is_default ? ' (default)' : ''}
+                          </option>
+                        ))}
+                      </select>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+                        {bridgeSavedAccounts.length > 0 ? 'Bridge uses your selected saved account as destination.' : 'No saved account found. Add one in Profile > Bridge Saved Offramp Accounts.'}
+                      </p>
+                    </div>
+                  )}
+
                   <div>
                     <label className="block text-sm font-semibold text-slate-900 dark:text-white mb-2">Amount to Withdraw (USDC)</label>
                     <input
@@ -901,9 +1026,55 @@ export default function WalletModal({ isOpen, onClose, onNavigateToEarn }: Walle
                   )}
                   <button
                     onClick={handleBankAmountSubmit}
+                    disabled={bankIsLoading}
                     className="w-full p-3 bg-primary text-white border-none rounded-xl font-semibold text-sm cursor-pointer transition-all hover:bg-primary/90"
                   >
-                    Continue
+                    {bankIsLoading ? 'Preparing...' : 'Continue'}
+                  </button>
+                </div>
+              )}
+
+              {bankStep === 'bridge-routing' && (
+                <div className="space-y-4">
+                  <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-4 border border-amber-200 dark:border-amber-800">
+                    <h4 className="text-sm font-semibold text-amber-700 dark:text-amber-300">Bridge account required</h4>
+                    <p className="text-xs text-amber-700 dark:text-amber-400 mt-2">
+                      To withdraw outside NG, choose a saved offramp account in this modal or add one in the profile Bridge settings.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setBankStep('amount')}
+                    className="w-full p-3 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border-none rounded-xl font-semibold text-sm cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                  >
+                    Back
+                  </button>
+                </div>
+              )}
+
+              {bankStep === 'bridge-prepare' && bridgePrepareResponse && (
+                <div className="space-y-4">
+                  <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-4 border border-emerald-200 dark:border-emerald-800">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="material-symbols-outlined text-emerald-600 dark:text-emerald-400 text-xl">check_circle</span>
+                      <span className="font-semibold text-emerald-600 dark:text-emerald-400">Bridge Withdrawal Prepared</span>
+                    </div>
+                    <div className="text-sm text-slate-700 dark:text-slate-300">Provider: {bridgePrepareResponse.provider.toUpperCase()}</div>
+                    <div className="text-sm text-slate-700 dark:text-slate-300">Status: {bridgePrepareResponse.status}</div>
+                    {bridgePrepareResponse.provider_reference_id && (
+                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">Ref: {bridgePrepareResponse.provider_reference_id}</div>
+                    )}
+                  </div>
+
+                  <div className="bg-slate-50 dark:bg-[#1a1a2c] rounded-xl p-4 border border-slate-100 dark:border-slate-800">
+                    <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-[0.5px] mb-2">Instructions</div>
+                    <pre className="text-xs text-slate-800 dark:text-slate-200 whitespace-pre-wrap break-words overflow-x-auto">{JSON.stringify(bridgePrepareResponse.instructions, null, 2)}</pre>
+                  </div>
+
+                  <button
+                    onClick={() => { resetBankWithdrawal(); setCurrentView('main'); }}
+                    className="w-full p-3 bg-primary text-white border-none rounded-xl font-semibold text-sm cursor-pointer transition-all hover:bg-primary/90"
+                  >
+                    Back to Wallet
                   </button>
                 </div>
               )}

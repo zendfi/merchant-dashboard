@@ -1149,6 +1149,29 @@ export interface OfframpOrder {
   bank_name?: string;
 }
 
+export interface OfframpPrepareRequest {
+  country_code: string;
+  amount: string;
+  source: {
+    payment_rail: string;
+    currency: string;
+  };
+  destination: {
+    payment_rail: string;
+    currency: string;
+    external_account_id?: string;
+  };
+  saved_offramp_account_id?: string;
+}
+
+export interface OfframpPrepareResponse {
+  provider: string;
+  offramp_request_id: string;
+  provider_reference_id?: string | null;
+  status: string;
+  instructions: Record<string, unknown>;
+}
+
 // Offramp (Withdraw to Bank) APIs
 export const offramp = {
   // Get offramp rates and USDC balance
@@ -1246,6 +1269,14 @@ export const offramp = {
   // Get order status
   getOrder: async (orderId: string): Promise<OfframpOrder> => {
     return apiCall(`/api/v1/offramp/orders/${orderId}`);
+  },
+
+  // Prepare offramp transfer with Bridge for non-NG merchants
+  prepare: async (data: OfframpPrepareRequest): Promise<OfframpPrepareResponse> => {
+    return apiCall("/api/v1/merchants/me/offramp/prepare", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
   },
 };
 
