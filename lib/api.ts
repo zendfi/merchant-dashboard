@@ -30,7 +30,7 @@ export interface MerchantSettings {
   private_key_export_enabled: boolean;
 }
 
-export interface BridgeKycStatus {
+export interface MerchantKycStatus {
   bridge_customer_id: string | null;
   kyc_status: string | null;
   tos_status: string | null;
@@ -42,6 +42,9 @@ export interface BridgeKycStatus {
   is_approved: boolean;
   bridge_features_blocked: boolean;
 }
+
+// Backward-compatible alias during KYC naming transition.
+export type BridgeKycStatus = MerchantKycStatus;
 
 export interface BridgeDefaultVirtualAccountResponse {
   bridge_customer_id: string;
@@ -675,7 +678,12 @@ export const merchant = {
     });
   },
 
-  getBridgeKycStatus: async (): Promise<{ kyc: BridgeKycStatus }> => {
+  getKycStatus: async (): Promise<{ kyc: MerchantKycStatus }> => {
+    return apiCall("/api/v1/merchants/me/bridge/kyc-status");
+  },
+
+  // Backward-compatible alias during KYC naming transition.
+  getBridgeKycStatus: async (): Promise<{ kyc: MerchantKycStatus }> => {
     return apiCall("/api/v1/merchants/me/bridge/kyc-status");
   },
 
@@ -717,10 +725,21 @@ export const merchant = {
     });
   },
 
+  startKyc: async (params?: {
+    skip_for_now?: boolean;
+    redirect_uri?: string;
+  }): Promise<{ kyc: MerchantKycStatus; warning?: string }> => {
+    return apiCall("/api/v1/merchants/me/bridge/kyc/start", {
+      method: "POST",
+      body: JSON.stringify(params ?? {}),
+    });
+  },
+
+  // Backward-compatible alias during KYC naming transition.
   startBridgeKyc: async (params?: {
     skip_for_now?: boolean;
     redirect_uri?: string;
-  }): Promise<{ kyc: BridgeKycStatus; warning?: string }> => {
+  }): Promise<{ kyc: MerchantKycStatus; warning?: string }> => {
     return apiCall("/api/v1/merchants/me/bridge/kyc/start", {
       method: "POST",
       body: JSON.stringify(params ?? {}),

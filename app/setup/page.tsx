@@ -7,7 +7,7 @@ import Image from 'next/image';
 import { isWebAuthnSupported, createPasskeyCredential } from '@/lib/webauthn';
 
 interface SetupStep {
-  step: 'info' | 'passkey' | 'password' | 'complete';
+  step: 'info' | 'passkey' | 'password' | 'complete' | 'kyc';
 }
 
 interface ApiKeys {
@@ -28,7 +28,8 @@ const STEPS = [
   { key: 'info', label: 'Account', icon: 'person' },
   { key: 'passkey', label: 'Passkey', icon: 'fingerprint' },
   { key: 'password', label: 'Password', icon: 'lock' },
-  { key: 'complete', label: 'Complete', icon: 'check_circle' },
+  { key: 'complete', label: 'API Keys', icon: 'vpn_key' },
+  { key: 'kyc', label: 'KYC', icon: 'badge' },
 ] as const;
 
 export default function SetupPage() {
@@ -308,13 +309,15 @@ export default function SetupPage() {
                 {currentStep === 'info' && 'Create your account'}
                 {currentStep === 'passkey' && 'Set up your passkey'}
                 {currentStep === 'password' && 'Create a password'}
-                {currentStep === 'complete' && 'You\'re all set!'}
+                {currentStep === 'complete' && 'Save your API keys'}
+                {currentStep === 'kyc' && 'Complete KYC (optional)'}
               </h1>
               <p className="text-sm text-slate-500 dark:text-slate-400">
                 {currentStep === 'info' && 'Start accepting crypto payments in minutes'}
                 {currentStep === 'passkey' && 'Secure your account with biometric authentication'}
                 {currentStep === 'password' && 'Set up email/password login as a backup'}
-                {currentStep === 'complete' && 'Save your API keys — they won\'t be shown again'}
+                {currentStep === 'complete' && 'Store your keys safely — they won\'t be shown again'}
+                {currentStep === 'kyc' && 'You can finish this now or do it later from your dashboard'}
               </p>
             </div>
 
@@ -409,23 +412,6 @@ export default function SetupPage() {
             {/* Step 2: Passkey Setup */}
             {currentStep === 'passkey' && (
               <div className="space-y-5">
-                <div className="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 p-4">
-                  <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">Bridge KYC (optional now, required later)</p>
-                  <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
-                    {bridgeKyc?.warning || 'You can continue onboarding without KYC for now, but Bridge-related features stay blocked until KYC is approved.'}
-                  </p>
-                  {bridgeKyc?.status?.latest_kyc_link && (
-                    <a
-                      href={bridgeKyc.status.latest_kyc_link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex mt-3 text-xs font-semibold text-primary hover:underline"
-                    >
-                      Start or Resume Bridge KYC
-                    </a>
-                  )}
-                </div>
-
                 <div className="text-center">
                   <div className="size-16 mx-auto mb-4 bg-primary/10 dark:bg-primary/20 rounded-2xl flex items-center justify-center">
                     <span className="material-symbols-outlined text-primary text-3xl">fingerprint</span>
@@ -612,10 +598,64 @@ export default function SetupPage() {
                 </div>
 
                 <Link
-                  href="/login"
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setCurrentStep('kyc');
+                  }}
                   className="block w-full p-3 bg-primary text-white rounded-xl text-sm font-semibold text-center transition-all hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20 no-underline"
                 >
-                  Go to Dashboard
+                  Continue to KYC
+                </Link>
+
+                <Link
+                  href="/login"
+                  className="block w-full p-3 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-sm font-semibold text-center transition-all hover:bg-slate-50 dark:hover:bg-slate-800/60 no-underline"
+                >
+                  Finish setup and go to dashboard
+                </Link>
+              </div>
+            )}
+
+            {/* Step 5: KYC (Optional) */}
+            {currentStep === 'kyc' && (
+              <div className="space-y-5">
+                <div className="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 p-4">
+                  <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">KYC (optional now, required later)</p>
+                  <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                    {bridgeKyc?.warning || 'You can continue for now, but payout and local payment features stay limited until KYC is approved.'}
+                  </p>
+                </div>
+
+                <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 space-y-2">
+                  <p className="text-sm text-slate-700 dark:text-slate-300">
+                    Complete your KYC when you are ready. It usually takes a few minutes.
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    You can skip this now and do it later from your dashboard settings.
+                  </p>
+                </div>
+
+                {bridgeKyc?.status?.latest_kyc_link ? (
+                  <a
+                    href={bridgeKyc.status.latest_kyc_link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block w-full p-3 bg-primary text-white rounded-xl text-sm font-semibold text-center transition-all hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20 no-underline"
+                  >
+                    Start or resume KYC
+                  </a>
+                ) : (
+                  <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-3 text-xs text-slate-500 dark:text-slate-400">
+                    KYC link is not available yet. You can continue to your dashboard and start KYC from there.
+                  </div>
+                )}
+
+                <Link
+                  href="/login"
+                  className="block w-full p-3 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-sm font-semibold text-center transition-all hover:bg-slate-50 dark:hover:bg-slate-800/60 no-underline"
+                >
+                  Skip for now and go to dashboard
                 </Link>
               </div>
             )}
