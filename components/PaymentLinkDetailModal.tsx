@@ -110,6 +110,10 @@ export default function PaymentLinkDetailModal({ link, isOpen, onClose }: Paymen
 
   const isExpired = link.expires_at && new Date(link.expires_at) < new Date();
   const isActive = link.is_active && !isExpired;
+  const previewInstructionStatus =
+    typeof previewData?.local_payment_option.payment_details?.instruction_status === 'string'
+      ? previewData.local_payment_option.payment_details.instruction_status
+      : null;
 
   return createPortal(
     <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
@@ -279,7 +283,7 @@ export default function PaymentLinkDetailModal({ link, isOpen, onClose }: Paymen
                       </div>
                       <div className="rounded-lg bg-slate-50 dark:bg-white/[0.03] p-3">
                         <div className="text-slate-500 dark:text-slate-400">Status</div>
-                        <div className="font-semibold text-slate-900 dark:text-white mt-1">{previewData.prepare_status || previewData.local_payment_option.payment_details?.instruction_status || 'previewed'}</div>
+                        <div className="font-semibold text-slate-900 dark:text-white mt-1">{previewData.prepare_status ?? previewInstructionStatus ?? 'previewed'}</div>
                       </div>
                     </div>
                     <pre className="overflow-x-auto rounded-xl bg-slate-50 dark:bg-slate-900 p-3 text-[11px] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
